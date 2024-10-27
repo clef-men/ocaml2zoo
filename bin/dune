@@ -1,0 +1,14 @@
+(executable
+  (name ocaml2zoo)
+  (public_name ocaml2zoo)
+  (libraries
+    dune
+    zoo
+    unix
+    fmt
+    cmdliner
+  )
+  (promote
+    (until-clean)
+  )
+)
