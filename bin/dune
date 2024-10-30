@@ -5,7 +5,6 @@
     dune
     zoo
     unix
-    fmt
     cmdliner
   )
   (promote

@@ -463,7 +463,7 @@ let structure ~code ~pp ~select ppf str =
     Fmt.hashtbl (fun ppf (lib, mods) ->
       Fmt.pf ppf "From %s Require Import@,  @[<v>%a@]."
         lib
-        Fmt.(hashtbl @@ fun ppf (mod_, ()) -> string ppf mod_) mods
+        (Hashset.pp Fmt.string) mods
     ) ppf str.dependencies ;
     Fmt.pf ppf "@,"
   ) ;

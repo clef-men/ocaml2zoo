@@ -101,7 +101,7 @@ type definition =
 type structure =
   { library: string;
     module_: string;
-    dependencies: (string, (string, unit) Hashtbl.t) Hashtbl.t;
+    dependencies: (string, string Hashset.t) Hashtbl.t;
     definitions: definition list;
   }
 

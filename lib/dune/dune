@@ -3,7 +3,6 @@
   (libraries
     ocaml2zoo.base
     unix
-    fmt
     csexp
   )
   (flags (:standard -open Ocaml2zoo__base))

@@ -417,7 +417,7 @@ module Context = struct
       global_names: (string, int) Hashtbl.t;
       global_ids: variable Ident.Tbl.t;
       mutable locals: Ident.Set.t;
-      dependencies: (string, (string, unit) Hashtbl.t) Hashtbl.t;
+      dependencies: (string, string Hashset.t) Hashtbl.t;
     }
 
   let create mod_ env =
@@ -473,11 +473,10 @@ module Context = struct
   let add_dependency' t lib mod_ =
     match Hashtbl.find_opt t.dependencies lib with
     | None ->
-        let mods = Hashtbl.create () in
-        Hashtbl.replace mods mod_ () ;
+        let mods = Hashset.singleton mod_ in
         Hashtbl.add t.dependencies lib mods
     | Some mods ->
-        Hashtbl.replace mods mod_ ()
+        Hashset.add mods mod_
   let add_dependency t (lib, mod_) =
     add_dependency' t lib mod_
   let rec add_dependency_from_path t loc (path : Path.t) =
