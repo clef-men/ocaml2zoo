@@ -4,6 +4,7 @@ type arguments =
     force: bool;
     quiet: bool;
     exclude: string list;
+    only: string list;
   }
 
 exception Error of unit Cmdliner.Term.ret

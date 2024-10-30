@@ -20,26 +20,32 @@ let quiet =
 
 let exclude =
   let docv = "library" in
-  let doc = "Ignored libraries." in
+  let doc = "Prevent a library from being processed." in
   Arg.(value & opt_all string [] & info ["exclude"] ~docv ~doc)
+
+let only =
+  let docv = "library" in
+  let doc = "Mark a library. Only marked libraries are processed." in
+  Arg.(value & opt_all string [] & info ["only"] ~docv ~doc)
 
 let info =
   let doc = "OCaml to Zoo" in
   Cmd.info "ocaml2zoo" ~doc
 
-let main input output force quiet exclude =
+let main input output force quiet exclude only =
   let args : Main.arguments =
     { input;
       output;
       force;
       quiet;
       exclude;
+      only;
     }
   in
   try `Ok (Main.main args)
   with Main.Error err -> err
 let main =
-  Term.(ret (const main $ input $ output $ force $ quiet $ exclude))
+  Term.(ret (const main $ input $ output $ force $ quiet $ exclude $ only))
 let () =
   Cmd.v info main
   |> Cmd.eval

@@ -4,6 +4,7 @@ type arguments =
     force: bool;
     quiet: bool;
     exclude: string list;
+    only: string list;
   }
 
 exception Error of unit Cmdliner.Term.ret
@@ -84,10 +85,11 @@ let main_directory args =
         error "cannot move to %s" (Filename.concat args.input dune.build_context)
       end ;
       let exclude = List.map String.uncapitalize_ascii args.exclude in
+      let only = List.map String.uncapitalize_ascii args.only in
       Hashtbl.iter (fun _ (lib : Dune.library) ->
         if lib.library_local then
           let lib_name = lib.library_name in
-          if not @@ List.mem lib_name exclude then
+          if not (List.mem lib_name exclude) && (only = [] || List.mem lib_name only) then
             let output_dir = Filename.concat args.output lib_name in
             begin try Sys.mkdir output_dir 0o777 with Sys_error _ -> () end ;
             Hashtbl.iter (fun mod_name (mod_ : Dune.module_) ->
