@@ -769,8 +769,11 @@ let rec expression ctx (expr : Typedtree.expression) =
           expr
       | _ ->
           let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc expr.exp_type in
-          if record_type_is_mutable (Env.find_type rcd (Context.env ctx)) then
+          let rcd = Env.find_type rcd (Context.env ctx) in
+          if record_type_is_mutable rcd then
             Record exprs
+          else if Attribute.has_reveal rcd.type_attributes then
+            Reveal (Tuple exprs)
           else
             Tuple exprs
       end
