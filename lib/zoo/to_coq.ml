@@ -346,17 +346,8 @@ and expression lvl ppf expr =
   else
     Fmt.pf ppf "%a" (expression' lvl_expr) expr
 and expression_if_aux ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
-  let neg, expr1 =
-    begin match expr1 with
-    | Unop (Unop_neg, expr1) ->
-        true, expr1
-    | _ ->
-        false, expr1
-    end
-  in
-  Fmt.pf ppf "@[<hv>%sif%s:@;<1 2>@[%a@]@;then (@]@,  @[%a@]@,)"
+  Fmt.pf ppf "@[<hv>%sif:@;<1 2>@[%a@]@;then (@]@,  @[%a@]@,)"
     (if nested then " else " else "")
-    (if neg then "not" else "")
     (expression max_level) expr1
     (expression max_level) expr2 ;
   match expr3 with
