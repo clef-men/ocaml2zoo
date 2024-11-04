@@ -56,8 +56,8 @@ let main ~args ~input ~output_dir ~lib_name ~mod_name =
         | output_stats when input_stats.st_mtime < output_stats.st_mtime ->
             if not args.quiet then
               Fmt.pr {|Ignoring module "%s" from library "%s" (already up-to-date).@.|}
-                lib_name
                 mod_name
+                lib_name
         | _
         | exception Unix.Unix_error _ ->
             main ~input ~output_types ~output_code ~lib_name ~mod_name
