@@ -12,6 +12,7 @@
 )
 
 (source (github clef-men/ocaml2zoo))
+(license ISC)
 
 (package
   (name ocaml2zoo)
