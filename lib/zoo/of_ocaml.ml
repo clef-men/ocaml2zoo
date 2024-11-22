@@ -168,6 +168,11 @@ module Attribute = struct
   let has attr =
     List.exists (fun attr' -> attr'.Parsetree.attr_name.txt = attr)
 
+  let exclude =
+    "zoo.exclude"
+  let has_exclude =
+    has exclude
+
   let prefix =
     "zoo.prefix"
   let has_prefix =
@@ -399,6 +404,8 @@ let error loc err =
   raise @@ Error (loc, err)
 let unsupported loc err =
   error loc (Unsupported err)
+
+exception Exclude
 
 let record_is_mutable attrs lbls =
   List.exists (fun lbl -> lbl.Types.ld_mutable = Mutable) lbls ||
@@ -1154,6 +1161,8 @@ let structure_item mod_ ctx (str_item : Typedtree.structure_item) =
   | Tstr_type (_, tys) ->
       List.concat_map type_declaration tys
   | Tstr_attribute attr ->
+      if Attribute.has_exclude [attr] then
+        raise Exclude ;
       if Attribute.has_prefix [attr] then (
         match attr.attr_payload with
         | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (pref, _, _); _ }; _ }, _); _ }] ->

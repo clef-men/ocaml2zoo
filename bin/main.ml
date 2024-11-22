@@ -34,6 +34,8 @@ let main ~input ~output_types ~output_code ~lib_name ~mod_name =
               error ~usage:false "%a:@,%a"
                 Location.print_loc loc
                 Zoo.Of_ocaml.Error.pp err
+          | exception Zoo.Of_ocaml.Exclude ->
+              ()
           | str ->
               let types = Format.formatter_of_out_channel @@ open_out output_types in
               let code = Format.formatter_of_out_channel @@ open_out output_code in
