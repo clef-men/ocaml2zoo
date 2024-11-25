@@ -213,7 +213,7 @@ let rec expression' lvl ppf = function
       Fmt.pf ppf "@] ;;@,%a@]"
         (expression max_level) expr2
   | Fun (bdrs, expr) ->
-      Fmt.pf ppf "@[<hv>fun: %a =>@;<1 2>%a@]"
+      Fmt.pf ppf "@[<hv>fun: %a =>@;<1 2>@[%a@]@]"
         Fmt.(list ~sep:(const char ' ') binder) bdrs
         (expression max_level) expr
   | Apply (expr, exprs) ->
