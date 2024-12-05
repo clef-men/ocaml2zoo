@@ -400,10 +400,10 @@ end
 
 exception Error of Location.t * Error.t
 
-let error loc err =
+let error ~loc err =
   raise @@ Error (loc, err)
-let unsupported loc err =
-  error loc (Unsupported err)
+let unsupported ~loc err =
+  error ~loc (Unsupported err)
 
 exception Exclude
 
@@ -486,14 +486,14 @@ module Context = struct
         Hashset.add mods mod_
   let add_dependency t (lib, mod_) =
     add_dependency' t lib mod_
-  let rec add_dependency_from_path t loc (path : Path.t) =
+  let rec add_dependency_from_path t ~loc (path : Path.t) =
     match path with
     | Pident _ ->
         ()
     | Pdot (path', _) ->
         begin match Path.flatten path' with
         | None ->
-            unsupported loc Functor
+            unsupported ~loc Functor
         | Some (id, path') ->
             let lib = id |> Ident.name |> String.uncapitalize_ascii in
             let mod_ =
@@ -506,11 +506,11 @@ module Context = struct
             add_dependency' t lib mod_
         end
     | Papply _ ->
-        unsupported loc Functor
+        unsupported ~loc Functor
     | Pextra_ty (path, _) ->
-        add_dependency_from_path t loc path
+        add_dependency_from_path t ~loc path
 
-  let rec resolve_path t loc (path : Path.t) =
+  let rec resolve_path t ~loc (path : Path.t) =
     match path with
     | Pident id ->
         if mem_local t id then
@@ -525,7 +525,7 @@ module Context = struct
         | None ->
             match Path.flatten path' with
             | None ->
-                unsupported loc Functor
+                unsupported ~loc Functor
             | Some (id, path') ->
                 let lib = id |> Ident.name |> String.uncapitalize_ascii in
                 let mod_, path' =
@@ -541,17 +541,17 @@ module Context = struct
                 Global global
         end
     | Papply _ ->
-        unsupported loc Functor
+        unsupported ~loc Functor
     | Pextra_ty (path, _) ->
-        resolve_path t loc path
+        resolve_path t ~loc path
 end
 
-let open_declaration ~err loc (open_ : Typedtree.open_declaration) =
+let open_declaration ~loc ~err (open_ : Typedtree.open_declaration) =
   match open_.open_expr.mod_desc with
   | Tmod_ident _ ->
       ()
   | _ ->
-      unsupported loc err
+      unsupported ~loc err
 
 let rec pattern_is_neutral (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -566,7 +566,7 @@ let rec pattern_is_neutral (pat : Typedtree.pattern) =
       List.for_all pattern_is_neutral pats
   | _ ->
       false
-let rec pattern_to_binder ~err ctx (pat : Typedtree.pattern) =
+let rec pattern_to_binder ctx ~err (pat : Typedtree.pattern) =
   match pat.pat_desc with
   | Tpat_any ->
       None
@@ -578,27 +578,27 @@ let rec pattern_to_binder ~err ctx (pat : Typedtree.pattern) =
         Context.add_local ctx id ;
         Some (Ident.name id)
       ) else (
-        unsupported pat.pat_loc err
+        unsupported ~loc:pat.pat_loc err
       )
   | Tpat_tuple pats ->
       if List.for_all pattern_is_neutral pats then
         None
       else
-        unsupported pat.pat_loc err
+        unsupported ~loc:pat.pat_loc err
   | Tpat_record ((_, { lbl_repres= Record_unboxed _; _ }, pat) :: _, _) ->
-      pattern_to_binder ~err ctx pat
+      pattern_to_binder ctx ~err pat
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
       let[@warning "-8"] [pat] = pats in
-      pattern_to_binder ~err ctx pat
+      pattern_to_binder ctx ~err pat
   | Tpat_construct (_, constr, pats, _) ->
       if constr.cstr_consts + constr.cstr_nonconsts = 1
       && List.for_all pattern_is_neutral pats
       then
         None
       else
-        unsupported pat.pat_loc err
+        unsupported ~loc:pat.pat_loc err
   | _ ->
-      unsupported pat.pat_loc err
+      unsupported ~loc:pat.pat_loc err
 
 let rec pattern ctx (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -608,50 +608,50 @@ let rec pattern ctx (pat : Typedtree.pattern) =
       Context.add_local ctx id ;
       Some (Pat_var (Ident.name id))
   | Tpat_tuple pats ->
-      let bdrs = List.map (pattern_to_binder ~err:Pattern_nested ctx) pats in
+      let bdrs = List.map (pattern_to_binder ctx ~err:Pattern_nested) pats in
       Some (Pat_tuple bdrs)
   | Tpat_record ((_, { lbl_repres= Record_unboxed _; _ }, pat) :: _, _) ->
       pattern ctx pat
   | Tpat_record (((_, lbl, _) :: _) as pats, Closed) ->
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
       if record_type_is_mutable (Env.find_type rcd (Context.env ctx)) then
-        unsupported pat.pat_loc Pattern_record ;
-      let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~err:Pattern_nested ctx pat) pats in
+        unsupported ~loc:pat.pat_loc Pattern_record ;
+      let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ctx ~err:Pattern_nested pat) pats in
       Some (Pat_tuple bdrs)
   | Tpat_record _ ->
-      unsupported pat.pat_loc Pattern_record
+      unsupported ~loc:pat.pat_loc Pattern_record
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
       let[@warning "-8"] [pat] = pats in
       pattern ctx pat
   | Tpat_construct (lid, constr, pats, _) ->
-      let bdrs = List.map (pattern_to_binder ~err:Pattern_nested ctx) pats in
+      let bdrs = List.map (pattern_to_binder ctx ~err:Pattern_nested) pats in
       if Longident.Map.mem lid.txt Builtin.constrs then
-        unsupported lid.loc Pattern_constr ;
-      let tag = Option.get_lazy (fun () -> unsupported lid.loc Functor) (Longident.last lid.txt) in
+        unsupported ~loc:lid.loc Pattern_constr ;
+      let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
       let[@warning "-8"] Types.Tconstr (variant, _, _) = Types.get_desc constr.cstr_res in
-      Context.add_dependency_from_path ctx lid.loc variant ;
+      Context.add_dependency_from_path ctx ~loc:lid.loc variant ;
       Some (Pat_constr (tag, bdrs))
   | Tpat_alias _ ->
-      unsupported pat.pat_loc Pattern_alias
+      unsupported ~loc:pat.pat_loc Pattern_alias
   | Tpat_constant _ ->
-      unsupported pat.pat_loc Pattern_constant
+      unsupported ~loc:pat.pat_loc Pattern_constant
   | Tpat_variant _ ->
-      unsupported pat.pat_loc Pattern_variant
+      unsupported ~loc:pat.pat_loc Pattern_variant
   | Tpat_array _ ->
-      unsupported pat.pat_loc Pattern_array
+      unsupported ~loc:pat.pat_loc Pattern_array
   | Tpat_or _ ->
-      unsupported pat.pat_loc Pattern_or
+      unsupported ~loc:pat.pat_loc Pattern_or
   | Tpat_lazy _ ->
-      unsupported pat.pat_loc Pattern_lazy
+      unsupported ~loc:pat.pat_loc Pattern_lazy
 
 let rec expression ctx (expr : Typedtree.expression) =
   match expr.exp_desc with
   | Texp_ident (path, _, _) ->
-      expression_ident ctx expr.exp_loc path
+      expression_ident ctx ~loc:expr.exp_loc path
   | Texp_constant (Const_int int) ->
       Int int
   | Texp_constant _ ->
-      unsupported expr.exp_loc Literal_non_integer
+      unsupported ~loc:expr.exp_loc Literal_non_integer
   | Texp_let (rec_flag, [bdg], expr2) ->
       let expr1 = expression ctx bdg.vb_expr in
       let restore_locals = Context.save_locals ctx in
@@ -668,21 +668,21 @@ let rec expression ctx (expr : Typedtree.expression) =
               Letrec (rec_flag, local, bdrs, expr1, expr2)
           | _ ->
               if rec_flag = Recursive then
-                unsupported bdg.vb_loc Expr_let_rec_non_function ;
+                unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
               let expr2 = expression ctx expr2 in
               restore_locals () ;
               Let (pat, expr1, expr2)
       end
   | Texp_let (_, _, _) ->
-      unsupported expr.exp_loc Expr_let_mutual
+      unsupported ~loc:expr.exp_loc Expr_let_mutual
   | Texp_function (params, body) ->
       let restore_locals = Context.save_locals ctx in
       let bdrs =
         List.map (fun (param : Typedtree.function_param) ->
           if param.fp_arg_label <> Nolabel then
-            unsupported param.fp_loc Label;
+            unsupported ~loc:param.fp_loc Label;
           let[@warning "-8"] Typedtree.Tparam_pat pat = param.fp_kind in
-          pattern_to_binder ~err:Pattern_non_trivial ctx pat
+          pattern_to_binder ctx ~err:Pattern_non_trivial pat
         ) params
       in
       begin match body with
@@ -701,7 +701,7 @@ let rec expression ctx (expr : Typedtree.expression) =
       let arguments () =
         List.map (fun (lbl, expr') ->
           if lbl <> Asttypes.Nolabel then
-            unsupported expr.exp_loc Label ;
+            unsupported ~loc:expr.exp_loc Label ;
           expression ctx (Option.get expr')
         ) exprs
       in
@@ -771,7 +771,7 @@ let rec expression ctx (expr : Typedtree.expression) =
       restore_locals () ;
       For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
-      unsupported expr.exp_loc Expr_for_downward
+      unsupported ~loc:expr.exp_loc Expr_for_downward
   | Texp_tuple exprs ->
       let exprs = List.map (expression ctx) exprs in
       Tuple exprs
@@ -800,9 +800,9 @@ let rec expression ctx (expr : Typedtree.expression) =
           assert (exprs = []) ;
           expr
       | None ->
-          let tag = Option.get_lazy (fun () -> unsupported lid.loc Functor) (Longident.last lid.txt) in
+          let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
           let[@warning "-8"] Types.Tconstr (variant, _, _) = Types.get_desc constr.cstr_res in
-          Context.add_dependency_from_path ctx lid.loc variant ;
+          Context.add_dependency_from_path ctx ~loc:lid.loc variant ;
           match constr.cstr_inlined with
           | None ->
               let exprs = List.map (expression ctx) exprs in
@@ -815,7 +815,7 @@ let rec expression ctx (expr : Typedtree.expression) =
               let[@warning "-8"] [expr] = exprs in
               match expr.exp_desc with
               | Texp_ident (path, _, _) ->
-                  expression_ident ctx expr.exp_loc path
+                  expression_ident ctx ~loc:expr.exp_loc path
               | Texp_record rcd ->
                   let exprs = expression_record ctx expr rcd.fields rcd.extended_expression in
                   if inline_record_type_is_mutable constr.cstr_attributes ty then
@@ -837,13 +837,13 @@ let rec expression ctx (expr : Typedtree.expression) =
       let expr = expression ctx expr in
       let fld = lbl.lbl_name in
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
-      Context.add_dependency_from_path ctx lid.loc rcd ;
+      Context.add_dependency_from_path ctx ~loc:lid.loc rcd ;
       Atomic_loc (expr, fld)
   | Texp_field (expr, lid, lbl) ->
       let expr = expression ctx expr in
       let fld = lbl.lbl_name in
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
-      Context.add_dependency_from_path ctx lid.loc rcd ;
+      Context.add_dependency_from_path ctx ~loc:lid.loc rcd ;
       if record_type_is_mutable (Env.find_type rcd (Context.env ctx)) then
         Record_get (expr, fld)
       else
@@ -852,7 +852,7 @@ let rec expression ctx (expr : Typedtree.expression) =
       let expr1 = expression ctx expr1 in
       let fld = lbl.lbl_name in
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
-      Context.add_dependency_from_path ctx lid.loc rcd ;
+      Context.add_dependency_from_path ctx ~loc:lid.loc rcd ;
       let expr2 = expression ctx expr2 in
       Record_set (expr1, fld, expr2)
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
@@ -862,47 +862,47 @@ let rec expression ctx (expr : Typedtree.expression) =
       let expr = expression ctx expr in
       Apply (Global "assert", [expr])
   | Texp_open (open_, expr) ->
-      open_declaration ~err:Expr_open expr.exp_loc open_ ;
+      open_declaration ~loc:expr.exp_loc ~err:Expr_open open_ ;
       expression ctx expr
   | Texp_array _ ->
-      unsupported expr.exp_loc Expr_array
+      unsupported ~loc:expr.exp_loc Expr_array
   | Texp_try _ ->
-      unsupported expr.exp_loc Expr_try
+      unsupported ~loc:expr.exp_loc Expr_try
   | Texp_variant _ ->
-      unsupported expr.exp_loc Expr_variant
+      unsupported ~loc:expr.exp_loc Expr_variant
   | Texp_while _ ->
-      unsupported expr.exp_loc Expr_while
+      unsupported ~loc:expr.exp_loc Expr_while
   | Texp_send _ ->
-      unsupported expr.exp_loc Expr_send
+      unsupported ~loc:expr.exp_loc Expr_send
   | Texp_new _ ->
-      unsupported expr.exp_loc Expr_new
+      unsupported ~loc:expr.exp_loc Expr_new
   | Texp_instvar _ ->
-      unsupported expr.exp_loc Expr_inst_var
+      unsupported ~loc:expr.exp_loc Expr_inst_var
   | Texp_setinstvar _ ->
-      unsupported expr.exp_loc Expr_set_inst_var
+      unsupported ~loc:expr.exp_loc Expr_set_inst_var
   | Texp_override _ ->
-      unsupported expr.exp_loc Expr_overwrite
+      unsupported ~loc:expr.exp_loc Expr_overwrite
   | Texp_letmodule _ ->
-      unsupported expr.exp_loc Expr_let_module
+      unsupported ~loc:expr.exp_loc Expr_let_module
   | Texp_letexception _ ->
-      unsupported expr.exp_loc Expr_let_exception
+      unsupported ~loc:expr.exp_loc Expr_let_exception
   | Texp_lazy _ ->
-      unsupported expr.exp_loc Expr_lazy
+      unsupported ~loc:expr.exp_loc Expr_lazy
   | Texp_object _ ->
-      unsupported expr.exp_loc Expr_object
+      unsupported ~loc:expr.exp_loc Expr_object
   | Texp_pack _ ->
-      unsupported expr.exp_loc Expr_pack
+      unsupported ~loc:expr.exp_loc Expr_pack
   | Texp_letop _ ->
-      unsupported expr.exp_loc Expr_let_op
+      unsupported ~loc:expr.exp_loc Expr_let_op
   | Texp_unreachable ->
-      unsupported expr.exp_loc Expr_unreachable
+      unsupported ~loc:expr.exp_loc Expr_unreachable
   | Texp_extension_constructor _ ->
-      unsupported expr.exp_loc Expr_extension
+      unsupported ~loc:expr.exp_loc Expr_extension
 and expression_ident =
   Context.resolve_path
 and expression_record ctx expr flds ext_expr =
   if ext_expr <> None then
-    unsupported expr.exp_loc Expr_record_update ;
+    unsupported ~loc:expr.exp_loc Expr_record_update ;
   Array.fold_right (fun (_, lbl) acc ->
     let[@warning "-8"] Typedtree.Overridden (_, expr) = lbl in
     expression ctx expr :: acc
@@ -912,7 +912,7 @@ and branches : type a. Context.t -> a Typedtree.case list -> branch list * fallb
     | [] ->
         acc, None
     | br :: brs ->
-        Option.iter (fun expr -> unsupported expr.Typedtree.exp_loc Pattern_guard) br.Typedtree.c_guard ;
+        Option.iter (fun expr -> unsupported ~loc:expr.Typedtree.exp_loc Pattern_guard) br.Typedtree.c_guard ;
         let restore_locals = Context.save_locals ctx in
         let pat = br.c_lhs in
         let pat =
@@ -920,9 +920,9 @@ and branches : type a. Context.t -> a Typedtree.case list -> branch list * fallb
           | Tpat_value pat ->
               (pat :> Typedtree.(value general_pattern))
           | Tpat_exception _ ->
-              unsupported pat.pat_loc Handler_exception
+              unsupported ~loc:pat.pat_loc Handler_exception
           | Tpat_or _ ->
-              unsupported pat.pat_loc Pattern_or
+              unsupported ~loc:pat.pat_loc Pattern_or
           | Tpat_any ->
               pat
           | Tpat_var _ ->
@@ -976,14 +976,14 @@ and branches : type a. Context.t -> a Typedtree.case list -> branch list * fallb
               aux2 pat bdr
           | Tpat_construct (lid, constr, pats, _) ->
               if Longident.Map.mem lid.txt Builtin.constrs then
-                unsupported lid.loc Pattern_constr ;
-              let tag = Option.get_lazy (fun () -> unsupported lid.loc Functor) (Longident.last lid.txt) in
+                unsupported ~loc:lid.loc Pattern_constr ;
+              let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
               let[@warning "-8"] Types.Tconstr (variant, _, _) = Types.get_desc constr.cstr_res in
-              Context.add_dependency_from_path ctx lid.loc variant ;
+              Context.add_dependency_from_path ctx ~loc:lid.loc variant ;
               let bdrs, bdr, expr =
                 match constr.cstr_inlined with
                 | None ->
-                    let bdrs = List.map (pattern_to_binder ~err:Pattern_invalid ctx) pats in
+                    let bdrs = List.map (pattern_to_binder ctx ~err:Pattern_invalid) pats in
                     let bdrs =
                       match bdrs with
                       | [None] ->
@@ -1017,17 +1017,17 @@ and branches : type a. Context.t -> a Typedtree.case list -> branch list * fallb
                         bdrs, bdr, expr
                     | Tpat_record (pats, Closed) ->
                         if inline_record_type_is_mutable constr.cstr_attributes ty then
-                          unsupported pat.pat_loc Pattern_invalid ;
-                        let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~err:Pattern_invalid ctx pat) pats in
+                          unsupported ~loc:pat.pat_loc Pattern_invalid ;
+                        let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ctx ~err:Pattern_invalid pat) pats in
                         let expr = expression ctx br.c_rhs in
                         bdrs, bdr, expr
                     | _ ->
-                        unsupported pat.pat_loc Pattern_invalid
+                        unsupported ~loc:pat.pat_loc Pattern_invalid
               in
               restore_locals () ;
               aux1 ({ branch_tag= tag; branch_fields= bdrs; branch_as= bdr; branch_expr= expr } :: acc) brs
           | _ ->
-              unsupported pat.pat_loc Pattern_invalid
+              unsupported ~loc:pat.pat_loc Pattern_invalid
         in
         aux2 pat bdr
   in
@@ -1042,7 +1042,7 @@ let value_bindings mod_ ctx env rec_flag bdgs =
           let global = Context.add_global ctx id in
           bdg, global, id, loc
       | _ ->
-          unsupported bdg.vb_pat.pat_loc Def_pattern
+          unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
     ) bdgs
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
@@ -1081,7 +1081,7 @@ let value_bindings mod_ ctx env rec_flag bdgs =
                   in
                   rec_flag', Typecore.type_expression env expr
               | _ ->
-                  error attr.attr_loc Attribute_overwrite_invalid_payload
+                  error ~loc:attr.attr_loc Attribute_overwrite_invalid_payload
         in
         let restore_locals = Context.save_locals ctx in
         begin match rec_flag, rec_flag' with
@@ -1103,11 +1103,11 @@ let value_bindings mod_ ctx env rec_flag bdgs =
               Val_fun (global, bdrs, expr)
         | _ ->
             if rec_ then
-              unsupported bdg.vb_loc Def_recursive ;
+              unsupported ~loc:bdg.vb_loc Def_recursive ;
             if expression_is_value expr then
               Val_expr (global, expr)
             else
-              unsupported bdg.vb_loc Def_invalid
+              unsupported ~loc:bdg.vb_loc Def_invalid
       ) bdgs
     in
     match rec_flag with
@@ -1154,7 +1154,7 @@ let type_declaration (ty : Typedtree.type_declaration) =
       in
       Type (var, Type_variant tags) :: defs
   | Type_open ->
-      unsupported ty.typ_loc Type_extensible
+      unsupported ~loc:ty.typ_loc Type_extensible
 
 let structure_item mod_ ctx (str_item : Typedtree.structure_item) =
   match str_item.str_desc with
@@ -1164,7 +1164,7 @@ let structure_item mod_ ctx (str_item : Typedtree.structure_item) =
   | Tstr_type (_, tys) ->
       List.concat_map type_declaration tys
   | Tstr_open open_ ->
-      open_declaration ~err:Def_open str_item.str_loc open_ ;
+      open_declaration ~loc:str_item.str_loc ~err:Def_open open_ ;
       []
   | Tstr_attribute attr ->
       if Attribute.has_exclude [attr] then
@@ -1174,35 +1174,35 @@ let structure_item mod_ ctx (str_item : Typedtree.structure_item) =
         | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (pref, _, _); _ }; _ }, _); _ }] ->
             Context.set_prefix ctx pref
         | _ ->
-            error attr.attr_loc Attribute_prefix_invalid_payload
+            error ~loc:attr.attr_loc Attribute_prefix_invalid_payload
       ) ;
       []
   | Tstr_eval _ ->
-      unsupported str_item.str_loc Def_eval
+      unsupported ~loc:str_item.str_loc Def_eval
   | Tstr_primitive _ ->
-      unsupported str_item.str_loc Def_primitive
+      unsupported ~loc:str_item.str_loc Def_primitive
   | Tstr_typext _ ->
-      unsupported str_item.str_loc Type_extensible
+      unsupported ~loc:str_item.str_loc Type_extensible
   | Tstr_exception _ ->
-      unsupported str_item.str_loc Def_exception
+      unsupported ~loc:str_item.str_loc Def_exception
   | Tstr_module _
   | Tstr_recmodule _ ->
-      unsupported str_item.str_loc Def_module
+      unsupported ~loc:str_item.str_loc Def_module
   | Tstr_modtype _ ->
-      unsupported str_item.str_loc Def_module_type
+      unsupported ~loc:str_item.str_loc Def_module_type
   | Tstr_class _ ->
-      unsupported str_item.str_loc Def_class
+      unsupported ~loc:str_item.str_loc Def_class
   | Tstr_class_type _ ->
-      unsupported str_item.str_loc Def_class_type
+      unsupported ~loc:str_item.str_loc Def_class_type
   | Tstr_include _ ->
-      unsupported str_item.str_loc Def_include
+      unsupported ~loc:str_item.str_loc Def_include
 
 let structure ~lib ~mod_ (str : Typedtree.structure) =
   let env =
     try
       Envaux.env_of_only_summary str.str_final_env
     with Envaux.Error err ->
-      error Location.none (Envaux err)
+      error ~loc:Location.none (Envaux err)
   in
   let ctx = Context.create mod_ env in
   let definitions = List.concat_map (structure_item mod_ ctx) str.str_items in
