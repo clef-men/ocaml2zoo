@@ -364,7 +364,7 @@ module Unsupported = struct
     | Def_module_type ->
         "module type definition"
     | Def_open ->
-        {|"open" declaration|}
+        "opened module must be an identifier"
     | Def_class ->
         "class definition"
     | Def_class_type ->
@@ -545,6 +545,13 @@ module Context = struct
     | Pextra_ty (path, _) ->
         resolve_path t loc path
 end
+
+let open_declaration ~err loc (open_ : Typedtree.open_declaration) =
+  match open_.open_expr.mod_desc with
+  | Tmod_ident _ ->
+      ()
+  | _ ->
+      unsupported loc err
 
 let rec pattern_is_neutral (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -854,13 +861,9 @@ let rec expression ctx (expr : Typedtree.expression) =
       Context.add_dependency ctx Dependency.assert_ ;
       let expr = expression ctx expr in
       Apply (Global "assert", [expr])
-  | Texp_open (open_decl, expr) ->
-      begin match open_decl.open_expr.mod_desc with
-      | Tmod_ident _ ->
-          expression ctx expr
-      | _ ->
-          unsupported expr.exp_loc Expr_open
-      end
+  | Texp_open (open_, expr) ->
+      open_declaration ~err:Expr_open expr.exp_loc open_ ;
+      expression ctx expr
   | Texp_array _ ->
       unsupported expr.exp_loc Expr_array
   | Texp_try _ ->
@@ -1160,6 +1163,9 @@ let structure_item mod_ ctx (str_item : Typedtree.structure_item) =
       List.map (fun val_ -> Val val_) vals
   | Tstr_type (_, tys) ->
       List.concat_map type_declaration tys
+  | Tstr_open open_ ->
+      open_declaration ~err:Def_open str_item.str_loc open_ ;
+      []
   | Tstr_attribute attr ->
       if Attribute.has_exclude [attr] then
         raise Exclude ;
@@ -1184,8 +1190,6 @@ let structure_item mod_ ctx (str_item : Typedtree.structure_item) =
       unsupported str_item.str_loc Def_module
   | Tstr_modtype _ ->
       unsupported str_item.str_loc Def_module_type
-  | Tstr_open _ ->
-      unsupported str_item.str_loc Def_open
   | Tstr_class _ ->
       unsupported str_item.str_loc Def_class
   | Tstr_class_type _ ->
