@@ -3,6 +3,8 @@ From zoo Require Import
 From zoo.language Require Import
   typeclasses
   notations.
+From foo Require Import
+  bar.
 From zoo Require Import
   options.
 

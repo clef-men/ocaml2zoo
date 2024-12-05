@@ -487,6 +487,18 @@ module Attribute = struct
   let has_opaque =
     has opaque
 
+  type overwrite_kind =
+    | Overwrite of rec_flag
+    | Raw
+  let overwrite_kind_to_string = function
+    | Raw ->
+        "_raw"
+    | Overwrite rec_ ->
+        match rec_ with
+        | Nonrecursive ->
+            ""
+        | Recursive ->
+            "_rec"
   let overwrite =
     "zoo.overwrite"
   let rec has_overwrite = function
@@ -499,9 +511,11 @@ module Attribute = struct
           let attr_len = String.length attr_name in
           match String.sub attr_name overwrite_len (attr_len - overwrite_len) with
           | "" ->
-              Some (Nonrecursive, attr)
+              Some (Overwrite Nonrecursive, attr)
           | "_rec" ->
-              Some (Recursive, attr)
+              Some (Overwrite Recursive, attr)
+          | "_raw" ->
+              Some (Raw, attr)
           | _ ->
               has_overwrite attrs
         else
@@ -674,7 +688,7 @@ module Error = struct
   type t =
     | Unsupported of Unsupported.t
     | Attribute_prefix_invalid_payload
-    | Attribute_overwrite_invalid_payload
+    | Attribute_overwrite_invalid_payload of Attribute.overwrite_kind
     | Envaux of Envaux.error
 
   let pp ppf = function
@@ -684,9 +698,16 @@ module Error = struct
     | Attribute_prefix_invalid_payload ->
         Fmt.pf ppf {|payload of attribute "%s" must be a string|}
           Attribute.prefix
-    | Attribute_overwrite_invalid_payload ->
-        Fmt.pf ppf {|payload of attribute "%s" must be a expression|}
+    | Attribute_overwrite_invalid_payload kind ->
+        Fmt.pf ppf {|payload of attribute "%s%s" must be %s|}
           Attribute.overwrite
+          (Attribute.overwrite_kind_to_string kind)
+          begin match kind with
+          | Overwrite _ ->
+              "an expression"
+          | Raw ->
+              "of the form library.module.identifier"
+          end
     | Envaux err ->
         Fmt.pf ppf "internal Envaux error: %a"
           Envaux.report_error err
@@ -1328,6 +1349,78 @@ and branches : type a. Context.t -> a Typedtree.case list -> branch list * fallb
   let brs, fb = aux1 [] brs in
   List.rev brs, fb
 
+let value_binding ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id rec_flag' expr =
+  let restore_locals = Context.save_locals ctx in
+  begin match rec_flag, rec_flag' with
+  | Recursive, _ ->
+      List.iter (fun (_, _, id, _) -> Context.add_local ctx id) bdgs
+  | Nonrecursive, Recursive ->
+      Context.add_local ctx id
+  | Nonrecursive, Nonrecursive ->
+      ()
+  end ;
+  let expr = expression ctx expr in
+  restore_locals () ;
+  let rec_ = rec_flag = Recursive || rec_flag' = Recursive in
+  match expr with
+  | Fun (bdrs, expr) ->
+      if rec_ then
+        Val_recs [global, Ident.name id, bdrs, expr]
+      else
+        Val_fun (global, bdrs, expr)
+  | _ ->
+      if rec_ then
+        unsupported ~loc:bdg.vb_loc Def_recursive ;
+      if expression_is_value expr then
+        Val_expr (global, expr)
+      else
+        unsupported ~loc:bdg.vb_loc Def_invalid
+let value_binding mod_ ctx env rec_flag bdgs bdg global id loc =
+  match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
+  | None ->
+      value_binding ctx rec_flag bdgs bdg global id Nonrecursive bdg.vb_expr
+  | Some (Overwrite rec_flag' as kind, attr) ->
+      begin match attr.attr_payload with
+      | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
+          let env = Envaux.env_of_only_summary env in
+          let add env id =
+            let val_descr : Types.value_description =
+              { val_type= Ctype.newvar ();
+                val_attributes= [];
+                val_kind= Val_reg;
+                val_loc= loc;
+                val_uid= Types.Uid.of_compilation_unit_id (Ident.create_persistent mod_);
+              }
+            in
+            Env.add_value id val_descr env
+          in
+          let env =
+            match rec_flag, rec_flag' with
+            | Recursive, _ ->
+                List.fold_left (fun env (_, _, id, _) -> add env id) env bdgs
+            | Nonrecursive, Recursive ->
+                add env id
+            | Nonrecursive, Nonrecursive ->
+                env
+          in
+          value_binding ctx rec_flag bdgs bdg global id rec_flag' (Typecore.type_expression env expr)
+      | _ ->
+          error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload kind)
+      end
+  | Some (Raw, attr) ->
+      begin match attr.attr_payload with
+      | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
+          begin match String.split_on_char '.' raw with
+          | [lib; mod_; global'] ->
+              Context.add_dependency' ctx lib mod_ ;
+              Val_expr (global, Global global')
+          | _ ->
+              error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
+          end
+      | _ ->
+          error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
+      end
+
 let value_bindings mod_ ctx env rec_flag bdgs =
   let bdgs =
     List.map (fun (bdg : Typedtree.value_binding) ->
@@ -1345,63 +1438,7 @@ let value_bindings mod_ ctx env rec_flag bdgs =
   else
     let vals =
       List.map (fun (bdg, global, id, loc) ->
-        let rec_flag', expr =
-          match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
-          | None ->
-              Nonrecursive, bdg.vb_expr
-          | Some (rec_flag', attr) ->
-              match attr.attr_payload with
-              | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
-                  let env = Envaux.env_of_only_summary env in
-                  let add env id =
-                    let val_descr : Types.value_description =
-                      { val_type= Ctype.newvar ();
-                        val_attributes= [];
-                        val_kind= Val_reg;
-                        val_loc= loc;
-                        val_uid= Types.Uid.of_compilation_unit_id (Ident.create_persistent mod_);
-                      }
-                    in
-                    Env.add_value id val_descr env
-                  in
-                  let env =
-                    match rec_flag, rec_flag' with
-                    | Recursive, _ ->
-                        List.fold_left (fun env (_, _, id, _) -> add env id) env bdgs
-                    | Nonrecursive, Recursive ->
-                        add env id
-                    | Nonrecursive, Nonrecursive ->
-                        env
-                  in
-                  rec_flag', Typecore.type_expression env expr
-              | _ ->
-                  error ~loc:attr.attr_loc Attribute_overwrite_invalid_payload
-        in
-        let restore_locals = Context.save_locals ctx in
-        begin match rec_flag, rec_flag' with
-        | Recursive, _ ->
-            List.iter (fun (_, _, id, _) -> Context.add_local ctx id) bdgs
-        | Nonrecursive, Recursive ->
-            Context.add_local ctx id
-        | Nonrecursive, Nonrecursive ->
-            ()
-        end ;
-        let expr = expression ctx expr in
-        restore_locals () ;
-        let rec_ = rec_flag = Recursive || rec_flag' = Recursive in
-        match expr with
-        | Fun (bdrs, expr) ->
-            if rec_ then
-              Val_recs [global, Ident.name id, bdrs, expr]
-            else
-              Val_fun (global, bdrs, expr)
-        | _ ->
-            if rec_ then
-              unsupported ~loc:bdg.vb_loc Def_recursive ;
-            if expression_is_value expr then
-              Val_expr (global, expr)
-            else
-              unsupported ~loc:bdg.vb_loc Def_invalid
+        value_binding mod_ ctx env rec_flag bdgs bdg global id loc
       ) bdgs
     in
     match rec_flag with
@@ -1410,7 +1447,6 @@ let value_bindings mod_ ctx env rec_flag bdgs =
     | Recursive ->
         let recs = List.concat_map (function Val_recs recs -> recs | _ -> assert false) vals in
         [Val_recs recs]
-
 
 let type_declaration_record attrs lbls =
   let is_mut = record_is_mutable attrs lbls in
