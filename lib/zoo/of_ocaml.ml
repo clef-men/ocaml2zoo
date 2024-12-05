@@ -27,56 +27,206 @@ module Builtin = struct
     ) Path.Set.empty raising
 
   let paths =
-    [|[|"Stdlib";"ignore"|], Fun ([Some "1"], Local "1"), None ;
-      [|"Stdlib";"not"|], Fun ([Some "1"], Unop (Unop_neg, Local "1")), None ;
-      [|"Stdlib";"~-"|], Fun ([Some "1"], Unop (Unop_minus, Local "1")), None ;
-      [|"Stdlib";"+"|], Fun ([Some "1"; Some "2"], Binop (Binop_plus, Local "1", Local "2")), None ;
-      [|"Stdlib";"-"|], Fun ([Some "1"; Some "2"], Binop (Binop_minus, Local "1", Local "2")), None ;
-      [|"Stdlib";"*"|], Fun ([Some "1"; Some "2"], Binop (Binop_mult, Local "1", Local "2")), None ;
-      [|"Stdlib";"/"|], Fun ([Some "1"; Some "2"], Binop (Binop_quot, Local "1", Local "2")), None ;
-      [|"Stdlib";"mod"|], Fun ([Some "1"; Some "2"], Binop (Binop_rem, Local "1", Local "2")), None ;
-      [|"Stdlib";"=="|], Fun ([Some "1"; Some "2"], Binop (Binop_eq, Local "1", Local "2")), None ;
-      [|"Stdlib";"!="|], Fun ([Some "1"; Some "2"], Binop (Binop_ne, Local "1", Local "2")), None ;
-      [|"Stdlib";"<="|], Fun ([Some "1"; Some "2"], Binop (Binop_le, Local "1", Local "2")), None ;
-      [|"Stdlib";"<"|], Fun ([Some "1"; Some "2"], Binop (Binop_lt, Local "1", Local "2")), None ;
-      [|"Stdlib";">="|], Fun ([Some "1"; Some "2"], Binop (Binop_ge, Local "1", Local "2")), None ;
-      [|"Stdlib";">"|], Fun ([Some "1"; Some "2"], Binop (Binop_gt, Local "1", Local "2")), None ;
-      [|"Stdlib";"&&"|], Fun ([Some "1"; Some "2"], Binop (Binop_and, Local "1", Local "2")), None ;
-      [|"Stdlib";"||"|], Fun ([Some "1"; Some "2"], Binop (Binop_or, Local "1", Local "2")), None ;
-      [|"Stdlib";"="|], Fun ([Some "1"; Some "2"], Binop (Binop_structeq, Local "1", Local "2")), Some Dependency.structeq ;
-      [|"Stdlib";"<>"|], Fun ([Some "1"; Some "2"], Binop (Binop_structne, Local "1", Local "2")), Some Dependency.structeq ;
-      [|"Stdlib";"ref"|], Fun ([Some "1"], Ref (Local "1")), None ;
-      [|"Stdlib";"!"|], Fun ([Some "1"], Ref_get (Local "1")), None ;
-      [|"Stdlib";":="|], Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")), None ;
-      [|"Stdlib";"Obj";"repr"|], Fun ([Some "1"], Local "1"), None ;
-      [|"Stdlib";"Obj";"obj"|], Fun ([Some "1"], Local "1"), None ;
-      [|"Stdlib";"Obj";"magic"|], Fun ([Some "1"], Local "1"), None ;
-      [|"Stdlib";"Obj";"tag"|], Fun ([Some "1"], Get_tag (Local "1")), None ;
-      [|"Stdlib";"Obj";"size"|], Fun ([Some "1"], Get_size (Local "1")), None ;
-      [|"Stdlib";"Obj";"field"|], Fun ([Some "1"; Some "2"], Load (Local "1", Local "2")), None ;
-      [|"Stdlib";"Obj";"set_field"|], Fun ([Some "1"; Some "2"; Some "3"], Store (Local "1", Local "2", Local "3")), None ;
-      [|"Stdlib";"Obj";"new_block"|], Fun ([Some "1"; Some "2"], Alloc (Local "1", Local "2")), None ;
-      [|"Stdlib";"Int";"min"|], Fun ([Some "1"; Some "2"], Apply (Global "minimum", [Local "1"; Local "2"])), Some Dependency.int ;
-      [|"Stdlib";"Int";"max"|], Fun ([Some "1"; Some "2"], Apply (Global "maximum", [Local "1"; Local "2"])), Some Dependency.int ;
-      [|"Stdlib";"Domain";"cpu_relax"|], Fun ([None], Yield), None ;
-      [|"Stdlib";"Atomic";"Loc";"get"|], Fun ([Some "1"], Load (Proj (Local "1", "0"), Proj (Local "1", "1"))), None ;
-      [|"Stdlib";"Atomic";"Loc";"set"|], Fun ([Some "1"; Some "2"], Store (Proj (Local "1", "0"), Proj (Local "1", "1"), Local "2")), None ;
-      [|"Stdlib";"Atomic";"Loc";"exchange"|], Fun ([Some "1"; Some "2"], Xchg (Local "1", Local "2")), None ;
-      [|"Stdlib";"Atomic";"Loc";"compare_and_set"|], Fun ([Some "1"; Some "2"; Some "3"], Cas (Local "1", Local "2", Local "3")), None ;
-      [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|], Fun ([Some "1"; Some "2"], Faa (Local "1", Local "2")), None ;
-      [|"Stdlib";"Atomic";"Loc";"decr"|], Fun ([Some "1"], Faa (Local "1", Int (-1))), None ;
-      [|"Stdlib";"Atomic";"Loc";"incr"|], Fun ([Some "1"], Faa (Local "1", Int 1)), None ;
-      [|"Stdlib";"Atomic";"make"|], Fun ([Some "1"], Ref (Local "1")), None ;
-      [|"Stdlib";"Atomic";"get"|], Fun ([Some "1"], Ref_get (Local "1")), None ;
-      [|"Stdlib";"Atomic";"set"|], Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")), None ;
-      [|"Stdlib";"Atomic";"exchange"|], Fun ([Some "1"; Some "2"], Xchg (Atomic_loc (Local "1", "contents"), Local "2")), None ;
-      [|"Stdlib";"Atomic";"compare_and_set"|], Fun ([Some "1"; Some "2"; Some "3"], Cas (Atomic_loc (Local "1", "contents"), Local "2", Local "3")), None ;
-      [|"Stdlib";"Atomic";"fetch_and_add"|], Fun ([Some "1"; Some "2"], Faa (Atomic_loc (Local "1", "contents"), Local "2")), None ;
-      [|"Stdlib";"Atomic";"decr"|], Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int (-1))), None ;
-      [|"Stdlib";"Atomic";"incr"|], Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int 1)), None ;
-      [|"Zoo";"proph"|], Proph, None ;
-      [|"Zoo";"resolve"|], Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")), None ;
-      [|"Zoo";"id"|], Id, Some Dependency.identifier ;
+    [|
+      [|"Stdlib";"ignore"|],
+      Fun ([Some "1"], Local "1"),
+      None
+    ;
+      [|"Stdlib";"not"|],
+      Fun ([Some "1"], Unop (Unop_neg, Local "1")),
+      None
+    ;
+      [|"Stdlib";"~-"|],
+      Fun ([Some "1"], Unop (Unop_minus, Local "1")),
+      None
+    ;
+      [|"Stdlib";"+"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_plus, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"-"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_minus, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"*"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_mult, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"/"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_quot, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"mod"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_rem, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"=="|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_eq, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"!="|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_ne, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"<="|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_le, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"<"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_lt, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";">="|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_ge, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";">"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_gt, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"&&"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_and, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"||"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_or, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"="|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_structeq, Local "1", Local "2")),
+      Some Dependency.structeq
+    ;
+      [|"Stdlib";"<>"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_structne, Local "1", Local "2")),
+      Some Dependency.structeq
+    ;
+      [|"Stdlib";"ref"|],
+      Fun ([Some "1"], Ref (Local "1")),
+      None
+    ;
+      [|"Stdlib";"!"|],
+      Fun ([Some "1"], Ref_get (Local "1")),
+      None
+    ;
+      [|"Stdlib";":="|],
+      Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"Obj";"repr"|],
+      Fun ([Some "1"], Local "1"),
+      None
+    ;
+      [|"Stdlib";"Obj";"obj"|],
+      Fun ([Some "1"], Local "1"),
+      None
+    ;
+      [|"Stdlib";"Obj";"magic"|],
+      Fun ([Some "1"], Local "1"),
+      None
+    ;
+      [|"Stdlib";"Obj";"tag"|],
+      Fun ([Some "1"], Get_tag (Local "1")),
+      None
+    ;
+      [|"Stdlib";"Obj";"size"|],
+      Fun ([Some "1"], Get_size (Local "1")),
+      None
+    ;
+      [|"Stdlib";"Obj";"field"|],
+      Fun ([Some "1"; Some "2"], Load (Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"Obj";"set_field"|],
+      Fun ([Some "1"; Some "2"; Some "3"], Store (Local "1", Local "2", Local "3")),
+      None
+    ;
+      [|"Stdlib";"Obj";"new_block"|],
+      Fun ([Some "1"; Some "2"], Alloc (Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"Int";"min"|],
+      Fun ([Some "1"; Some "2"], Apply (Global "minimum", [Local "1"; Local "2"])),
+      Some Dependency.int
+    ;
+      [|"Stdlib";"Int";"max"|],
+      Fun ([Some "1"; Some "2"], Apply (Global "maximum", [Local "1"; Local "2"])),
+      Some Dependency.int
+    ;
+      [|"Stdlib";"Domain";"cpu_relax"|],
+      Fun ([None], Yield),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"get"|],
+      Fun ([Some "1"], Load (Proj (Local "1", "0"), Proj (Local "1", "1"))),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"set"|],
+      Fun ([Some "1"; Some "2"], Store (Proj (Local "1", "0"), Proj (Local "1", "1"), Local "2")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"exchange"|],
+      Fun ([Some "1"; Some "2"], Xchg (Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
+      Fun ([Some "1"; Some "2"; Some "3"], Cas (Local "1", Local "2", Local "3")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
+      Fun ([Some "1"; Some "2"], Faa (Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"decr"|],
+      Fun ([Some "1"], Faa (Local "1", Int (-1))),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"incr"|],
+      Fun ([Some "1"], Faa (Local "1", Int 1)),
+      None
+    ;
+      [|"Stdlib";"Atomic";"make"|],
+      Fun ([Some "1"], Ref (Local "1")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"get"|],
+      Fun ([Some "1"], Ref_get (Local "1")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"set"|],
+      Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"exchange"|],
+      Fun ([Some "1"; Some "2"], Xchg (Atomic_loc (Local "1", "contents"), Local "2")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"compare_and_set"|],
+      Fun ([Some "1"; Some "2"; Some "3"], Cas (Atomic_loc (Local "1", "contents"), Local "2", Local "3")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"fetch_and_add"|],
+      Fun ([Some "1"; Some "2"], Faa (Atomic_loc (Local "1", "contents"), Local "2")),
+      None
+    ;
+      [|"Stdlib";"Atomic";"decr"|],
+      Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int (-1))),
+      None
+    ;
+      [|"Stdlib";"Atomic";"incr"|],
+      Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int 1)),
+      None
+    ;
+      [|"Zoo";"proph"|],
+      Proph,
+      None
+    ;
+      [|"Zoo";"resolve"|],
+      Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")),
+      None
+    ;
+      [|"Zoo";"id"|],
+      Id,
+      Some Dependency.identifier
     |]
   let paths =
     Array.fold_left (fun acc (path, expr, dep) ->
@@ -93,54 +243,198 @@ module Builtin = struct
     | Opaque of expression
     | Transparent of (expression list -> expression option)
   let apps =
-    [|[|"Stdlib";"ignore"|], (function [expr] -> Some expr | _ -> None), None ;
-      [|"Stdlib";"not"|], (function [expr] -> Some (Unop (Unop_neg, expr)) | _ -> None), None ;
-      [|"Stdlib";"~-"|], (function [expr] -> Some (Unop (Unop_minus, expr)) | _ -> None), None ;
-      [|"Stdlib";"+"|], (function [expr1; expr2] -> Some (Binop (Binop_plus, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"-"|], (function [expr1; expr2] -> Some (Binop (Binop_minus, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"*"|], (function [expr1; expr2] -> Some (Binop (Binop_mult, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"/"|], (function [expr1; expr2] -> Some (Binop (Binop_quot, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"mod"|], (function [expr1; expr2] -> Some (Binop (Binop_rem, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"=="|], (function [expr1; expr2] -> Some (Binop (Binop_eq, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"!="|], (function [expr1; expr2] -> Some (Binop (Binop_ne, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"<="|], (function [expr1; expr2] -> Some (Binop (Binop_le, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"<"|], (function [expr1; expr2] -> Some (Binop (Binop_lt, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";">="|], (function [expr1; expr2] -> Some (Binop (Binop_ge, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";">"|], (function [expr1; expr2] -> Some (Binop (Binop_gt, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"&&"|], (function [expr1; expr2] -> Some (Binop (Binop_and, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"||"|], (function [expr1; expr2] -> Some (Binop (Binop_or, expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"="|], (function [expr1; expr2] -> Some (Binop (Binop_structeq, expr1, expr2)) | _ -> None), Some Dependency.structeq ;
-      [|"Stdlib";"<>"|], (function [expr1; expr2] -> Some (Binop (Binop_structne, expr1, expr2)) | _ -> None), Some Dependency.structeq ;
-      [|"Stdlib";"ref"|], (function [expr] -> Some (Ref expr) | _ -> None), None ;
-      [|"Stdlib";"!"|], (function [expr] -> Some (Ref_get expr) | _ -> None), None ;
-      [|"Stdlib";":="|], (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"Obj";"repr"|], (function [expr] -> Some expr | _ -> None), None ;
-      [|"Stdlib";"Obj";"obj"|], (function [expr] -> Some expr | _ -> None), None ;
-      [|"Stdlib";"Obj";"magic"|], (function [expr] -> Some expr | _ -> None), None ;
-      [|"Stdlib";"Obj";"tag"|], (function [expr] -> Some (Get_tag expr) | _ -> None), None ;
-      [|"Stdlib";"Obj";"size"|], (function [expr] -> Some (Get_size expr) | _ -> None), None ;
-      [|"Stdlib";"Obj";"field"|], (function [expr1; expr2] -> Some (Load (expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"Obj";"set_field"|], (function [expr1; expr2; expr3] -> Some (Store (expr1, expr2, expr3)) | _ -> None), None ;
-      [|"Stdlib";"Obj";"new_block"|], (function [expr1; expr2] -> Some (Alloc (expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"Int";"min"|], (function [expr1; expr2] -> Some (Apply (Global "minimum", [expr1; expr2])) | _ -> None), Some Dependency.int;
-      [|"Stdlib";"Int";"max"|], (function [expr1; expr2] -> Some (Apply (Global "maximum", [expr1; expr2])) | _ -> None), Some Dependency.int;
-      [|"Stdlib";"Domain";"cpu_relax"|], (function [_expr] -> Some Yield | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"get"|], (function [expr] -> Some (Load (Proj (expr, "0"), Proj (expr, "1"))) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"set"|], (function [expr1; expr2] -> Some (Store (Proj (expr1, "0"), Proj (expr1, "1"), expr2)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"exchange"|], (function [expr1; expr2] -> Some (Xchg (expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"compare_and_set"|], (function [expr1; expr2; expr3] -> Some (Cas (expr1, expr2, expr3)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|], (function [expr1; expr2] -> Some (Faa (expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"decr"|], (function [expr] -> Some (Faa (expr, Int (-1))) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"Loc";"incr"|], (function [expr] -> Some (Faa (expr, Int 1)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"make"|], (function [expr] -> Some (Ref expr) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"get"|], (function [expr] -> Some (Ref_get expr) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"set"|], (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"exchange"|], (function [expr1; expr2] -> Some (Xchg (Atomic_loc (expr1, "contents"), expr2)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"compare_and_set"|], (function [expr1; expr2; expr3] -> Some (Cas (Atomic_loc (expr1, "contents"), expr2, expr3)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"fetch_and_add"|], (function [expr1; expr2] -> Some (Faa (Atomic_loc (expr1, "contents"), expr2)) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"decr"|], (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int (-1))) | _ -> None), None ;
-      [|"Stdlib";"Atomic";"incr"|], (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int 1)) | _ -> None), None ;
-      [|"Zoo";"resolve"|], (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None), None ;
+    [|
+      [|"Stdlib";"ignore"|],
+      (function [expr] -> Some expr | _ -> None),
+      None
+    ;
+      [|"Stdlib";"not"|],
+      (function [expr] -> Some (Unop (Unop_neg, expr)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"~-"|],
+      (function [expr] -> Some (Unop (Unop_minus, expr)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"+"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_plus, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"-"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_minus, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"*"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_mult, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"/"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_quot, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"mod"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_rem, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"=="|],
+      (function [expr1; expr2] -> Some (Binop (Binop_eq, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"!="|],
+      (function [expr1; expr2] -> Some (Binop (Binop_ne, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"<="|],
+      (function [expr1; expr2] -> Some (Binop (Binop_le, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"<"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_lt, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";">="|],
+      (function [expr1; expr2] -> Some (Binop (Binop_ge, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";">"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_gt, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"&&"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_and, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"||"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_or, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"="|],
+      (function [expr1; expr2] -> Some (Binop (Binop_structeq, expr1, expr2)) | _ -> None),
+      Some Dependency.structeq
+    ;
+      [|"Stdlib";"<>"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_structne, expr1, expr2)) | _ -> None),
+      Some Dependency.structeq
+    ;
+      [|"Stdlib";"ref"|],
+      (function [expr] -> Some (Ref expr) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"!"|],
+      (function [expr] -> Some (Ref_get expr) | _ -> None),
+      None
+    ;
+      [|"Stdlib";":="|],
+      (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"repr"|],
+      (function [expr] -> Some expr | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"obj"|],
+      (function [expr] -> Some expr | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"magic"|],
+      (function [expr] -> Some expr | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"tag"|],
+      (function [expr] -> Some (Get_tag expr) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"size"|],
+      (function [expr] -> Some (Get_size expr) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"field"|],
+      (function [expr1; expr2] -> Some (Load (expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"set_field"|],
+      (function [expr1; expr2; expr3] -> Some (Store (expr1, expr2, expr3)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"new_block"|],
+      (function [expr1; expr2] -> Some (Alloc (expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Int";"min"|],
+      (function [expr1; expr2] -> Some (Apply (Global "minimum", [expr1; expr2])) | _ -> None),
+      Some Dependency.int
+    ;
+      [|"Stdlib";"Int";"max"|],
+      (function [expr1; expr2] -> Some (Apply (Global "maximum", [expr1; expr2])) | _ -> None),
+      Some Dependency.int
+    ;
+      [|"Stdlib";"Domain";"cpu_relax"|],
+      (function [_expr] -> Some Yield | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"get"|],
+      (function [expr] -> Some (Load (Proj (expr, "0"), Proj (expr, "1"))) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"set"|],
+      (function [expr1; expr2] -> Some (Store (Proj (expr1, "0"), Proj (expr1, "1"), expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"exchange"|],
+      (function [expr1; expr2] -> Some (Xchg (expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
+      (function [expr1; expr2; expr3] -> Some (Cas (expr1, expr2, expr3)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
+      (function [expr1; expr2] -> Some (Faa (expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"decr"|],
+      (function [expr] -> Some (Faa (expr, Int (-1))) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"Loc";"incr"|],
+      (function [expr] -> Some (Faa (expr, Int 1)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"make"|],
+      (function [expr] -> Some (Ref expr) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"get"|],
+      (function [expr] -> Some (Ref_get expr) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"set"|],
+      (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"exchange"|],
+      (function [expr1; expr2] -> Some (Xchg (Atomic_loc (expr1, "contents"), expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"compare_and_set"|],
+      (function [expr1; expr2; expr3] -> Some (Cas (Atomic_loc (expr1, "contents"), expr2, expr3)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"fetch_and_add"|],
+      (function [expr1; expr2] -> Some (Faa (Atomic_loc (expr1, "contents"), expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"decr"|],
+      (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int (-1))) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Atomic";"incr"|],
+      (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int 1)) | _ -> None),
+      None
+    ;
+      [|"Zoo";"resolve"|],
+      (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None),
+      None
     |]
   let apps =
     Array.fold_left (fun acc (path, mk_expr, dep) ->
