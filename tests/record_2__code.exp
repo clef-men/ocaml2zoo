@@ -17,3 +17,12 @@ Definition record_2_test2 : val :=
   fun: "t" =>
     let: "f1", "f2" := "t" in
     "f1" + "f2".
+
+Definition record_2_test3 : val :=
+  fun: "t" =>
+    (#0, "t".<f2>).
+
+Definition record_2_test4 : val :=
+  fun: <> =>
+    let: "__tmp__" := (#0, #0) in
+    (#0, "__tmp__".<f2>).

@@ -8,8 +8,17 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition record_1_test : val :=
+Definition record_1_test1 : val :=
   fun: <> =>
     let: "t1" := { #0, #1 } in
     "t1".{f1} ;;
     "t1" <-{f1} #0.
+
+Definition record_1_test2 : val :=
+  fun: "t" =>
+    { #0, "t".{f2} }.
+
+Definition record_1_test3 : val :=
+  fun: <> =>
+    let: "__tmp__" := { #0, #0 } in
+    { #0, "__tmp__".{f2} }.
