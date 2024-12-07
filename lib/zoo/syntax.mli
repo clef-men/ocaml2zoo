@@ -74,7 +74,6 @@ type expression =
   | Cas of expression * expression * expression
   | Faa of expression * expression
   | Fail
-  | Yield
   | Proph
   | Resolve of expression * expression * expression
   | Id

@@ -74,7 +74,6 @@ type expression =
   | Cas of expression * expression * expression
   | Faa of expression * expression
   | Fail
-  | Yield
   | Proph
   | Resolve of expression * expression * expression
   | Id
@@ -144,7 +143,6 @@ let rec expression_is_value = function
   | Cas _
   | Faa _
   | Fail
-  | Yield
   | Proph
   | Resolve _
   | Id ->

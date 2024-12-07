@@ -11,8 +11,6 @@ module Dependency = struct
     "zoo_std", "assert"
   let assume =
     "zoo_std", "assume"
-  let int =
-    "zoo_std", "int"
 end
 
 module Builtin = struct
@@ -158,18 +156,6 @@ module Builtin = struct
     ;
       [|"Stdlib";"Obj";"new_block"|],
       Fun ([Some "1"; Some "2"], Alloc (Local "1", Local "2")),
-      None
-    ;
-      [|"Stdlib";"Int";"min"|],
-      Fun ([Some "1"; Some "2"], Apply (Global "minimum", [Local "1"; Local "2"])),
-      Some Dependency.int
-    ;
-      [|"Stdlib";"Int";"max"|],
-      Fun ([Some "1"; Some "2"], Apply (Global "maximum", [Local "1"; Local "2"])),
-      Some Dependency.int
-    ;
-      [|"Stdlib";"Domain";"cpu_relax"|],
-      Fun ([None], Yield),
       None
     ;
       [|"Stdlib";"Atomic";"Loc";"get"|],
@@ -390,18 +376,6 @@ module Builtin = struct
     ;
       [|"Stdlib";"Obj";"new_block"|],
       (function [expr1; expr2] -> Some (Alloc (expr1, expr2)) | _ -> None),
-      None
-    ;
-      [|"Stdlib";"Int";"min"|],
-      (function [expr1; expr2] -> Some (Apply (Global "minimum", [expr1; expr2])) | _ -> None),
-      Some Dependency.int
-    ;
-      [|"Stdlib";"Int";"max"|],
-      (function [expr1; expr2] -> Some (Apply (Global "maximum", [expr1; expr2])) | _ -> None),
-      Some Dependency.int
-    ;
-      [|"Stdlib";"Domain";"cpu_relax"|],
-      (function [_expr] -> Some Yield | _ -> None),
       None
     ;
       [|"Stdlib";"Atomic";"Loc";"get"|],
