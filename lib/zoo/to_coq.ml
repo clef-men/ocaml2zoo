@@ -84,6 +84,14 @@ let binop ppf op =
         "`quot`"
     | Binop_rem ->
         "`rem`"
+    | Binop_land ->
+        "`land`"
+    | Binop_lor ->
+        "`lor`"
+    | Binop_lsl ->
+        "`lsl`"
+    | Binop_lsr ->
+        "`lsr`"
     | Binop_eq ->
         "=="
     | Binop_ne ->
@@ -105,6 +113,32 @@ let binop ppf op =
     | Binop_structne ->
         "≠"
     end
+
+type associativity =
+  | Left
+  | Right
+let associativity = function
+  | Binop_lsl
+  | Binop_lsr ->
+      Right
+  | Binop_plus
+  | Binop_minus
+  | Binop_mult
+  | Binop_quot
+  | Binop_rem
+  | Binop_land
+  | Binop_lor
+  | Binop_eq
+  | Binop_ne
+  | Binop_le
+  | Binop_lt
+  | Binop_ge
+  | Binop_gt
+  | Binop_and
+  | Binop_or
+  | Binop_structeq
+  | Binop_structne ->
+      Left
 
 let max_level =
   200
@@ -148,6 +182,13 @@ let level = function
   | Cas _
   | Faa _ ->
       10
+  | Binop (Binop_lsl, _, _)
+  | Binop (Binop_lsr, _, _) ->
+      30
+  | Binop (Binop_land, _, _) ->
+      31
+  | Binop (Binop_lor, _, _) ->
+      32
   | Unop (Unop_minus, _)
   | Binop (Binop_quot, _, _)
   | Binop (Binop_rem, _, _) ->
@@ -181,6 +222,7 @@ let level = function
   | Letrec _
   | Fun _ ->
       max_level
+
 let rec expression' lvl ppf = function
   | Global global ->
       global_variable ppf global
@@ -225,10 +267,11 @@ let rec expression' lvl ppf = function
         unop op
         (expression lvl) expr
   | Binop (op, expr1, expr2) ->
+      let assoc = associativity op in
       Fmt.pf ppf "@[%a %a@;%a@]"
-        (expression lvl) expr1
+        (expression @@ if assoc = Left then lvl else next_level lvl) expr1
         binop op
-        (expression @@ next_level lvl) expr2
+        (expression @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
       expression_if ppf expr1 expr2 expr3
   | For (local, expr1, expr2, expr3) ->

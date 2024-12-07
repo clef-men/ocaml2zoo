@@ -6,6 +6,10 @@ let test1 i =
   let _ = i * i in
   let _ = i / i in
   let _ = i mod i in
+  let _ = i land i in
+  let _ = i lor i in
+  let _ = i lsl i in
+  let _ = i lsr i in
   let _ = i == i in
   let _ = i != i in
   let _ = i <= i in

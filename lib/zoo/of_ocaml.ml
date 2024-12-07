@@ -60,6 +60,22 @@ module Builtin = struct
       Fun ([Some "1"; Some "2"], Binop (Binop_rem, Local "1", Local "2")),
       None
     ;
+      [|"Stdlib";"land"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_land, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"lor"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_lor, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"lsl"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_lsl, Local "1", Local "2")),
+      None
+    ;
+      [|"Stdlib";"lsr"|],
+      Fun ([Some "1"; Some "2"], Binop (Binop_lsr, Local "1", Local "2")),
+      None
+    ;
       [|"Stdlib";"=="|],
       Fun ([Some "1"; Some "2"], Binop (Binop_eq, Local "1", Local "2")),
       None
@@ -274,6 +290,22 @@ module Builtin = struct
     ;
       [|"Stdlib";"mod"|],
       (function [expr1; expr2] -> Some (Binop (Binop_rem, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"land"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_land, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"lor"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_lor, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"lsl"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_lsl, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Stdlib";"lsr"|],
+      (function [expr1; expr2] -> Some (Binop (Binop_lsr, expr1, expr2)) | _ -> None),
       None
     ;
       [|"Stdlib";"=="|],

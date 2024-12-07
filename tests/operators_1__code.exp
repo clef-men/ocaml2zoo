@@ -17,6 +17,10 @@ Definition operators_1_test1 : val :=
     "i" * "i" ;;
     "i" `quot` "i" ;;
     "i" `rem` "i" ;;
+    "i" `land` "i" ;;
+    "i" `lor` "i" ;;
+    "i" `lsl` "i" ;;
+    "i" `lsr` "i" ;;
     "i" == "i" ;;
     "i" != "i" ;;
     "i" ≤ "i" ;;

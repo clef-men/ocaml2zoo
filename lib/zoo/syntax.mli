@@ -34,6 +34,7 @@ type unop =
 
 type binop =
   | Binop_plus | Binop_minus | Binop_mult | Binop_quot | Binop_rem
+  | Binop_land | Binop_lor | Binop_lsl | Binop_lsr
   | Binop_eq | Binop_ne | Binop_le | Binop_lt | Binop_ge | Binop_gt
   | Binop_and | Binop_or
   | Binop_structeq | Binop_structne
