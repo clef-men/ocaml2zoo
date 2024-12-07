@@ -1472,7 +1472,9 @@ let value_bindings ~ctx mod_ env rec_flag bdgs =
     ) bdgs
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
-  if Attribute.has_opaque bdg.vb_attributes then
+  if Attribute.has_exclude bdg.vb_attributes then
+    []
+  else if Attribute.has_opaque bdg.vb_attributes then
     List.map (fun (_, global, _, _) -> Val_opaque global) bdgs
   else
     let vals =
