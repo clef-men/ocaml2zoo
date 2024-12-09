@@ -20,8 +20,11 @@ end
 
 let boolean ppf =
   Fmt.pf ppf "#%B"
-let integer ppf =
-  Fmt.pf ppf "#%i"
+let integer ppf int =
+  if int < 0 then
+    Fmt.pf ppf "#(%i)" int
+  else
+    Fmt.pf ppf "#%i" int
 
 let global_variable ppf global =
   Fmt.pf ppf "%s" global

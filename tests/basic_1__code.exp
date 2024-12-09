@@ -12,25 +12,28 @@ Definition basic_1_test1 : val :=
   #0.
 
 Definition basic_1_test2 : val :=
-  basic_1_test1.
+  #(-1).
 
 Definition basic_1_test3 : val :=
-  (#0, #true).
+  basic_1_test1.
 
 Definition basic_1_test4 : val :=
-  (basic_1_test1, basic_1_test2).
+  (#0, #true).
 
 Definition basic_1_test5 : val :=
-  §None.
+  (basic_1_test2, basic_1_test3).
 
 Definition basic_1_test6 : val :=
-  ‘Some( #0 ).
+  §None.
 
 Definition basic_1_test7 : val :=
-  ‘Some( fun: <> => () ).
+  ‘Some( #0 ).
 
 Definition basic_1_test8 : val :=
-  ‘Some( §None ).
+  ‘Some( fun: <> => () ).
 
 Definition basic_1_test9 : val :=
+  ‘Some( §None ).
+
+Definition basic_1_test10 : val :=
   ‘Some( (‘Some( fun: <> => () ), ‘Some( () )) ).

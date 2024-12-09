@@ -1,26 +1,28 @@
 let test1 =
   0
-
 let test2 =
-  test1
+  -1
 
 let test3 =
-  (0, true)
+  test1
 
 let test4 =
-  (test1, test2)
+  (0, true)
 
 let test5 =
-  None
+  (test2, test3)
 
 let test6 =
-  Some 0
+  None
 
 let test7 =
-  Some (fun () -> ())
+  Some 0
 
 let test8 =
-  Some None
+  Some (fun () -> ())
 
 let test9 =
+  Some None
+
+let test10 =
   Some (Some (fun () -> ()), Some ())
