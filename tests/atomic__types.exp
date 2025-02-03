@@ -7,6 +7,6 @@ From zoo Require Import
   options.
 
 Notation "'f'" := (
-  in_type "t" 0
+  in_type "tests.atomic.t" 0
 )(in custom zoo_field
 ).

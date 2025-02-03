@@ -37,7 +37,8 @@ let binder ppf = function
   | Some local ->
       local_variable ppf local
 
-let typ ppf (var, ty) =
+let typ ~lib ~mod_ ppf (var, ty) =
+  let var = String.concat "." [lib; mod_; var] in
   match ty with
   | Type_product flds ->
       Fmt.list_index (fun ppf i fld ->
@@ -509,5 +510,5 @@ let structure ~code ~pp ~select ppf str =
   Fmt.(list ~sep:(any "@,@,")) pp ppf (select str) ;
   Fmt.pf ppf "@]@."
 let structure ~types ~code str =
-  structure ~code:false ~pp:typ ~select:structure_types types str ;
+  structure ~code:false ~pp:(typ ~lib:str.library ~mod_:str.module_) ~select:structure_types types str ;
   structure ~code:true ~pp:(value ()) ~select:structure_values code str
