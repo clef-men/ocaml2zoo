@@ -1142,14 +1142,17 @@ let rec expression ~ctx (expr : Typedtree.expression) =
       | None ->
           let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
           let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
+          let mk_immutable exprs =
+            let expr = Constr (Immutable, tag, exprs) in
+            if Attribute.has_reveal constr.cstr_attributes then
+              Reveal expr
+            else
+              expr
+          in
           match constr.cstr_inlined with
           | None ->
               let exprs = List.map (expression ~ctx) exprs in
-              let expr = Constr (Immutable, tag, exprs) in
-              if Attribute.has_reveal constr.cstr_attributes then
-                Reveal expr
-              else
-                expr
+              mk_immutable exprs
           | Some ty ->
               let[@warning "-8"] [expr] = exprs in
               match expr.exp_desc with
@@ -1160,11 +1163,7 @@ let rec expression ~ctx (expr : Typedtree.expression) =
                     if inline_record_type_is_mutable constr.cstr_attributes ty then
                       Constr (Mutable, tag, exprs)
                     else
-                      let expr = Constr (Immutable, tag, exprs) in
-                      if Attribute.has_reveal constr.cstr_attributes then
-                        Reveal expr
-                      else
-                        expr
+                      mk_immutable exprs
                   )
               | _ ->
                   assert false
