@@ -175,7 +175,6 @@ let level = function
   | Apply _
   | Alloc _
   | Ref _
-  | Reveal _
   | Get_tag _
   | Get_size _
   | Load _
@@ -306,15 +305,12 @@ let rec expression' lvl ppf = function
   | Constr (_, tag, []) ->
       Fmt.pf ppf "§%s"
         tag
-  | Constr (mut, tag, exprs) ->
+  | Constr (flag, tag, exprs) ->
       Fmt.pf ppf "@[<hv>‘%s%c %a@;%c@]"
         tag
-        (if mut = Mutable then '{' else '(')
+        (match flag with Immutable -> '(' | Generative -> '[' | Mutable -> '{')
         Fmt.(list ~sep:(any ",@;<1 2>") (fun ppf -> pf ppf "@[%a@]" (expression max_level))) exprs
-        (if mut = Mutable then '}' else ')')
-  | Reveal expr ->
-      Fmt.pf ppf "@[<hv>Reveal@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr
+        (match flag with Immutable -> ')' | Generative -> ']' | Mutable -> '}')
   | Proj (expr, fld) ->
       Fmt.pf ppf "@[%a@].<%s>"
         (expression lvl) expr

@@ -1126,8 +1126,6 @@ let rec expression ~ctx (expr : Typedtree.expression) =
             let rcd = Env.find_type rcd (Context.env ctx) in
             if record_type_is_mutable rcd then
               Record exprs
-            else if Attribute.has_reveal rcd.type_attributes then
-              Reveal (Tuple exprs)
             else
               Tuple exprs
       )
@@ -1143,11 +1141,17 @@ let rec expression ~ctx (expr : Typedtree.expression) =
           let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
           let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
           let mk_immutable exprs =
-            let expr = Constr (Immutable, tag, exprs) in
-            if Attribute.has_reveal constr.cstr_attributes then
-              Reveal expr
-            else
-              expr
+            let flag =
+              match constr.cstr_generative with
+              | Nongenerative ->
+                  Immutable
+              | Generative ->
+                  if Attribute.has_reveal constr.cstr_attributes then
+                    Mutable
+                  else
+                    Generative
+            in
+            Constr (flag, tag, exprs)
           in
           match constr.cstr_inlined with
           | None ->

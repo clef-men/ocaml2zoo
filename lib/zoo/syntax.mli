@@ -14,8 +14,9 @@ type rec_flag = Asttypes.rec_flag =
   | Nonrecursive
   | Recursive
 
-type mutable_flag = Asttypes.mutable_flag =
+type constructor_flag =
   | Immutable
+  | Generative
   | Mutable
 
 type typ =
@@ -57,8 +58,7 @@ type expression =
   | Tuple of expression list
   | Ref of expression
   | Record of expression list
-  | Constr of mutable_flag * tag * expression list
-  | Reveal of expression
+  | Constr of constructor_flag * tag * expression list
   | Proj of expression * field
   | Match of expression * branch list * fallback option
   | Ref_get of expression

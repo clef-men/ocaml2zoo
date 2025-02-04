@@ -4,10 +4,12 @@ From zoo.language Require Import
   typeclasses
   notations.
 From tests Require Import
-  zoo_reveal_2__types.
+  generative_2__types.
 From zoo Require Import
   options.
 
-Definition zoo_reveal_2_test : val :=
+Definition generative_2_test : val :=
   fun: <> =>
-    Reveal (#0, #0).
+    ‘A{ () } ;;
+    ‘B( () ) ;;
+    ().
