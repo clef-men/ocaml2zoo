@@ -762,8 +762,8 @@ module Context = struct
   let set_prefix t pref =
     t.prefix <- if pref = "" then "" else pref ^ "_"
 
-  let env t =
-    t.env
+  let find_type t path =
+    Env.find_type path t.env
 
   let find_global t id =
     Ident.Tbl.find t.global_ids id
@@ -948,7 +948,7 @@ let rec pattern ~ctx (pat : Typedtree.pattern) =
       pattern ~ctx pat
   | Tpat_record (((_, lbl, _) :: _) as pats, Closed) ->
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
-      if record_type_is_mutable (Env.find_type rcd (Context.env ctx)) then
+      if record_type_is_mutable (Context.find_type ctx rcd) then
         unsupported ~loc:pat.pat_loc Pattern_record ;
       let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_nested pat) pats in
       Some (Pat_tuple bdrs)
@@ -980,7 +980,7 @@ let rec pattern ~ctx (pat : Typedtree.pattern) =
 let expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let fld = lbl.lbl_name in
   let rcd = Context.add_dependency_from_label ctx ~loc lbl in
-  if record_type_is_mutable (Env.find_type rcd (Context.env ctx)) then
+  if record_type_is_mutable (Context.find_type ctx rcd) then
     Record_get (expr, fld)
   else
     Proj (expr, fld)
@@ -1123,8 +1123,7 @@ let rec expression ~ctx (expr : Typedtree.expression) =
             expr
         | _ ->
             let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc expr.exp_type in
-            let rcd = Env.find_type rcd (Context.env ctx) in
-            if record_type_is_mutable rcd then
+            if record_type_is_mutable (Context.find_type ctx rcd) then
               Record exprs
             else
               Tuple exprs
