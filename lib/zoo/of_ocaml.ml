@@ -743,16 +743,18 @@ let inline_record_type_is_mutable constr_attrs ty =
 module Context = struct
   type t =
     { mutable prefix: string;
-      env: Env.t;
+      mutable env: Env.t;
+      final_env: Env.t;
       global_names: (string, int) Hashtbl.t;
       global_ids: variable Ident.Tbl.t;
       mutable locals: Ident.Set.t;
       dependencies: (string, string Hashset.t) Hashtbl.t;
     }
 
-  let create mod_ env =
+  let create mod_ final_env =
     { prefix= mod_ ^ "_";
-      env;
+      env= Env.empty;
+      final_env;
       global_names= Hashtbl.create ();
       global_ids= Ident.Tbl.create 17;
       locals= Ident.Set.empty;
@@ -761,6 +763,14 @@ module Context = struct
 
   let set_prefix t pref =
     t.prefix <- if pref = "" then "" else pref ^ "_"
+
+  let env t =
+    t.env
+  let update_env t env =
+    t.env <- Envaux.env_of_only_summary env
+
+  let normalize_path t path =
+    Env.normalize_value_path None (env t) path
 
   let find_type t path =
     Env.find_type path t.env
@@ -781,7 +791,7 @@ module Context = struct
     let idx = add_global t name in
     let global = t.prefix ^ name in
     let global =
-      let[@warning "-8"] Some cnt = Env.find_value_index id t.env in
+      let[@warning "-8"] Some cnt = Env.find_value_index id t.final_env in
       if cnt = 0 then
         global
       else
@@ -832,6 +842,10 @@ module Context = struct
         unsupported ~loc Functor
     | Pextra_ty (path, _) ->
         add_dependency_from_path t ~loc path
+  let add_dependency_from_path t ~loc path =
+    path
+    |> normalize_path t
+    |> add_dependency_from_path t ~loc
   let add_dependency_from_type t ~loc typ =
     match Types.get_desc typ with
     | Tconstr (path, _, _) ->
@@ -878,6 +892,10 @@ module Context = struct
         unsupported ~loc Functor
     | Pextra_ty (path, _) ->
         resolve_path t ~loc path
+  let resolve_path t ~loc path =
+    path
+    |> normalize_path t
+    |> resolve_path t ~loc
 end
 
 let open_declaration ~loc ~err (open_ : Typedtree.open_declaration) =
@@ -1416,14 +1434,14 @@ let value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id r
         Val_expr (global, expr)
       else
         unsupported ~loc:bdg.vb_loc Def_invalid
-let value_binding ~ctx mod_ env rec_flag bdgs bdg global id loc =
+let value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
       value_binding ~ctx rec_flag bdgs bdg global id Nonrecursive bdg.vb_expr
   | Some (Overwrite rec_flag' as kind, attr) ->
       begin match attr.attr_payload with
       | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
-          let env = Envaux.env_of_only_summary env in
+          let env = Context.env ctx in
           let add env id =
             let val_descr : Types.value_description =
               { val_type= Ctype.newvar ();
@@ -1462,7 +1480,7 @@ let value_binding ~ctx mod_ env rec_flag bdgs bdg global id loc =
           error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
       end
 
-let value_bindings ~ctx mod_ env rec_flag bdgs =
+let value_bindings ~ctx mod_ rec_flag bdgs =
   let bdgs =
     List.map (fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
@@ -1481,7 +1499,7 @@ let value_bindings ~ctx mod_ env rec_flag bdgs =
   else
     let vals =
       List.map (fun (bdg, global, id, loc) ->
-        value_binding ~ctx mod_ env rec_flag bdgs bdg global id loc
+        value_binding ~ctx mod_ rec_flag bdgs bdg global id loc
       ) bdgs
     in
     match rec_flag with
@@ -1532,7 +1550,7 @@ let type_declaration (ty : Typedtree.type_declaration) =
 let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   match str_item.str_desc with
   | Tstr_value (rec_flag, bdgs) ->
-      let vals = value_bindings ~ctx mod_ str_item.str_env rec_flag bdgs in
+      let vals = value_bindings ~ctx mod_ rec_flag bdgs in
       List.map (fun val_ -> Val val_) vals
   | Tstr_type (_, tys) ->
       List.concat_map type_declaration tys
@@ -1569,15 +1587,18 @@ let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
       unsupported ~loc:str_item.str_loc Def_class_type
   | Tstr_include _ ->
       unsupported ~loc:str_item.str_loc Def_include
+let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
+  Context.update_env ctx str_item.str_env ;
+  structure_item ~ctx mod_ str_item
 
 let structure ~lib ~mod_ (str : Typedtree.structure) =
-  let env =
+  let final_env =
     try
       Envaux.env_of_only_summary str.str_final_env
     with Envaux.Error err ->
       error ~loc:Location.none (Envaux err)
   in
-  let ctx = Context.create mod_ env in
+  let ctx = Context.create mod_ final_env in
   let definitions = List.concat_map (structure_item ~ctx mod_) str.str_items in
   let dependencies = Context.dependencies ctx in
   { library= lib;
