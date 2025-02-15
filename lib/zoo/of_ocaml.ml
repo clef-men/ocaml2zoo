@@ -568,14 +568,13 @@ module Unsupported = struct
     | Label
     | Functor
     | Type_extensible
-    | Module_non_alias
     | Def_recursive
     | Def_invalid
     | Def_pattern
     | Def_eval
     | Def_primitive
     | Def_exception
-    | Def_rec_module
+    | Def_module
     | Def_module_type
     | Def_open
     | Def_class
@@ -659,8 +658,6 @@ module Unsupported = struct
         "module functor"
     | Type_extensible ->
         "extensible variant"
-    | Module_non_alias ->
-        "module definition (only module aliases are supported)"
     | Def_recursive ->
         "recursive toplevel definition must be a function"
     | Def_invalid ->
@@ -673,8 +670,8 @@ module Unsupported = struct
         "primitive definition"
     | Def_exception ->
         "exception definition"
-    | Def_rec_module ->
-        "recursive module definition"
+    | Def_module ->
+        "module definition"
     | Def_module_type ->
         "module type definition"
     | Def_open ->
@@ -1550,21 +1547,6 @@ let type_declaration (ty : Typedtree.type_declaration) =
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 
-let module_expr (mexpr : Typedtree.module_expr) =
-  match mexpr.mod_desc with
-  | Tmod_ident _ ->
-      []
-  | Tmod_structure _
-  | Tmod_functor _
-  | Tmod_apply _
-  | Tmod_apply_unit _
-  | Tmod_constraint _
-  | Tmod_unpack _ ->
-      unsupported ~loc:mexpr.mod_loc Module_non_alias
-
-let module_binding (bdg : Typedtree.module_binding) =
-  module_expr bdg.mb_expr
-
 let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   match str_item.str_desc with
   | Tstr_value (rec_flag, bdgs) ->
@@ -1575,8 +1557,6 @@ let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   | Tstr_open open_ ->
       open_declaration ~loc:str_item.str_loc ~err:Def_open open_ ;
       []
-  | Tstr_module bdg ->
-      module_binding bdg
   | Tstr_attribute attr ->
       if Attribute.has_exclude [attr] then
         raise Exclude ;
@@ -1596,8 +1576,9 @@ let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
       unsupported ~loc:str_item.str_loc Type_extensible
   | Tstr_exception _ ->
       unsupported ~loc:str_item.str_loc Def_exception
+  | Tstr_module _
   | Tstr_recmodule _ ->
-      unsupported ~loc:str_item.str_loc Def_rec_module
+      unsupported ~loc:str_item.str_loc Def_module
   | Tstr_modtype _ ->
       unsupported ~loc:str_item.str_loc Def_module_type
   | Tstr_class _ ->
