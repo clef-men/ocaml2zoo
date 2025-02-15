@@ -769,9 +769,6 @@ module Context = struct
   let update_env t env =
     t.env <- Envaux.env_of_only_summary env
 
-  let normalize_path t path =
-    Env.normalize_value_path None (env t) path
-
   let find_type t path =
     Env.find_type path t.env
 
@@ -842,10 +839,6 @@ module Context = struct
         unsupported ~loc Functor
     | Pextra_ty (path, _) ->
         add_dependency_from_path t ~loc path
-  let add_dependency_from_path t ~loc path =
-    path
-    |> normalize_path t
-    |> add_dependency_from_path t ~loc
   let add_dependency_from_type t ~loc typ =
     match Types.get_desc typ with
     | Tconstr (path, _, _) ->
@@ -892,10 +885,6 @@ module Context = struct
         unsupported ~loc Functor
     | Pextra_ty (path, _) ->
         resolve_path t ~loc path
-  let resolve_path t ~loc path =
-    path
-    |> normalize_path t
-    |> resolve_path t ~loc
 end
 
 let open_declaration ~loc ~err (open_ : Typedtree.open_declaration) =
