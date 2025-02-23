@@ -1,2 +1,2 @@
 let test () =
-  Zoo.id
+  Zoo.id ()

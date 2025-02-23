@@ -218,17 +218,9 @@ module Builtin = struct
       Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int 1)),
       None
     ;
-      [|"Zoo";"proph"|],
-      Proph,
-      None
-    ;
       [|"Zoo";"resolve"|],
       Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")),
       None
-    ;
-      [|"Zoo";"id"|],
-      Id,
-      Some Dependency.identifier
     |]
   let paths =
     Array.fold_left (fun acc (path, expr, dep) ->
@@ -438,9 +430,17 @@ module Builtin = struct
       (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int 1)) | _ -> None),
       None
     ;
+      [|"Zoo";"proph"|],
+      (function [_expr] -> Some Proph | _ -> None),
+      None
+    ;
       [|"Zoo";"resolve"|],
       (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None),
       None
+    ;
+      [|"Zoo";"id"|],
+      (function [_expr] -> Some Id | _ -> None),
+      Some Dependency.identifier
     |]
   let apps =
     Array.fold_left (fun acc (path, mk_expr, dep) ->
