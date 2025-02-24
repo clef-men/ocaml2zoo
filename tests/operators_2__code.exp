@@ -4,7 +4,7 @@ From zoo.language Require Import
   typeclasses
   notations.
 From zoo Require Import
-  structeq.
+  structural_equality.
 From tests Require Import
   operators_2__types.
 From zoo Require Import

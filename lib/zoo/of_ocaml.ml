@@ -2,7 +2,7 @@ open Syntax
 
 module Dependency = struct
   let structeq =
-    "zoo", "structeq"
+    "zoo", "structural_equality"
   let identifier =
     "zoo", "identifier"
   let diverge =
