@@ -10,6 +10,6 @@ From zoo Require Import
 
 Definition generative_2_test : val :=
   fun: <> =>
-    ‘A{ () } ;;
+    ‘A@[ () ] ;;
     ‘B( () ) ;;
     ().

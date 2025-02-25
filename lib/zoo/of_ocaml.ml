@@ -1150,12 +1150,12 @@ let rec expression ~ctx (expr : Typedtree.expression) =
             let flag =
               match constr.cstr_generative with
               | Nongenerative ->
-                  Immutable
+                  Immutable_nongenerative
               | Generative ->
                   if Attribute.has_reveal constr.cstr_attributes then
-                    Mutable
+                    Immutable_generative_strong
                   else
-                    Generative
+                    Immutable_generative_weak
             in
             Constr (flag, tag, exprs)
           in

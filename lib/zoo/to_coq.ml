@@ -306,11 +306,21 @@ let rec expression' lvl ppf = function
       Fmt.pf ppf "§%s"
         tag
   | Constr (flag, tag, exprs) ->
-      Fmt.pf ppf "@[<hv>‘%s%c %a@;%c@]"
+      Fmt.pf ppf "@[<hv>‘%s%s %a@;%s@]"
         tag
-        (match flag with Immutable -> '(' | Generative -> '[' | Mutable -> '{')
+        ( match flag with
+          | Mutable -> "{"
+          | Immutable_nongenerative -> "("
+          | Immutable_generative_weak -> "["
+          | Immutable_generative_strong -> "@["
+        )
         Fmt.(list ~sep:(any ",@;<1 2>") (fun ppf -> pf ppf "@[%a@]" (expression max_level))) exprs
-        (match flag with Immutable -> ')' | Generative -> ']' | Mutable -> '}')
+        ( match flag with
+          | Mutable -> "}"
+          | Immutable_nongenerative -> ")"
+          | Immutable_generative_weak -> "]"
+          | Immutable_generative_strong -> "]"
+        )
   | Proj (expr, fld) ->
       Fmt.pf ppf "@[%a@].<%s>"
         (expression lvl) expr

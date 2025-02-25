@@ -14,10 +14,11 @@ type rec_flag = Asttypes.rec_flag =
   | Nonrecursive
   | Recursive
 
-type constructor_flag =
-  | Immutable
-  | Generative
+type mutability =
   | Mutable
+  | Immutable_nongenerative
+  | Immutable_generative_weak
+  | Immutable_generative_strong
 
 type typ =
   | Type_product of field list
@@ -58,7 +59,7 @@ type expression =
   | Tuple of expression list
   | Ref of expression
   | Record of expression list
-  | Constr of constructor_flag * tag * expression list
+  | Constr of mutability * tag * expression list
   | Proj of expression * field
   | Match of expression * branch list * fallback option
   | Ref_get of expression
