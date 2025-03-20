@@ -16,10 +16,10 @@ Notation "'B'" := (
 ).
 
 Notation "'f1'" := (
-  in_type "tests.variant_4.t__B" 0
+  in_type "tests.variant_4.t.B" 0
 )(in custom zoo_field
 ).
 Notation "'f2'" := (
-  in_type "tests.variant_4.t__B" 1
+  in_type "tests.variant_4.t.B" 1
 )(in custom zoo_field
 ).

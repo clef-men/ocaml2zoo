@@ -1525,7 +1525,7 @@ let type_declaration (ty : Typedtree.type_declaration) =
             match constr.cd_args with
             | Cstr_record lbls ->
                 let ty = type_declaration_record constr.cd_attributes lbls in
-                Type (Printf.sprintf "%s__%s" var tag, ty) :: defs
+                Type (Printf.sprintf "%s.%s" var tag, ty) :: defs
             | _ ->
                 defs
           in

@@ -25,6 +25,6 @@ Notation "'B'" := (
 ).
 
 Notation "'f'" := (
-  in_type "tests.zoo_force_record.t2__B" 0
+  in_type "tests.zoo_force_record.t2.B" 0
 )(in custom zoo_field
 ).
