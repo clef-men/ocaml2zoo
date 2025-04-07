@@ -27,7 +27,7 @@ module Builtin = struct
   let paths =
     [|
       [|"Stdlib";"ignore"|],
-      Fun ([Some "1"], Local "1"),
+      Fun ([None], Tuple []),
       None
     ;
       [|"Stdlib";"not"|],
@@ -239,7 +239,7 @@ module Builtin = struct
   let apps =
     [|
       [|"Stdlib";"ignore"|],
-      (function [expr] -> Some expr | _ -> None),
+      (function [expr] -> Some (Seq (expr, Tuple [])) | _ -> None),
       None
     ;
       [|"Stdlib";"not"|],
@@ -1091,6 +1091,13 @@ let rec expression ~ctx (expr : Typedtree.expression) =
       end
   | Texp_sequence (expr1, expr2) ->
       let expr1 = expression ~ctx expr1 in
+      let expr1 =
+        match expr1 with
+        | Seq (expr1, Tuple []) ->
+            expr1
+        | _ ->
+            expr1
+      in
       let expr2 = expression ~ctx expr2 in
       Seq (expr1, expr2)
   | Texp_for (id, pat, expr1, expr2, Upto, expr3) ->
