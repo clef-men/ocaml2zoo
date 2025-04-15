@@ -468,10 +468,10 @@ module Attribute = struct
   let has attr =
     List.exists (fun attr' -> attr'.Parsetree.attr_name.txt = attr)
 
-  let exclude =
-    "zoo.exclude"
-  let has_exclude =
-    has exclude
+  let ignore =
+    "zoo.ignore"
+  let has_ignore =
+    has ignore
 
   let prefix =
     "zoo.prefix"
@@ -1488,7 +1488,7 @@ let value_bindings ~ctx mod_ rec_flag bdgs =
     ) bdgs
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
-  if Attribute.has_exclude bdg.vb_attributes then
+  if Attribute.has_ignore bdg.vb_attributes then
     []
   else if Attribute.has_opaque bdg.vb_attributes then
     List.map (fun (_, global, _, _) -> Val_opaque global) bdgs
@@ -1554,7 +1554,7 @@ let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
       open_declaration ~loc:str_item.str_loc ~err:Def_open open_ ;
       []
   | Tstr_attribute attr ->
-      if Attribute.has_exclude [attr] then
+      if Attribute.has_ignore [attr] then
         raise Exclude ;
       if Attribute.has_prefix [attr] then (
         match attr.attr_payload with

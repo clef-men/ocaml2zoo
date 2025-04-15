@@ -18,10 +18,10 @@ let quiet =
   let doc = "Enable quiet mode." in
   Arg.(value & flag & info ["q";"quiet"] ~doc)
 
-let exclude =
+let ignore =
   let docv = "library" in
   let doc = "Prevent a library from being processed." in
-  Arg.(value & opt_all string [] & info ["exclude"] ~docv ~doc)
+  Arg.(value & opt_all string [] & info ["ignore"] ~docv ~doc)
 
 let only =
   let docv = "library" in
@@ -32,20 +32,29 @@ let info =
   let doc = "OCaml to Zoo" in
   Cmd.info "ocaml2zoo" ~doc
 
-let main input output force quiet exclude only =
+let main input output force quiet ignore only =
   let args : Main.arguments =
     { input;
       output;
       force;
       quiet;
-      exclude;
+      ignore;
       only;
     }
   in
   try `Ok (Main.main args)
   with Main.Error err -> err
 let main =
-  Term.(ret (const main $ input $ output $ force $ quiet $ exclude $ only))
+  let open Term in
+  ret (
+    const main
+    $ input
+    $ output
+    $ force
+    $ quiet
+    $ ignore
+    $ only
+  )
 let () =
   Cmd.v info main
   |> Cmd.eval

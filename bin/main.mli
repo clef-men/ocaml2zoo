@@ -3,7 +3,7 @@ type arguments =
     output: string;
     force: bool;
     quiet: bool;
-    exclude: string list;
+    ignore: string list;
     only: string list;
   }
 
