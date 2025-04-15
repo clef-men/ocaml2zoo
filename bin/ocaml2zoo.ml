@@ -18,6 +18,8 @@ let quiet =
   let doc = "Enable quiet mode." in
   Arg.(value & flag & info ["q";"quiet"] ~doc)
 
+let ignore_file =
+  ".zooignore"
 let ignore =
   let docv = "library" in
   let doc = "Prevent a library from being processed." in
@@ -33,6 +35,16 @@ let info =
   Cmd.info "ocaml2zoo" ~doc
 
 let main input output force quiet ignore only =
+  let ignore =
+    try
+      In_channel.with_open_text ignore_file (fun input ->
+        In_channel.fold_lines (fun ignore line ->
+          String.trim line :: ignore
+        ) ignore input
+      )
+    with Sys_error _ ->
+      ignore
+  in
   let args : Main.arguments =
     { input;
       output;
