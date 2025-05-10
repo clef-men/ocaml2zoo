@@ -221,6 +221,10 @@ module Builtin = struct
       [|"Zoo";"resolve"|],
       Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")),
       None
+    ;
+      [|"Zoo";"resolve'"|],
+      Fun ([Some "1"; Some "2"], Resolve (Apply (Fun ([None], Tuple []), [Tuple []]), Local "1", Local "2")),
+      None
     |]
   let paths =
     Array.fold_left (fun acc (path, expr, dep) ->
@@ -436,6 +440,10 @@ module Builtin = struct
     ;
       [|"Zoo";"resolve"|],
       (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None),
+      None
+    ;
+      [|"Zoo";"resolve'"|],
+      (function [expr1; expr2] -> Some (Resolve (Apply (Fun ([None], Tuple []), [Tuple []]), expr1, expr2)) | _ -> None),
       None
     ;
       [|"Zoo";"id"|],
