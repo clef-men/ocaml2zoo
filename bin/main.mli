@@ -5,6 +5,7 @@ type arguments =
     quiet: bool;
     ignore: string list;
     only: string list;
+    describe: bool;
   }
 
 exception Error of unit Cmdliner.Term.ret

@@ -30,11 +30,23 @@ let only =
   let doc = "Mark a library. Only marked libraries are processed." in
   Arg.(value & opt_all string [] & info ["only"] ~docv ~doc)
 
+let describe =
+  let doc = "Only dump description of dune project." in
+  Arg.(value & flag & info ["describe"] ~doc)
+
 let info =
   let doc = "OCaml to Zoo" in
   Cmd.info "ocaml2zoo" ~doc
 
-let main input output force quiet ignore only =
+let main
+  input
+  output
+  force
+  quiet
+  ignore
+  only
+  describe
+=
   let ignore =
     try
       In_channel.with_open_text ignore_file (fun input ->
@@ -52,6 +64,7 @@ let main input output force quiet ignore only =
       quiet;
       ignore;
       only;
+      describe;
     }
   in
   try `Ok (Main.main args)
@@ -66,6 +79,7 @@ let main =
     $ quiet
     $ ignore
     $ only
+    $ describe
   )
 let () =
   Cmd.v info main
