@@ -2,6 +2,7 @@ type module_ =
   { module_name: string;
     module_impl: string;
     module_cmt: string;
+    module_cmti: string option;
   }
 
 type library =
@@ -61,6 +62,7 @@ let module_of_sexp sexp =
   let name = ref "" in
   let impl = ref "" in
   let cmt = ref "" in
+  let cmti = ref None in
   List.iter (function
     | List (Atom "name" :: sexps) ->
         let< sexp = sexps in
@@ -72,6 +74,10 @@ let module_of_sexp sexp =
     | List (Atom "cmt" :: sexps) ->
         let< sexp = sexps in
         cmt := string_of_sexp sexp
+    | List (Atom "cmti" :: sexps) ->
+        let< sexp = sexps in
+        if sexp <> List [] then
+          cmti := Some (string_of_sexp sexp)
     | _ ->
         ()
   ) sexps ;
@@ -79,9 +85,11 @@ let module_of_sexp sexp =
   let name = String.uncapitalize_ascii name in
   let impl = if !impl = "" then invalid () ; !impl in
   let cmt = if !cmt = "" then invalid () ; !cmt in
+  let cmti = !cmti in
   { module_name= name;
     module_impl= impl;
     module_cmt= cmt;
+    module_cmti= cmti;
   }
 let library_of_sexp sexp =
   let@ sexps = sexp in
@@ -144,10 +152,11 @@ let of_directory () =
     Result.bind (Csexp.input chan) of_sexp
 
 let pp_module ppf mod_ =
-  Fmt.pf ppf "+ %s@,  @[<v>+ impl: %s@,+ cmt: %s@]"
+  Fmt.pf ppf "+ %s@,  @[<v>+ impl: %s@,+ cmt: %s@,+ cmti: %s@]"
     mod_.module_name
     mod_.module_impl
     mod_.module_cmt
+    (Option.value ~default:"∅" mod_.module_cmti)
 let pp_library ppf lib =
   Fmt.pf ppf "+ %s (%s)@,  @[<v>%a@]"
     lib.library_name

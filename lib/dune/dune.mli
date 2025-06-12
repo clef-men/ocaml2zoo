@@ -2,6 +2,7 @@ type module_ =
   { module_name: string;
     module_impl: string;
     module_cmt: string;
+    module_cmti: string option;
   }
 
 type library =
