@@ -1,4 +1,4 @@
-open Syntax
+open Implementation
 
 module Fmt = struct
   include Fmt
@@ -496,25 +496,25 @@ let value () =
   let gen = ref 0 in
   value (fun () -> let i = !gen in gen := i + 1 ; i)
 
-let structure ~code ~pp ~select ppf str =
+let pp ~code ~pp ~select ppf t =
   Fmt.pf ppf "@[<v>" ;
   Fmt.pf ppf "From zoo Require Import@,  prelude.@," ;
   Fmt.pf ppf "From zoo.language Require Import@,  typeclasses@,  notations.@," ;
-  if not @@ Hashtbl.is_empty str.dependencies then (
+  if not @@ Hashtbl.is_empty t.dependencies then (
     Fmt.hashtbl (fun ppf (lib, mods) ->
       Fmt.pf ppf "From %s Require Import@,  @[<v>%a@]."
         lib
         (Hashset.pp Fmt.string) mods
-    ) ppf str.dependencies ;
+    ) ppf t.dependencies ;
     Fmt.pf ppf "@,"
   ) ;
   if code then
     Fmt.pf ppf "From %s Require Import@,  %s__types.@,"
-      str.library
-      str.module_ ;
+      t.library
+      t.module_ ;
   Fmt.pf ppf "From zoo Require Import@,  options.@,@," ;
-  Fmt.(list ~sep:(any "@,@,")) pp ppf (select str) ;
+  Fmt.(list ~sep:(any "@,@,")) pp ppf (select t) ;
   Fmt.pf ppf "@]@."
-let structure ~types ~code str =
-  structure ~code:false ~pp:(typ ~lib:str.library ~mod_:str.module_) ~select:structure_types types str ;
-  structure ~code:true ~pp:(value ()) ~select:structure_values code str
+let pp ~ppf_types ~ppf_code t =
+  pp ~code:false ~pp:(typ ~lib:t.library ~mod_:t.module_) ~select:types ppf_types t ;
+  pp ~code:true ~pp:(value ()) ~select:values ppf_code t

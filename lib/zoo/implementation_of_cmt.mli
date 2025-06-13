@@ -7,7 +7,7 @@ end
 
 exception Error of Location.t * Error.t
 
-exception Exclude
+exception Ignore
 
 val structure :
-  lib:string -> mod_:string -> Typedtree.structure -> Syntax.structure
+  lib:string -> mod_:string -> Typedtree.structure -> Implementation.t

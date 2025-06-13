@@ -30,17 +30,17 @@ let main ~input ~output_types ~output_code ~lib_name ~mod_name =
       match cmt.cmt_annots with
       | Implementation str ->
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Of_ocaml.structure ~lib:lib_name ~mod_:mod_name str with
-          | exception Zoo.Of_ocaml.Error (loc, err) ->
+          begin match Zoo.Implementation_of_cmt.structure ~lib:lib_name ~mod_:mod_name str with
+          | exception Zoo.Implementation_of_cmt.Error (loc, err) ->
               error ~usage:false "%a:@,%a"
                 Location.print_loc loc
-                Zoo.Of_ocaml.Error.pp err
-          | exception Zoo.Of_ocaml.Exclude ->
+                Zoo.Implementation_of_cmt.Error.pp err
+          | exception Zoo.Implementation_of_cmt.Ignore ->
               ()
           | str ->
-              let types = Format.formatter_of_out_channel @@ open_out output_types in
-              let code = Format.formatter_of_out_channel @@ open_out output_code in
-              Zoo.To_coq.structure ~types ~code str
+              let ppf_types = Format.formatter_of_out_channel @@ open_out output_types in
+              let ppf_code = Format.formatter_of_out_channel @@ open_out output_code in
+              Zoo.Implementation_to_coq.pp ~ppf_types ~ppf_code str
           end
       | _ ->
           invalid_cmt ": not an implementation"
@@ -65,7 +65,7 @@ let main ~args ~input ~output_dir ~lib_name ~mod_name =
         | exception Unix.Unix_error _ ->
             main ~input ~output_types ~output_code ~lib_name ~mod_name
 
-let main_cmt args =
+let main_singlefile args =
   let input = args.input in
   let output_dir = args.output in
   let lib_name = Filename.(input |> dirname |> basename) |> String.uncapitalize_ascii in
@@ -122,7 +122,7 @@ let main args =
   in
   let args = { args with input; output } in
   if Filename.extension args.input = ".cmt" then
-    main_cmt args
+    main_singlefile args
   else if Sys.is_directory args.input then
     main_directory args
   else

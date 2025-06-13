@@ -99,56 +99,17 @@ type definition =
   | Type of variable * typ
   | Val of value
 
-type structure =
+type t =
   { library: string;
     module_: string;
     dependencies: (string, string Hashset.t) Hashtbl.t;
     definitions: definition list;
   }
 
-let rec expression_is_value = function
-  | Global _
-  | Bool _
-  | Int _
-  | Fun _ ->
-      true
-  | Tuple exprs
-  | Constr ((Immutable_nongenerative | Immutable_generative_weak), _, exprs) ->
-      List.for_all expression_is_value exprs
-  | Local _
-  | Let _
-  | Letrec _
-  | Seq _
-  | Apply _
-  | Unop _
-  | Binop _
-  | If _
-  | For _
-  | Alloc _
-  | Ref _
-  | Record _
-  | Constr (_, _, _)
-  | Proj _
-  | Match _
-  | Ref_get _
-  | Ref_set _
-  | Record_get _
-  | Record_set _
-  | Get_tag _
-  | Get_size _
-  | Atomic_loc _
-  | Load _
-  | Store _
-  | Xchg _
-  | Cas _
-  | Faa _
-  | Fail
-  | Proph
-  | Resolve _
-  | Id ->
-      false
+val expression_is_value :
+  expression -> bool
 
-let structure_types str =
-  List.filter_map (function Type (var, ty) -> Some (var, ty) | _ -> None) str.definitions
-let structure_values str =
-  List.filter_map (function Val val_ -> Some val_ | _ -> None) str.definitions
+val types :
+  t -> (variable * typ) list
+val values :
+  t -> value list

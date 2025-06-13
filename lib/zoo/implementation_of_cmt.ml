@@ -1,4 +1,4 @@
-open Syntax
+open Implementation
 
 module Dependency = struct
   let structeq =
@@ -731,7 +731,7 @@ let error ~loc err =
 let unsupported ~loc err =
   error ~loc (Unsupported err)
 
-exception Exclude
+exception Ignore
 
 let internal_local =
   Printf.sprintf "__%s__"
@@ -1563,7 +1563,7 @@ let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
       []
   | Tstr_attribute attr ->
       if Attribute.has_ignore [attr] then
-        raise Exclude ;
+        raise Ignore ;
       if Attribute.has_prefix [attr] then (
         match attr.attr_payload with
         | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (pref, _, _); _ }; _ }, _); _ }] ->

@@ -1,8 +1,8 @@
 include module type of struct
-  include Syntax
+  include Implementation
 end
 
-module Of_ocaml =
-  Of_ocaml
-module To_coq =
-  To_coq
+module Implementation_of_cmt =
+  Implementation_of_cmt
+module Implementation_to_coq =
+  Implementation_to_coq
