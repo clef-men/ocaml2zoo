@@ -16,10 +16,24 @@ let error ?(usage = true) fmt =
   ) ("@[<v>" ^^ fmt ^^ "@]")
 let invalid_cmt ?(usage = true) fmt =
   error ~usage ("invalid .cmt file" ^^ fmt)
+let invalid_cmti ?(usage = true) fmt =
+  error ~usage ("invalid .cmti file" ^^ fmt)
 let invalid_directory ?(usage = true) fmt =
   error ~usage ("invalid directory" ^^ fmt)
 
-let main ~input ~output_types ~output_code ~lib_name ~mod_name =
+type output =
+  { output_types: string;
+    output_code: string;
+    output_opaque: string;
+  }
+let output output_dir mod_name =
+  let output = Filename.concat output_dir mod_name in
+  { output_types= output ^ "__types.v";
+    output_code= output ^ "__code.v";
+    output_opaque= output ^ "__opaque.v";
+  }
+
+let implementation ~lib_name ~mod_name ~input ~output =
   match Cmt_format.read_cmt input with
   | exception Sys_error err ->
       invalid_cmt ": %s" err
@@ -37,41 +51,56 @@ let main ~input ~output_types ~output_code ~lib_name ~mod_name =
                 Zoo.Implementation_of_cmt.Error.pp err
           | exception Zoo.Implementation_of_cmt.Ignore ->
               ()
-          | str ->
-              let ppf_types = Format.formatter_of_out_channel @@ open_out output_types in
-              let ppf_code = Format.formatter_of_out_channel @@ open_out output_code in
-              Zoo.Implementation_to_coq.pp ~ppf_types ~ppf_code str
+          | impl ->
+              let ppf_types = output.output_types |> open_out |> Format.formatter_of_out_channel in
+              let ppf_code = output.output_code |> open_out |> Format.formatter_of_out_channel in
+              Zoo.Implementation_to_coq.pp ~ppf_types ~ppf_code impl
           end
       | _ ->
           invalid_cmt ": not an implementation"
-let main ~args ~input ~output_dir ~lib_name ~mod_name =
-  let output = Filename.concat output_dir mod_name in
-  let output_types = output ^ "__types.v" in
-  let output_code = output ^ "__code.v" in
+
+let interface ~lib_name ~mod_name ~input ~output =
+  match Cmt_format.read_cmt input with
+  | exception Sys_error err ->
+      invalid_cmti ": %s" err
+  | exception Cmt_format.Error _
+  | exception Cmi_format.Error _ ->
+      invalid_cmti ""
+  | cmt ->
+      match cmt.cmt_annots with
+      | Interface sig_ ->
+          Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
+          begin match Zoo.Interface_of_cmti.signature ~lib:lib_name ~mod_:mod_name sig_ with
+          | exception Zoo.Interface_of_cmti.Ignore ->
+              ()
+          | intf ->
+              let ppf = output.output_opaque |> open_out |> Format.formatter_of_out_channel in
+              Zoo.Interface_to_coq.pp ppf intf
+          end
+      | _ ->
+          invalid_cmti ": not an interface"
+
+let main_singlefile args =
+  let input = args.input in
+  let lib_name = Filename.(input |> dirname |> basename) |> String.uncapitalize_ascii in
+  let mod_name = Filename.(input |> basename |> remove_extension) |> String.uncapitalize_ascii in
+  let output = output args.output mod_name in
+  implementation ~lib_name ~mod_name ~input ~output
+
+let check ~args ~input ~output =
   if args.force then
-    main ~input ~output_types ~output_code ~lib_name ~mod_name
+    true
   else
     match Unix.stat input with
     | exception Unix.Unix_error _ ->
         invalid_cmt ""
     | input_stats ->
-        match Unix.stat output_code with
+        match Unix.stat output.output_code with
         | output_stats when input_stats.st_mtime < output_stats.st_mtime ->
-            if not args.quiet then
-              Fmt.pr {|Ignoring module "%s" from library "%s" (already up-to-date).@.|}
-                mod_name
-                lib_name
+            false
         | _
         | exception Unix.Unix_error _ ->
-            main ~input ~output_types ~output_code ~lib_name ~mod_name
-
-let main_singlefile args =
-  let input = args.input in
-  let output_dir = args.output in
-  let lib_name = Filename.(input |> dirname |> basename) |> String.uncapitalize_ascii in
-  let mod_name = Filename.(input |> basename |> remove_extension) |> String.uncapitalize_ascii in
-  main ~args ~input ~output_dir ~lib_name ~mod_name
-
+            true
 let main_directory args (dune : Dune.t) =
   let ignore = List.map String.uncapitalize_ascii args.ignore in
   let only = List.map String.uncapitalize_ascii args.only in
@@ -81,11 +110,22 @@ let main_directory args (dune : Dune.t) =
       if not (List.mem lib_name ignore) && (only = [] || List.mem lib_name only) then
         let output_dir = Filename.concat args.output lib_name in
         begin try Sys.mkdir output_dir 0o777 with Sys_error _ -> () end ;
-        Hashtbl.iter (fun mod_name (mod_ : Dune.module_) ->
+        lib.library_modules |> Hashtbl.iter @@ fun mod_name (mod_ : Dune.module_) ->
           if not @@ Filename.check_suffix mod_.module_impl "-gen" then
             let input = Filename.concat args.input mod_.module_cmt in
-            main ~args ~input ~output_dir ~lib_name ~mod_name
-        ) lib.library_modules
+            let output = output output_dir mod_name in
+            if check ~args ~input ~output then (
+              implementation ~lib_name ~mod_name ~input ~output ;
+              match mod_.module_cmti with
+              | None ->
+                  ()
+              | Some cmti ->
+                  let input = Filename.concat args.input cmti in
+                  interface ~lib_name ~mod_name ~input ~output
+            ) else if not args.quiet then
+              Fmt.pr {|Ignoring module "%s" from library "%s" (already up-to-date).@.|}
+                mod_name
+                lib_name
 let main_directory args =
   begin try
     Sys.chdir args.input
