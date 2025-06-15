@@ -4,28 +4,33 @@ type t =
 let has attr =
   List.exists (fun attr' -> attr'.Parsetree.attr_name.txt = attr)
 
+let zoo =
+  "zoo"
+let has_zoo =
+  has zoo
+
 let ignore =
-  "zoo.ignore"
+  zoo ^ ".ignore"
 let has_ignore =
   has ignore
 
 let prefix =
-  "zoo.prefix"
+  zoo ^ ".prefix"
 let has_prefix =
   has prefix
 
 let force_record =
-  "zoo.force_record"
+  zoo ^ ".force_record"
 let has_force_record =
   has force_record
 
 let reveal =
-  "zoo.reveal"
+  zoo ^ ".reveal"
 let has_reveal =
   has reveal
 
 let opaque =
-  "zoo.opaque"
+  zoo ^ ".opaque"
 let has_opaque =
   has opaque
 
@@ -42,7 +47,7 @@ let overwrite_kind_to_string = function
       | Recursive ->
           "_rec"
 let overwrite =
-  "zoo.overwrite"
+  zoo ^ ".overwrite"
 let rec has_overwrite = function
   | [] ->
       None

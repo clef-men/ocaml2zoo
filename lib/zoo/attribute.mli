@@ -1,6 +1,11 @@
 type t =
   Parsetree.attribute
 
+val zoo :
+  string
+val has_zoo :
+  t list -> bool
+
 val ignore :
   string
 val has_ignore :
