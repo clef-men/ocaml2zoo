@@ -266,19 +266,19 @@ let rec expression' lvl ppf = function
         (expression lvl) expr
         Fmt.(list ~sep:nop (fun ppf -> pf ppf "@;<1 2>@[%a@]" (expression @@ next_level lvl))) exprs
   | Unop (op, expr) ->
-      Fmt.pf ppf "@[%a %a@]"
+      Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@]"
         unop op
         (expression lvl) expr
   | Binop (op, expr1, expr2) ->
       let assoc = associativity op in
-      Fmt.pf ppf "@[%a %a@;%a@]"
+      Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@;@[%a@]@]"
         (expression @@ if assoc = Left then lvl else next_level lvl) expr1
         binop op
         (expression @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
       expression_if ppf expr1 expr2 expr3
   | For (local, expr1, expr2, expr3) ->
-      Fmt.pf ppf "@[<v>for: %a := %a to %a begin@,  @[%a@]@,end@]"
+      Fmt.pf ppf "@[<v>@[<hv>for:@;<1 2>@[%a@]@;:=@;<1 2>@[%a@]@;to@;<1 2>@[%a@]@;begin@]@,  @[%a@]@,end@]"
         binder local
         (expression max_level) expr1
         (expression max_level) expr2
