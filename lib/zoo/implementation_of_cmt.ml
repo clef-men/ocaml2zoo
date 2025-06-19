@@ -1,5 +1,10 @@
 open Implementation
 
+let internal_local =
+  Printf.sprintf "__%s__"
+let temporary_local =
+  internal_local "tmp"
+
 module Dependency = struct
   let structeq =
     "zoo", "structural_equality"
@@ -218,12 +223,16 @@ module Builtin = struct
       Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int 1)),
       None
     ;
-      [|"Zoo";"resolve"|],
+      [|"Zoo";"resolve_with"|],
       Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")),
       None
     ;
-      [|"Zoo";"resolve'"|],
-      Fun ([Some "1"; Some "2"], Resolve (Apply (Fun ([None], Tuple []), [Tuple []]), Local "1", Local "2")),
+      [|"Zoo";"resolve_silent"|],
+      Fun ([Some "1"; Some "2"], Resolve (Skip, Local "1", Local "2")),
+      None
+    ;
+      [|"Zoo";"resolve"|],
+      Fun ([Some "1"; Some "2"], Seq (Resolve (Skip, Local "1", Local "2"), Local "2")),
       None
     |]
   let paths =
@@ -438,12 +447,16 @@ module Builtin = struct
       (function [_expr] -> Some Proph | _ -> None),
       None
     ;
-      [|"Zoo";"resolve"|],
+      [|"Zoo";"resolve_with"|],
       (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None),
       None
     ;
-      [|"Zoo";"resolve'"|],
-      (function [expr1; expr2] -> Some (Resolve (Apply (Fun ([None], Tuple []), [Tuple []]), expr1, expr2)) | _ -> None),
+      [|"Zoo";"resolve_silent"|],
+      (function [expr1; expr2] -> Some (Resolve (Skip, expr1, expr2)) | _ -> None),
+      None
+    ;
+      [|"Zoo";"resolve"|],
+      (function [expr1; expr2] -> Some (Let (Pat_var temporary_local, expr2, Seq (Resolve (Skip, expr1, Local temporary_local), Local temporary_local))) | _ -> None),
       None
     ;
       [|"Zoo";"id"|],
@@ -668,11 +681,6 @@ let unsupported ~loc err =
   error ~loc (Unsupported err)
 
 exception Ignore
-
-let internal_local =
-  Printf.sprintf "__%s__"
-let temporary_local =
-  internal_local "tmp"
 
 let record_is_mutable attrs lbls =
   List.exists (fun lbl -> lbl.Types.ld_mutable = Mutable) lbls ||

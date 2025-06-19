@@ -8,7 +8,19 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition proph_test : val :=
+Definition proph_test1 : val :=
   fun: <> =>
-    let: "p" := Proph in
-    Resolve #0 "p" ().
+    let: "proph" := Proph in
+    Resolve (#1 + #1) "proph" ().
+
+Definition proph_test2 : val :=
+  fun: <> =>
+    let: "proph" := Proph in
+    Resolve Skip "proph" ().
+
+Definition proph_test3 : val :=
+  fun: <> =>
+    let: "proph" := Proph in
+    let: "__tmp__" := () in
+    Resolve Skip "proph" "__tmp__" ;;
+    "__tmp__".

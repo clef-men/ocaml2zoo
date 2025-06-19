@@ -160,6 +160,7 @@ let level = function
   | Constr _
   | Match _
   | Fail
+  | Skip
   | Proph
   | Id ->
       1
@@ -380,6 +381,8 @@ let rec expression' lvl ppf = function
         (expression @@ next_level lvl) expr2
   | Fail ->
       Fmt.pf ppf "Fail"
+  | Skip ->
+      Fmt.pf ppf "Skip"
   | Proph ->
       Fmt.pf ppf "Proph"
   | Resolve (expr1, expr2, expr3) ->
