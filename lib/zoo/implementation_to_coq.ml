@@ -176,6 +176,7 @@ let level = function
   | Apply _
   | Alloc _
   | Ref _
+  | Is_immediate _
   | Get_tag _
   | Get_size _
   | Load _
@@ -347,6 +348,9 @@ let rec expression' lvl ppf = function
         (expression @@ next_level lvl) expr1
         fld
         (expression lvl) expr2
+  | Is_immediate expr ->
+      Fmt.pf ppf "@[<hv>IsImmediate@;<1 2>@[%a@]@]"
+        (expression @@ next_level lvl) expr
   | Get_tag expr ->
       Fmt.pf ppf "@[<hv>GetTag@;<1 2>@[%a@]@]"
         (expression @@ next_level lvl) expr

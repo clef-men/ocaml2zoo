@@ -13,6 +13,7 @@ Definition obj_test : val :=
     let: "x" := () in
     "x" ;;
     "x" ;;
+    IsImmediate "x" ;;
     GetTag "x" ;;
     GetSize "x" ;;
     Load "x" #0 ;;

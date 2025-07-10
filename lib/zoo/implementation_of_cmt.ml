@@ -143,6 +143,10 @@ module Builtin = struct
       Fun ([Some "1"], Local "1"),
       None
     ;
+      [|"Stdlib";"Obj";"is_int"|],
+      Fun ([Some "1"], Is_immediate (Local "1")),
+      None
+    ;
       [|"Stdlib";"Obj";"tag"|],
       Fun ([Some "1"], Get_tag (Local "1")),
       None
@@ -361,6 +365,10 @@ module Builtin = struct
     ;
       [|"Stdlib";"Obj";"magic"|],
       (function [expr] -> Some expr | _ -> None),
+      None
+    ;
+      [|"Stdlib";"Obj";"is_int"|],
+      (function [expr] -> Some (Is_immediate expr) | _ -> None),
       None
     ;
       [|"Stdlib";"Obj";"tag"|],

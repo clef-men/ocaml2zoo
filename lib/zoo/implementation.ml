@@ -66,6 +66,7 @@ type expression =
   | Ref_set of expression * expression
   | Record_get of expression * field
   | Record_set of expression * field * expression
+  | Is_immediate of expression
   | Get_tag of expression
   | Get_size of expression
   | Atomic_loc of expression * field
@@ -135,6 +136,7 @@ let rec expression_is_value = function
   | Ref_set _
   | Record_get _
   | Record_set _
+  | Is_immediate _
   | Get_tag _
   | Get_size _
   | Atomic_loc _
