@@ -14,7 +14,7 @@ fi
 
 for test in $tests ; do
 	if [ ! -f "$test" ] ; then
-		echo "error: test does not exist: \"$test\""
+		echo "error: test does not exist: $test"
 		exit 1
 	fi
 
@@ -26,5 +26,5 @@ for test in $tests ; do
 	cp "${test}__types.v" "${test}__types.exp"
 	cp "${test}__code.v" "${test}__code.exp"
 
-  echo "test promoted: \"$(basename $test)\""
+  echo "test promoted: $(basename $test)"
 done
