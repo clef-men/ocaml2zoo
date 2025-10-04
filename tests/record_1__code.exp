@@ -20,5 +20,5 @@ Definition record_1_test2 : val :=
 
 Definition record_1_test3 : val :=
   fun: <> =>
-    let: "__tmp__" := { #0, #0 } in
-    { #0, "__tmp__".{f2} }.
+    let: "@tmp" := { #0, #0 } in
+    { #0, "@tmp".{f2} }.

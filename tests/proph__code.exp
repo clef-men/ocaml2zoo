@@ -21,6 +21,6 @@ Definition proph_test2 : val :=
 Definition proph_test3 : val :=
   fun: <> =>
     let: "proph" := Proph in
-    let: "__tmp__" := () in
-    Resolve Skip "proph" "__tmp__" ;;
-    "__tmp__".
+    let: "@tmp" := () in
+    Resolve Skip "proph" "@tmp" ;;
+    "@tmp".

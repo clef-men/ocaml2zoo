@@ -1,7 +1,7 @@
 open Implementation
 
 let internal_local =
-  Printf.sprintf "__%s__"
+  Printf.sprintf "@%s"
 let temporary_local =
   internal_local "tmp"
 
