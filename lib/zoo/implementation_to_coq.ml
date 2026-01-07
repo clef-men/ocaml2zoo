@@ -19,12 +19,12 @@ module Fmt = struct
 end
 
 let boolean ppf =
-  Fmt.pf ppf "#%B"
+  Fmt.pf ppf "%B"
 let integer ppf int =
   if int < 0 then
-    Fmt.pf ppf "#(%i)" int
+    Fmt.pf ppf "(%i)" int
   else
-    Fmt.pf ppf "#%i" int
+    Fmt.pf ppf "%i" int
 
 let global_variable ppf global =
   Fmt.pf ppf "%s" global

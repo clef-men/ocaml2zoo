@@ -11,15 +11,15 @@ From zoo Require Import
 Definition variant_1_test1 : val :=
   fun: <> =>
     §A ;;
-    ‘B( #0 ) ;;
-    ‘C( #0, #0 ) ;;
+    ‘B( 0 ) ;;
+    ‘C( 0, 0 ) ;;
     ().
 
 Definition variant_1_test2 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
-        #0
+        0
     | B "i" =>
         "i"
     | C "i1" "i2" =>

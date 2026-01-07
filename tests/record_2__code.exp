@@ -10,7 +10,7 @@ From zoo Require Import
 
 Definition record_2_test1 : val :=
   fun: <> =>
-    let: "t2" := (#0, #1) in
+    let: "t2" := (0, 1) in
     "t2".<f1>.
 
 Definition record_2_test2 : val :=
@@ -20,9 +20,9 @@ Definition record_2_test2 : val :=
 
 Definition record_2_test3 : val :=
   fun: "t" =>
-    (#0, "t".<f2>).
+    (0, "t".<f2>).
 
 Definition record_2_test4 : val :=
   fun: <> =>
-    let: "@tmp" := (#0, #0) in
-    (#0, "@tmp".<f2>).
+    let: "@tmp" := (0, 0) in
+    (0, "@tmp".<f2>).

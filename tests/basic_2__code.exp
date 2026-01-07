@@ -17,10 +17,10 @@ Definition basic_2_test2 : val :=
     "x" + "test2" "x".
 
 Definition basic_2_test3 : val :=
-  #0.
+  0.
 
 Definition basic_2_test4 : val :=
-  #1.
+  1.
 
 Definition basic_2_test5 : val :=
   fun: "x" =>

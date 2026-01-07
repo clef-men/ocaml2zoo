@@ -10,12 +10,12 @@ From zoo Require Import
 
 Definition for_test1 : val :=
   fun: <> =>
-    for: "i" := #0 to #10 + #1 begin
+    for: "i" := 0 to 10 + 1 begin
       ()
     end.
 
 Definition for_test2 : val :=
   fun: <> =>
-    for: "i" := #0 to #10 begin
+    for: "i" := 0 to 10 begin
       ()
     end.

@@ -10,9 +10,9 @@ From zoo Require Import
 
 Definition zoo_force_record_test1 : val :=
   fun: <> =>
-    let: "t" := { #0, #1 } in
+    let: "t" := { 0, 1 } in
     "t".{f1}.
 
 Definition zoo_force_record_test2 : val :=
   fun: <> =>
-    ‘B{ #0 }.
+    ‘B{ 0 }.

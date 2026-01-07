@@ -10,15 +10,15 @@ From zoo Require Import
 
 Definition record_1_test1 : val :=
   fun: <> =>
-    let: "t1" := { #0, #1 } in
+    let: "t1" := { 0, 1 } in
     "t1".{f1} ;;
-    "t1" <-{f1} #0.
+    "t1" <-{f1} 0.
 
 Definition record_1_test2 : val :=
   fun: "t" =>
-    { #0, "t".{f2} }.
+    { 0, "t".{f2} }.
 
 Definition record_1_test3 : val :=
   fun: <> =>
-    let: "@tmp" := { #0, #0 } in
-    { #0, "@tmp".{f2} }.
+    let: "@tmp" := { 0, 0 } in
+    { 0, "@tmp".{f2} }.

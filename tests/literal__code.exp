@@ -10,7 +10,7 @@ From zoo Require Import
 
 Definition literal_test : val :=
   fun: <> =>
-    #0 ;;
-    #true ;;
-    #false ;;
+    0 ;;
+    true ;;
+    false ;;
     ().

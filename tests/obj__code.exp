@@ -16,7 +16,7 @@ Definition obj_test : val :=
     IsImmediate "x" ;;
     GetTag "x" ;;
     GetSize "x" ;;
-    Load "x" #0 ;;
-    Store "x" #0 "x" ;;
-    Alloc #0 #0 ;;
+    Load "x" 0 ;;
+    Store "x" 0 "x" ;;
+    Alloc 0 0 ;;
     ().

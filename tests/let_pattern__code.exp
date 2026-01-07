@@ -10,10 +10,10 @@ From zoo Require Import
 
 Definition let_pattern_test1 : val :=
   fun: <> =>
-    let: "x", "y" := (#0, #1) in
+    let: "x", "y" := (0, 1) in
     "x" + "y".
 
 Definition let_pattern_test2 : val :=
   fun: <> =>
-    let: ‘Some "i" := ‘Some( #0 ) in
+    let: ‘Some "i" := ‘Some( 0 ) in
     "i".

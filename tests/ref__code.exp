@@ -10,6 +10,6 @@ From zoo Require Import
 
 Definition ref_test : val :=
   fun: <> =>
-    let: "r" := ref #0 in
+    let: "r" := ref 0 in
     !"r" ;;
-    "r" <- #1.
+    "r" <- 1.

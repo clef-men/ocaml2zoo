@@ -10,8 +10,8 @@ From zoo Require Import
 
 Definition let_open_test1 : val :=
   fun: <> =>
-    Load (Alloc #0 #1) #0.
+    Load (Alloc 0 1) 0.
 
 Definition let_open_test2 : val :=
   fun: <> =>
-    Load (Alloc #0 #1) #0.
+    Load (Alloc 0 1) 0.

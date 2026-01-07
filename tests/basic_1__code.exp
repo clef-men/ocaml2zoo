@@ -9,16 +9,16 @@ From zoo Require Import
   options.
 
 Definition basic_1_test1 : val :=
-  #0.
+  0.
 
 Definition basic_1_test2 : val :=
-  #(-1).
+  (-1).
 
 Definition basic_1_test3 : val :=
   basic_1_test1.
 
 Definition basic_1_test4 : val :=
-  (#0, #true).
+  (0, true).
 
 Definition basic_1_test5 : val :=
   (basic_1_test2, basic_1_test3).
@@ -27,7 +27,7 @@ Definition basic_1_test6 : val :=
   §None.
 
 Definition basic_1_test7 : val :=
-  ‘Some( #0 ).
+  ‘Some( 0 ).
 
 Definition basic_1_test8 : val :=
   ‘Some( fun: <> => () ).

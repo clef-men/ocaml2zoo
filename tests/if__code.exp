@@ -11,29 +11,29 @@ From zoo Require Import
 Definition if_test1 : val :=
   fun: "b" =>
     if: "b" then (
-      #0
+      0
     ) else (
-      #1
+      1
     ).
 
 Definition if_test2 : val :=
   fun: "b0" "b1" =>
     if: "b0" then (
-      #0
+      0
     ) else if: "b1" then (
-      #1
+      1
     ) else (
-      #2
+      2
     ).
 
 Definition if_test3 : val :=
   fun: "b0" "b1" "b2" =>
     if: "b0" then (
-      #0
+      0
     ) else if: "b1" then (
-      #1
+      1
     ) else if: "b2" then (
-      #2
+      2
     ) else (
-      #3
+      3
     ).
