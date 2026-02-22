@@ -15,7 +15,8 @@ Definition atomic_test1 : val :=
     CAS "a".[contents] 0 0 ;;
     FAA "a".[contents] 0 ;;
     FAA "a".[contents] (-1) ;;
-    FAA "a".[contents] 1.
+    FAA "a".[contents] 1 ;;
+    ().
 
 Definition atomic_test2 : val :=
   fun: "loc" =>
@@ -25,7 +26,8 @@ Definition atomic_test2 : val :=
     CAS "loc" 0 0 ;;
     FAA "loc" 0 ;;
     FAA "loc" (-1) ;;
-    FAA "loc" 1.
+    FAA "loc" 1 ;;
+    ().
 
 Definition atomic_test3 : val :=
   fun: "t" =>
@@ -35,4 +37,5 @@ Definition atomic_test3 : val :=
     CAS "t".[f] 0 0 ;;
     FAA "t".[f] 0 ;;
     FAA "t".[f] (-1) ;;
-    FAA "t".[f] 1.
+    FAA "t".[f] 1 ;;
+    ().

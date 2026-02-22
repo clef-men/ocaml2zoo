@@ -188,11 +188,11 @@ module Builtin = struct
       None
     ;
       [|"Stdlib";"Atomic";"Loc";"decr"|],
-      Fun ([Some "1"], Faa (Local "1", Int (-1))),
+      Fun ([Some "1"], Seq (Faa (Local "1", Int (-1)), Tuple [])),
       None
     ;
       [|"Stdlib";"Atomic";"Loc";"incr"|],
-      Fun ([Some "1"], Faa (Local "1", Int 1)),
+      Fun ([Some "1"], Seq (Faa (Local "1", Int 1), Tuple [])),
       None
     ;
       [|"Stdlib";"Atomic";"make"|],
@@ -220,11 +220,11 @@ module Builtin = struct
       None
     ;
       [|"Stdlib";"Atomic";"decr"|],
-      Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int (-1))),
+      Fun ([Some "1"], Seq (Faa (Atomic_loc (Local "1", "contents"), Int (-1)), Tuple [])),
       None
     ;
       [|"Stdlib";"Atomic";"incr"|],
-      Fun ([Some "1"], Faa (Atomic_loc (Local "1", "contents"), Int 1)),
+      Fun ([Some "1"], Seq (Faa (Atomic_loc (Local "1", "contents"), Int 1), Tuple [])),
       None
     ;
       [|"Zoo";"resolve_with"|],
@@ -412,11 +412,11 @@ module Builtin = struct
       None
     ;
       [|"Stdlib";"Atomic";"Loc";"decr"|],
-      (function [expr] -> Some (Faa (expr, Int (-1))) | _ -> None),
+      (function [expr] -> Some (Seq (Faa (expr, Int (-1)), Tuple [])) | _ -> None),
       None
     ;
       [|"Stdlib";"Atomic";"Loc";"incr"|],
-      (function [expr] -> Some (Faa (expr, Int 1)) | _ -> None),
+      (function [expr] -> Some (Seq (Faa (expr, Int 1), Tuple [])) | _ -> None),
       None
     ;
       [|"Stdlib";"Atomic";"make"|],
@@ -444,11 +444,11 @@ module Builtin = struct
       None
     ;
       [|"Stdlib";"Atomic";"decr"|],
-      (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int (-1))) | _ -> None),
+      (function [expr] -> Some (Seq (Faa (Atomic_loc (expr, "contents"), Int (-1)), Tuple [])) | _ -> None),
       None
     ;
       [|"Stdlib";"Atomic";"incr"|],
-      (function [expr] -> Some (Faa (Atomic_loc (expr, "contents"), Int 1)) | _ -> None),
+      (function [expr] -> Some (Seq (Faa (Atomic_loc (expr, "contents"), Int 1), Tuple [])) | _ -> None),
       None
     ;
       [|"Zoo";"proph"|],
