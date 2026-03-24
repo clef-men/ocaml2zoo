@@ -44,7 +44,7 @@ let implementation ~lib_name ~mod_name ~input ~output =
       match cmt.cmt_annots with
       | Implementation str ->
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Implementation_of_cmt.structure ~lib:lib_name ~mod_:mod_name str with
+          begin match Zoo.Implementation_of_cmt.transl_structure ~lib:lib_name ~mod_:mod_name str with
           | exception Zoo.Implementation_of_cmt.Error (loc, err) ->
               error ~usage:false "%a:@,%a"
                 Location.print_loc loc
@@ -73,7 +73,7 @@ let interface ~lib_name ~mod_name ~input ~output =
       match cmt.cmt_annots with
       | Interface sig_ ->
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Interface_of_cmti.signature ~lib:lib_name ~mod_:mod_name sig_ with
+          begin match Zoo.Interface_of_cmti.transl_signature ~lib:lib_name ~mod_:mod_name sig_ with
           | exception Zoo.Interface_of_cmti.Ignore ->
               ()
           | intf ->

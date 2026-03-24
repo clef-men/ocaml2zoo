@@ -2,7 +2,7 @@ open Interface
 
 exception Ignore
 
-let signature_item (sig_item : Typedtree.signature_item) =
+let transl_signature_item (sig_item : Typedtree.signature_item) =
   match sig_item.sig_desc with
   | Tsig_value val_descr ->
       Some (Ident.name val_descr.val_id)
@@ -13,8 +13,8 @@ let signature_item (sig_item : Typedtree.signature_item) =
   | _ ->
       None
 
-let signature ~lib ~mod_ (sig_ : Typedtree.signature) =
-  let values = List.filter_map signature_item sig_.sig_items in
+let transl_signature ~lib ~mod_ (sig_ : Typedtree.signature) =
+  let values = List.filter_map transl_signature_item sig_.sig_items in
   { library= lib;
     module_= mod_;
     values;

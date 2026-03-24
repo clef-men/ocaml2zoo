@@ -9,5 +9,5 @@ exception Error of Location.t * Error.t
 
 exception Ignore
 
-val structure :
+val transl_structure :
   lib:string -> mod_:string -> Typedtree.structure -> Implementation.t

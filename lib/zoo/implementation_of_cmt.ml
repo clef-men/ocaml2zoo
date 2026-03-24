@@ -847,7 +847,7 @@ module Context = struct
         resolve_path t ~loc path
 end
 
-let open_declaration ~loc ~err (open_ : Typedtree.open_declaration) =
+let transl_open_declaration ~loc ~err (open_ : Typedtree.open_declaration) =
   match open_.open_expr.mod_desc with
   | Tmod_ident _ ->
       ()
@@ -901,7 +901,7 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
   | _ ->
       unsupported ~loc:pat.pat_loc err
 
-let rec pattern ~ctx (pat : Typedtree.pattern) =
+let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   match pat.pat_desc with
   | Tpat_any ->
       None
@@ -912,7 +912,7 @@ let rec pattern ~ctx (pat : Typedtree.pattern) =
       let bdrs = List.map (pattern_to_binder ~ctx ~err:Pattern_nested) pats in
       Some (Pat_tuple bdrs)
   | Tpat_record ((_, { lbl_repres= Record_unboxed _; _ }, pat) :: _, _) ->
-      pattern ~ctx pat
+      transl_pattern ~ctx pat
   | Tpat_record (((_, lbl, _) :: _) as pats, Closed) ->
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
       if record_type_is_mutable (Context.find_type ctx rcd) then
@@ -923,7 +923,7 @@ let rec pattern ~ctx (pat : Typedtree.pattern) =
       unsupported ~loc:pat.pat_loc Pattern_record
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
       let[@warning "-8"] [pat] = pats in
-      pattern ~ctx pat
+      transl_pattern ~ctx pat
   | Tpat_construct (lid, constr, pats, _) ->
       let bdrs = List.map (pattern_to_binder ~ctx ~err:Pattern_nested) pats in
       if Longident.Map.mem lid.txt Builtin.constrs then
@@ -944,39 +944,39 @@ let rec pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_lazy _ ->
       unsupported ~loc:pat.pat_loc Pattern_lazy
 
-let expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
+let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let fld = lbl.lbl_name in
   let rcd = Context.add_dependency_from_label ctx ~loc lbl in
   if record_type_is_mutable (Context.find_type ctx rcd) then
     Record_get (expr, fld)
   else
     Proj (expr, fld)
-let rec expression ~ctx (expr : Typedtree.expression) =
+let rec transl_expression ~ctx (expr : Typedtree.expression) =
   match expr.exp_desc with
   | Texp_ident (path, _, _) ->
-      expression_ident ~ctx ~loc:expr.exp_loc path
+      transl_expression_ident ~ctx ~loc:expr.exp_loc path
   | Texp_constant (Const_int int) ->
       Int int
   | Texp_constant _ ->
       unsupported ~loc:expr.exp_loc Literal_non_integer
   | Texp_let (rec_flag, [bdg], expr2) ->
-      let expr1 = expression ~ctx bdg.vb_expr in
+      let expr1 = transl_expression ~ctx bdg.vb_expr in
       let restore_locals = Context.save_locals ctx in
-      begin match pattern ~ctx bdg.vb_pat with
+      begin match transl_pattern ~ctx bdg.vb_pat with
       | None ->
-          let expr2 = expression ~ctx expr2 in
+          let expr2 = transl_expression ~ctx expr2 in
           Seq (expr1, expr2)
       | Some pat ->
           match expr1 with
           | Fun (bdrs, expr1) ->
               let[@warning "-8"] Pat_var local = pat in
-              let expr2 = expression ~ctx expr2 in
+              let expr2 = transl_expression ~ctx expr2 in
               restore_locals () ;
               Letrec (rec_flag, local, bdrs, expr1, expr2)
           | _ ->
               if rec_flag = Recursive then
                 unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
-              let expr2 = expression ~ctx expr2 in
+              let expr2 = transl_expression ~ctx expr2 in
               restore_locals () ;
               Let (pat, expr1, expr2)
       end
@@ -994,12 +994,12 @@ let rec expression ~ctx (expr : Typedtree.expression) =
       in
       begin match body with
       | Tfunction_body expr ->
-          let expr = expression ~ctx expr in
+          let expr = transl_expression ~ctx expr in
           restore_locals () ;
           Fun (bdrs, expr)
       | Tfunction_cases { cases= brs; param= id; _ } ->
           Context.add_local ctx id ;
-          let brs, fb = branches ~ctx brs in
+          let brs, fb = transl_branches ~ctx brs in
           restore_locals () ;
           let local = Ident.name id in
           Fun (bdrs @ [Some local], Match (Local local, brs, fb))
@@ -1009,11 +1009,11 @@ let rec expression ~ctx (expr : Typedtree.expression) =
         List.map (fun (lbl, expr') ->
           if lbl <> Asttypes.Nolabel then
             unsupported ~loc:expr.exp_loc Label ;
-          expression ~ctx (Option.get expr')
+          transl_expression ~ctx (Option.get expr')
         ) exprs
       in
       let default exprs =
-        let expr' = expression ~ctx expr' in
+        let expr' = transl_expression ~ctx expr' in
         Apply (expr', exprs)
       in
       begin match expr'.exp_desc with
@@ -1038,19 +1038,19 @@ let rec expression ~ctx (expr : Typedtree.expression) =
           default (arguments ())
       end
   | Texp_ifthenelse (expr1, expr2, expr3) ->
-      let expr1 = expression ~ctx expr1 in
+      let expr1 = transl_expression ~ctx expr1 in
       begin match expr1, expr2.exp_desc, expr3 with
       | Unop (Unop_neg, expr1), Texp_apply ({ exp_desc= Texp_ident (path, _, _); _ }, _), None
         when Path.Set.mem path Builtin.raising ->
           Context.add_dependency ctx Dependency.assume ;
           Apply (Global "assume", [expr1])
       | _ ->
-          let expr2 = expression ~ctx expr2 in
-          let expr3 = Option.map (expression ~ctx) expr3 in
+          let expr2 = transl_expression ~ctx expr2 in
+          let expr3 = Option.map (transl_expression ~ctx) expr3 in
           If (expr1, expr2, expr3)
       end
   | Texp_sequence (expr1, expr2) ->
-      let expr1 = expression ~ctx expr1 in
+      let expr1 = transl_expression ~ctx expr1 in
       let expr1 =
         match expr1 with
         | Seq (expr1, Tuple []) ->
@@ -1058,7 +1058,7 @@ let rec expression ~ctx (expr : Typedtree.expression) =
         | _ ->
             expr1
       in
-      let expr2 = expression ~ctx expr2 in
+      let expr2 = transl_expression ~ctx expr2 in
       Seq (expr1, expr2)
   | Texp_for (id, pat, expr1, expr2, Upto, expr3) ->
       let bdr =
@@ -1070,8 +1070,8 @@ let rec expression ~ctx (expr : Typedtree.expression) =
         | _ ->
             assert false
       in
-      let expr1 = expression ~ctx expr1 in
-      let expr2 = expression ~ctx expr2 in
+      let expr1 = transl_expression ~ctx expr1 in
+      let expr2 = transl_expression ~ctx expr2 in
       let expr2 =
         match expr2 with
         | Binop (Binop_minus, expr2, Int 1) ->
@@ -1081,16 +1081,16 @@ let rec expression ~ctx (expr : Typedtree.expression) =
       in
       let restore_locals = Context.save_locals ctx in
       Context.add_local ctx id ;
-      let expr3 = expression ~ctx expr3 in
+      let expr3 = transl_expression ~ctx expr3 in
       restore_locals () ;
       For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
       unsupported ~loc:expr.exp_loc Expr_for_downward
   | Texp_tuple exprs ->
-      let exprs = List.map (expression ~ctx) exprs in
+      let exprs = List.map (transl_expression ~ctx) exprs in
       Tuple exprs
   | Texp_record rcd ->
-      expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
+      transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
         match rcd.representation with
         | Record_unboxed _ ->
             let[@warning "-8"] [expr] = exprs in
@@ -1104,7 +1104,7 @@ let rec expression ~ctx (expr : Typedtree.expression) =
       )
   | Texp_construct (_, { cstr_tag= Cstr_unboxed; _ }, exprs) ->
       let[@warning "-8"] [expr] = exprs in
-      expression ~ctx expr
+      transl_expression ~ctx expr
   | Texp_construct (lid, constr, exprs) ->
       begin match Longident.Map.find_opt lid.txt Builtin.constrs with
       | Some expr ->
@@ -1128,15 +1128,15 @@ let rec expression ~ctx (expr : Typedtree.expression) =
           in
           match constr.cstr_inlined with
           | None ->
-              let exprs = List.map (expression ~ctx) exprs in
+              let exprs = List.map (transl_expression ~ctx) exprs in
               mk_immutable exprs
           | Some ty ->
               let[@warning "-8"] [expr] = exprs in
               match expr.exp_desc with
               | Texp_ident (path, _, _) ->
-                  expression_ident ~ctx ~loc:expr.exp_loc path
+                  transl_expression_ident ~ctx ~loc:expr.exp_loc path
               | Texp_record rcd ->
-                  expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
+                  transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
                     if inline_record_type_is_mutable constr.cstr_attributes ty then
                       Constr (Mutable, tag, exprs)
                     else
@@ -1146,32 +1146,32 @@ let rec expression ~ctx (expr : Typedtree.expression) =
                   assert false
       end
   | Texp_match (expr, brs, _, _) ->
-      let expr = expression ~ctx expr in
-      let brs, fb = branches ~ctx brs in
+      let expr = transl_expression ~ctx expr in
+      let brs, fb = transl_branches ~ctx brs in
       Match (expr, brs, fb)
   | Texp_atomic_loc (expr, lid, lbl) ->
-      let expr = expression ~ctx expr in
+      let expr = transl_expression ~ctx expr in
       let fld = lbl.lbl_name in
       let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
       Atomic_loc (expr, fld)
   | Texp_field (expr, lid, lbl) ->
-      let expr = expression ~ctx expr in
-      expression_field ~ctx ~loc:lid.loc expr lbl
+      let expr = transl_expression ~ctx expr in
+      transl_expression_field ~ctx ~loc:lid.loc expr lbl
   | Texp_setfield (expr1, lid, lbl, expr2) ->
-      let expr1 = expression ~ctx expr1 in
+      let expr1 = transl_expression ~ctx expr1 in
       let fld = lbl.lbl_name in
       let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
-      let expr2 = expression ~ctx expr2 in
+      let expr2 = transl_expression ~ctx expr2 in
       Record_set (expr1, fld, expr2)
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
       Fail
   | Texp_assert (expr, _) ->
       Context.add_dependency ctx Dependency.assert_ ;
-      let expr = expression ~ctx expr in
+      let expr = transl_expression ~ctx expr in
       Apply (Global "assert", [expr])
   | Texp_open (open_, expr) ->
-      open_declaration ~loc:expr.exp_loc ~err:Expr_open open_ ;
-      expression ~ctx expr
+      transl_open_declaration ~loc:expr.exp_loc ~err:Expr_open open_ ;
+      transl_expression ~ctx expr
   | Texp_array _ ->
       unsupported ~loc:expr.exp_loc Expr_array
   | Texp_try _ ->
@@ -1206,15 +1206,15 @@ let rec expression ~ctx (expr : Typedtree.expression) =
       unsupported ~loc:expr.exp_loc Expr_unreachable
   | Texp_extension_constructor _ ->
       unsupported ~loc:expr.exp_loc Expr_extension
-and expression_ident ~ctx ~loc path =
+and transl_expression_ident ~ctx ~loc path =
   Context.resolve_path ctx ~loc path
-and expression_record ~ctx ~loc flds ext_expr mk_expr =
+and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
     | None ->
         Either.Left temporary_local
     | Some ext_expr ->
-        match expression ~ctx ext_expr with
+        match transl_expression ~ctx ext_expr with
         | Local local ->
             Left local
         | ext_expr ->
@@ -1225,9 +1225,9 @@ and expression_record ~ctx ~loc flds ext_expr mk_expr =
       let expr =
         match def with
         | Typedtree.Kept _ ->
-            expression_field ~ctx ~loc (Local (Either.get_left ~right:temporary_local ext_expr)) lbl
+            transl_expression_field ~ctx ~loc (Local (Either.get_left ~right:temporary_local ext_expr)) lbl
         | Overridden (_, expr) ->
-            expression ~ctx expr
+            transl_expression ~ctx expr
       in
       expr :: acc
     ) flds []
@@ -1238,7 +1238,7 @@ and expression_record ~ctx ~loc flds ext_expr mk_expr =
       expr
   | Right ext_expr ->
       Let (Pat_var temporary_local, ext_expr, expr)
-and branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * fallback option = fun ~ctx brs ->
+and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * fallback option = fun ~ctx brs ->
   let rec aux1 acc = function
     | [] ->
         acc, None
@@ -1286,12 +1286,12 @@ and branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * f
         let rec aux2 (pat : Typedtree.pattern) bdr =
           match pat.pat_desc with
           | Tpat_any ->
-              let expr = expression ~ctx br.c_rhs in
+              let expr = transl_expression ~ctx br.c_rhs in
               restore_locals () ;
               acc, Some { fallback_as= bdr; fallback_expr= expr }
           | Tpat_var (id, _, _) ->
               Context.add_local ctx id ;
-              let expr = expression ~ctx br.c_rhs in
+              let expr = transl_expression ~ctx br.c_rhs in
               restore_locals () ;
               let local = Ident.name id in
               begin match bdr with
@@ -1321,19 +1321,19 @@ and branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * f
                       | _ ->
                           bdrs
                     in
-                    let expr = expression ~ctx br.c_rhs in
+                    let expr = transl_expression ~ctx br.c_rhs in
                     bdrs, bdr, expr
                 | Some ty ->
                     let[@warning "-8"] [pat] = pats in
                     match pat.pat_desc with
                     | Tpat_any ->
-                        let expr = expression ~ctx br.c_rhs in
+                        let expr = transl_expression ~ctx br.c_rhs in
                         let[@warning "-8"] Types.Type_record (lbls, _) = ty.type_kind in
                         let bdrs = List.make (List.length lbls) None in
                         bdrs, bdr, expr
                     | Tpat_var (id, _, _) ->
                         Context.add_local ctx id ;
-                        let expr = expression ~ctx br.c_rhs in
+                        let expr = transl_expression ~ctx br.c_rhs in
                         let bdr, expr =
                           let local = Ident.name id in
                           match bdr with
@@ -1349,7 +1349,7 @@ and branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * f
                         if inline_record_type_is_mutable constr.cstr_attributes ty then
                           unsupported ~loc:pat.pat_loc Pattern_invalid ;
                         let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_invalid pat) pats in
-                        let expr = expression ~ctx br.c_rhs in
+                        let expr = transl_expression ~ctx br.c_rhs in
                         bdrs, bdr, expr
                     | _ ->
                         unsupported ~loc:pat.pat_loc Pattern_invalid
@@ -1364,7 +1364,7 @@ and branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * f
   let brs, fb = aux1 [] brs in
   List.rev brs, fb
 
-let value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id rec_flag' expr =
+let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id rec_flag' expr =
   let restore_locals = Context.save_locals ctx in
   begin match rec_flag, rec_flag' with
   | Recursive, _ ->
@@ -1374,7 +1374,7 @@ let value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id r
   | Nonrecursive, Nonrecursive ->
       ()
   end ;
-  let expr = expression ~ctx expr in
+  let expr = transl_expression ~ctx expr in
   restore_locals () ;
   let rec_ = rec_flag = Recursive || rec_flag' = Recursive in
   match expr with
@@ -1390,10 +1390,10 @@ let value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id r
         Val_expr (global, expr)
       else
         unsupported ~loc:bdg.vb_loc Def_invalid
-let value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
+let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
-      value_binding ~ctx rec_flag bdgs bdg global id Nonrecursive bdg.vb_expr
+      transl_value_binding ~ctx rec_flag bdgs bdg global id Nonrecursive bdg.vb_expr
   | Some (Overwrite rec_flag' as kind, attr) ->
       begin match attr.attr_payload with
       | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
@@ -1418,7 +1418,7 @@ let value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
             | Nonrecursive, Nonrecursive ->
                 env
           in
-          value_binding ~ctx rec_flag bdgs bdg global id rec_flag' (Typecore.type_expression env expr)
+          transl_value_binding ~ctx rec_flag bdgs bdg global id rec_flag' (Typecore.type_expression env expr)
       | _ ->
           error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload kind)
       end
@@ -1436,7 +1436,7 @@ let value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
           error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
       end
 
-let value_bindings ~ctx mod_ rec_flag bdgs =
+let transl_value_bindings ~ctx mod_ rec_flag bdgs =
   let bdgs =
     List.map (fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
@@ -1455,7 +1455,7 @@ let value_bindings ~ctx mod_ rec_flag bdgs =
   else
     let vals =
       List.map (fun (bdg, global, id, loc) ->
-        value_binding ~ctx mod_ rec_flag bdgs bdg global id loc
+        transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc
       ) bdgs
     in
     match rec_flag with
@@ -1465,14 +1465,14 @@ let value_bindings ~ctx mod_ rec_flag bdgs =
         let recs = List.concat_map (function Val_recs recs -> recs | _ -> assert false) vals in
         [Val_recs recs]
 
-let type_declaration_record attrs lbls =
+let transl_type_declaration_record attrs lbls =
   let is_mut = record_is_mutable attrs lbls in
   let lbls = List.map (fun lbl -> Ident.name lbl.Types.ld_id) lbls in
   if is_mut then
     Type_record lbls
   else
     Type_product lbls
-let type_declaration (ty : Typedtree.type_declaration) =
+let transl_type_declaration (ty : Typedtree.type_declaration) =
   let var = ty.typ_name.txt in
   match ty.typ_type.type_kind with
   | Type_abstract _ ->
@@ -1480,7 +1480,7 @@ let type_declaration (ty : Typedtree.type_declaration) =
   | Type_record (_, Record_unboxed _) ->
       []
   | Type_record (lbls, _) ->
-      let ty = type_declaration_record ty.typ_attributes lbls in
+      let ty = transl_type_declaration_record ty.typ_attributes lbls in
       [Type (var, ty)]
   | Type_variant (_, Variant_unboxed) ->
       []
@@ -1491,7 +1491,7 @@ let type_declaration (ty : Typedtree.type_declaration) =
           let defs =
             match constr.cd_args with
             | Cstr_record lbls ->
-                let ty = type_declaration_record constr.cd_attributes lbls in
+                let ty = transl_type_declaration_record constr.cd_attributes lbls in
                 Type (Printf.sprintf "%s.%s" var tag, ty) :: defs
             | _ ->
                 defs
@@ -1503,15 +1503,15 @@ let type_declaration (ty : Typedtree.type_declaration) =
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 
-let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
+let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   match str_item.str_desc with
   | Tstr_value (rec_flag, bdgs) ->
-      let vals = value_bindings ~ctx mod_ rec_flag bdgs in
+      let vals = transl_value_bindings ~ctx mod_ rec_flag bdgs in
       List.map (fun val_ -> Val val_) vals
   | Tstr_type (_, tys) ->
-      List.concat_map type_declaration tys
+      List.concat_map transl_type_declaration tys
   | Tstr_open open_ ->
-      open_declaration ~loc:str_item.str_loc ~err:Def_open open_ ;
+      transl_open_declaration ~loc:str_item.str_loc ~err:Def_open open_ ;
       []
   | Tstr_attribute attr ->
       if Attribute.has_ignore [attr] then
@@ -1543,11 +1543,11 @@ let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
       unsupported ~loc:str_item.str_loc Def_class_type
   | Tstr_include _ ->
       unsupported ~loc:str_item.str_loc Def_include
-let structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
+let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   Context.update_env ctx str_item.str_env ;
-  structure_item ~ctx mod_ str_item
+  transl_structure_item ~ctx mod_ str_item
 
-let structure ~lib ~mod_ (str : Typedtree.structure) =
+let transl_structure ~lib ~mod_ (str : Typedtree.structure) =
   let final_env =
     try
       Envaux.env_of_only_summary str.str_final_env
@@ -1555,7 +1555,7 @@ let structure ~lib ~mod_ (str : Typedtree.structure) =
       error ~loc:Location.none (Envaux err)
   in
   let ctx = Context.create mod_ final_env in
-  let definitions = List.concat_map (structure_item ~ctx mod_) str.str_items in
+  let definitions = List.concat_map (transl_structure_item ~ctx mod_) str.str_items in
   let dependencies = Context.dependencies ctx in
   { library= lib;
     module_= mod_;
