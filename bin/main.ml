@@ -53,11 +53,13 @@ let implementation ~lib_name ~mod_name ~input ~output =
               ()
           | impl ->
               let rocq = Zoo.Implementation_to_rocq.transl_types impl in
-              let ppf = output.output_types |> open_out |> Format.formatter_of_out_channel in
-              Fmt.pf ppf "%a@." Zoo.Rocq.pp rocq ;
+              Out_channel.with_open_text output.output_types (fun chan ->
+                Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+              ) ;
               let rocq = Zoo.Implementation_to_rocq.transl_code impl in
-              let ppf = output.output_code |> open_out |> Format.formatter_of_out_channel in
-              Fmt.pf ppf "%a@." Zoo.Rocq.pp rocq
+              Out_channel.with_open_text output.output_code (fun chan ->
+                Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+              )
           end
       | _ ->
           invalid_cmt ": not an implementation"
@@ -78,8 +80,9 @@ let interface ~lib_name ~mod_name ~input ~output =
               ()
           | intf ->
               let rocq = Zoo.Interface_to_rocq.transl intf in
-              let ppf = output.output_opaque |> open_out |> Format.formatter_of_out_channel in
-              Fmt.pf ppf "%a@." Zoo.Rocq.pp rocq
+              Out_channel.with_open_text output.output_opaque (fun chan ->
+                Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+              )
           end
       | _ ->
           invalid_cmti ": not an interface"
