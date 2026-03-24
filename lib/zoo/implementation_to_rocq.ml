@@ -1,72 +1,35 @@
 open Implementation
 
-module Fmt = struct
-  include Fmt
-
-  let rec list_index ~sep item ppf i = function
-    | [] ->
-        ()
-    | x :: xs ->
-        sep ppf () ;
-        item ppf i x ;
-        list_index ~sep item ppf (i + 1) xs
-  let list_index ?(sep = cut) item ppf = function
-    | [] ->
-        ()
-    | x :: xs ->
-        item ppf 0 x ;
-        list_index ~sep item ppf 1 xs
-end
-
-let boolean ppf =
+let pp_boolean ppf =
   Fmt.pf ppf "%B"
-let integer ppf int =
+let pp_integer ppf int =
   if int < 0 then
     Fmt.pf ppf "(%i)" int
   else
     Fmt.pf ppf "%i" int
 
-let global_variable ppf global =
-  Fmt.pf ppf "%s" global
-let local_variable ppf local =
+let pp_global =
+  Fmt.string
+let pp_local ppf local =
   Fmt.pf ppf {|"%s"|} local
 
-let binder ppf = function
+let pp_binder ppf = function
   | None ->
       Fmt.pf ppf "<>"
   | Some local ->
-      local_variable ppf local
+      pp_local ppf local
 
-let typ ~lib ~mod_ ppf (var, ty) =
-  let var = String.concat "." [lib; mod_; var] in
-  match ty with
-  | Type_product flds ->
-      Fmt.list_index (fun ppf i fld ->
-        Fmt.pf ppf {|Notation "'%s'" := (@,  in_type "%s" %i@,)(in custom zoo_proj@,).|}
-          fld var i
-      ) ppf flds
-  | Type_record flds ->
-      Fmt.list_index (fun ppf i fld ->
-        Fmt.pf ppf {|Notation "'%s'" := (@,  in_type "%s" %i@,)(in custom zoo_field@,).|}
-          fld var i
-      ) ppf flds
-  | Type_variant tags ->
-      Fmt.list_index (fun ppf i tag ->
-        Fmt.pf ppf {|Notation "'%s'" := (@,  in_type "%s" %i@,)(in custom zoo_tag@,).|}
-          tag var i
-      ) ppf tags
-
-let pattern ppf = function
+let pp_pattern ppf = function
   | Pat_var var ->
-      local_variable ppf var
+      pp_local ppf var
   | Pat_tuple bdrs ->
-      Fmt.(list ~sep:(const string ", ") binder) ppf bdrs
+      Fmt.(list ~sep:(const string ", ") pp_binder) ppf bdrs
   | Pat_constr (tag, bdrs) ->
       Fmt.pf ppf "‘%s %a"
         tag
-        Fmt.(list ~sep:(const string ", ") binder) bdrs
+        Fmt.(list ~sep:(const string ", ") pp_binder) bdrs
 
-let unop ppf op =
+let pp_unop ppf op =
   Fmt.char ppf
     begin match op with
     | Unop_neg ->
@@ -75,7 +38,7 @@ let unop ppf op =
         '-'
     end
 
-let binop ppf op =
+let pp_binop ppf op =
   Fmt.string ppf
     begin match op with
     | Binop_plus ->
@@ -227,83 +190,95 @@ let level = function
   | Fun _ ->
       max_level
 
-let rec expression' lvl ppf = function
+let rec pp_expression' lvl ppf = function
   | Global global ->
-      global_variable ppf global
+      pp_global ppf global
   | Local local ->
-      local_variable ppf local
+      pp_local ppf local
   | Bool bool ->
-      boolean ppf bool
+      pp_boolean ppf bool
   | Int int ->
-      integer ppf int
+      pp_integer ppf int
   | Let (pat, expr1, expr2) ->
       Fmt.pf ppf "@[<v>@[<hv>let: %a :=@;<1 2>@[%a@]@;in@]@,%a@]"
-        pattern pat
-        (expression max_level) expr1
-        (expression max_level) expr2
+        pp_pattern pat
+        (pp_expression max_level) expr1
+        (pp_expression max_level) expr2
   | Letrec (rec_flag, local, bdrs, expr1, expr2) ->
       Fmt.pf ppf "@[<v>@[<hv>let%s: %a %a :=@;<1 2>@[%a@]@;in@]@,%a@]"
         (match rec_flag with Nonrecursive -> "" | Recursive -> "rec")
-        local_variable local
-        Fmt.(list ~sep:(const char ' ') binder) bdrs
-        (expression max_level) expr1
-        (expression max_level) expr2
+        pp_local local
+        Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
+        (pp_expression max_level) expr1
+        (pp_expression max_level) expr2
   | Seq (expr1, expr2) ->
       Fmt.pf ppf "@[<v>@[" ;
       begin match expr1 with
       | If (expr1, expr2, expr3) ->
-          expression_if ~force_else:true ppf expr1 expr2 expr3
+          pp_expression_if ~force_else:true ppf expr1 expr2 expr3
       | _ ->
-          expression (next_level lvl) ppf expr1
+          pp_expression (next_level lvl) ppf expr1
       end ;
       Fmt.pf ppf "@] ;;@,%a@]"
-        (expression max_level) expr2
+        (pp_expression max_level) expr2
   | Fun (bdrs, expr) ->
       Fmt.pf ppf "@[<hv>fun: %a =>@;<1 2>@[%a@]@]"
-        Fmt.(list ~sep:(const char ' ') binder) bdrs
-        (expression max_level) expr
+        Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
+        (pp_expression max_level) expr
   | Apply (expr, exprs) ->
       Fmt.pf ppf "@[<hv>@[%a@]%a@]"
-        (expression lvl) expr
-        Fmt.(list ~sep:nop (fun ppf -> pf ppf "@;<1 2>@[%a@]" (expression @@ next_level lvl))) exprs
+        (pp_expression lvl) expr
+        Fmt.(
+          list ~sep:nop @@ fun ppf ->
+            pf ppf "@;<1 2>@[%a@]"
+              (pp_expression @@ next_level lvl)
+        ) exprs
   | Unop (op, expr) ->
       Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@]"
-        unop op
-        (expression lvl) expr
+        pp_unop op
+        (pp_expression lvl) expr
   | Binop (op, expr1, expr2) ->
       let assoc = associativity op in
       Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@;@[%a@]@]"
-        (expression @@ if assoc = Left then lvl else next_level lvl) expr1
-        binop op
-        (expression @@ if assoc = Left then next_level lvl else lvl) expr2
+        (pp_expression @@ if assoc = Left then lvl else next_level lvl) expr1
+        pp_binop op
+        (pp_expression @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
-      expression_if ppf expr1 expr2 expr3
+      pp_expression_if ppf expr1 expr2 expr3
   | For (local, expr1, expr2, expr3) ->
       Fmt.pf ppf "@[<v>@[<hv>for:@;<1 2>@[%a@]@;:=@;<1 2>@[%a@]@;to@;<1 2>@[%a@]@;begin@]@,  @[%a@]@,end@]"
-        binder local
-        (expression max_level) expr1
-        (expression max_level) expr2
-        (expression max_level) expr3
+        pp_binder local
+        (pp_expression max_level) expr1
+        (pp_expression max_level) expr2
+        (pp_expression max_level) expr3
   | Alloc (expr1, expr2) ->
       Fmt.pf ppf "@[<hv>Alloc@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
   | Tuple exprs ->
       Fmt.pf ppf "@[<hv>(%a@,)@]"
-        Fmt.(list ~sep:(any ",@;<1 1>") (fun ppf -> pf ppf "@[%a@]" (expression max_level))) exprs
+        Fmt.(
+          list ~sep:(any ",@;<1 1>") @@ fun ppf ->
+            pf ppf "@[%a@]"
+              (pp_expression max_level)
+        ) exprs
   | Ref expr ->
       Fmt.pf ppf "@[<hv>ref@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr
+        (pp_expression @@ next_level lvl) expr
   | Record exprs ->
       Fmt.pf ppf "@[<hv>{ %a@;}@]"
-        Fmt.(list ~sep:(any ",@;<1 2>") (fun ppf -> pf ppf "@[%a@]" (expression max_level))) exprs
+        Fmt.(
+          list ~sep:(any ",@;<1 2>") @@ fun ppf ->
+            pf ppf "@[%a@]"
+              (pp_expression max_level)
+        ) exprs
   | Constr (_, "[]", _) ->
       Fmt.pf ppf "[]"
   | Constr (_, "::", exprs) ->
       let[@warning "-8"] [expr1; expr2] = exprs in
       Fmt.pf ppf "@[<hv>%a ::@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression lvl) expr2
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression lvl) expr2
   | Constr (_, tag, []) ->
       Fmt.pf ppf "§%s"
         tag
@@ -316,7 +291,11 @@ let rec expression' lvl ppf = function
           | Immutable_generative_weak -> "["
           | Immutable_generative_strong -> "@["
         )
-        Fmt.(list ~sep:(any ",@;<1 2>") (fun ppf -> pf ppf "@[%a@]" (expression max_level))) exprs
+        Fmt.(
+          list ~sep:(any ",@;<1 2>") @@ fun ppf ->
+            pf ppf "@[%a@]"
+              (pp_expression max_level)
+        ) exprs
         ( match flag with
           | Mutable -> "}"
           | Immutable_nongenerative -> ")"
@@ -325,64 +304,64 @@ let rec expression' lvl ppf = function
         )
   | Proj (expr, fld) ->
       Fmt.pf ppf "@[%a@].<%s>"
-        (expression lvl) expr
+        (pp_expression lvl) expr
         fld
   | Match (expr, brs, fb) ->
       Fmt.pf ppf "@[<v>@[<hv>match:@;<1 2>@[%a@]@;with@]@,%a%aend@]"
-        (expression max_level) expr
-        Fmt.(list ~sep:nop branch) brs
-        Fmt.(option fallback) fb
+        (pp_expression max_level) expr
+        Fmt.(list ~sep:nop pp_branch) brs
+        Fmt.(option pp_fallback) fb
   | Ref_get expr ->
       Fmt.pf ppf "!@[%a@]"
-        (expression lvl) expr
+        (pp_expression lvl) expr
   | Ref_set (expr1, expr2) ->
       Fmt.pf ppf "@[<hv>@[<hv>@[%a@]@;<1 2><-@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression lvl) expr2
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression lvl) expr2
   | Record_get (expr, fld) ->
       Fmt.pf ppf "@[%a@].{%s}"
-        (expression lvl) expr
+        (pp_expression lvl) expr
         fld
   | Record_set (expr1, fld, expr2) ->
       Fmt.pf ppf "@[<hv>@[<hv>@[%a@]@;<1 2><-{%s}@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr1
         fld
-        (expression lvl) expr2
+        (pp_expression lvl) expr2
   | Is_immediate expr ->
       Fmt.pf ppf "@[<hv>IsImmediate@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr
+        (pp_expression @@ next_level lvl) expr
   | Get_tag expr ->
       Fmt.pf ppf "@[<hv>GetTag@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr
+        (pp_expression @@ next_level lvl) expr
   | Get_size expr ->
       Fmt.pf ppf "@[<hv>GetSize@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr
+        (pp_expression @@ next_level lvl) expr
   | Atomic_loc (expr, fld) ->
       Fmt.pf ppf "@[%a@].[%s]"
-        (expression lvl) expr
+        (pp_expression lvl) expr
         fld
   | Load (expr1, expr2) ->
       Fmt.pf ppf "@[<hv>Load@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
   | Store (expr1, expr2, expr3) ->
       Fmt.pf ppf "@[<hv>Store@;<1 2>@[%a@]@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
-        (expression @@ next_level lvl) expr3
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr3
   | Xchg (expr1, expr2) ->
       Fmt.pf ppf "@[<hv>Xchg@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
   | Cas (expr1, expr2, expr3) ->
       Fmt.pf ppf "@[<hv>CAS@;<1 2>@[%a@]@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
-        (expression @@ next_level lvl) expr3
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr3
   | Faa (expr1, expr2) ->
       Fmt.pf ppf "@[<hv>FAA@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
   | Fail ->
       Fmt.pf ppf "Fail"
   | Skip ->
@@ -391,22 +370,24 @@ let rec expression' lvl ppf = function
       Fmt.pf ppf "Proph"
   | Resolve (expr1, expr2, expr3) ->
       Fmt.pf ppf "@[<hv>Resolve@;<1 2>@[%a@]@;<1 2>@[%a@]@;<1 2>@[%a@]@]"
-        (expression @@ next_level lvl) expr1
-        (expression @@ next_level lvl) expr2
-        (expression @@ next_level lvl) expr3
+        (pp_expression @@ next_level lvl) expr1
+        (pp_expression @@ next_level lvl) expr2
+        (pp_expression @@ next_level lvl) expr3
   | Id ->
       Fmt.pf ppf "Id"
-and expression lvl ppf expr =
+and pp_expression lvl ppf expr =
   let lvl_expr = level expr in
   if lvl < lvl_expr then
-    Fmt.pf ppf "(%a)" (expression' lvl_expr) expr
+    Fmt.pf ppf "(%a)"
+      (pp_expression' lvl_expr) expr
   else
-    Fmt.pf ppf "%a" (expression' lvl_expr) expr
-and expression_if_aux ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
+    Fmt.pf ppf "%a"
+      (pp_expression' lvl_expr) expr
+and pp_expression_if_aux ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
   Fmt.pf ppf "@[<hv>%sif:@;<1 2>@[%a@]@;then (@]@,  @[%a@]@,)"
     (if nested then " else " else "")
-    (expression max_level) expr1
-    (expression max_level) expr2 ;
+    (pp_expression max_level) expr1
+    (pp_expression max_level) expr2 ;
   match expr3 with
   | None ->
       if force_else then
@@ -414,15 +395,15 @@ and expression_if_aux ?(nested = false) ?(force_else = false) ppf expr1 expr2 ex
   | Some expr3 ->
       match expr3 with
       | If (expr1, expr2, expr3) ->
-          expression_if_aux ~nested:true ppf expr1 expr2 expr3
+          pp_expression_if_aux ~nested:true ppf expr1 expr2 expr3
       | expr ->
           Fmt.pf ppf " else (@,  @[%a@]@,)"
-            (expression max_level) expr
-and expression_if ?force_else ppf expr1 expr2 expr3 =
+            (pp_expression max_level) expr
+and pp_expression_if ?force_else ppf expr1 expr2 expr3 =
   Fmt.pf ppf "@[<v>" ;
-  expression_if_aux ?force_else ppf expr1 expr2 expr3 ;
+  pp_expression_if_aux ?force_else ppf expr1 expr2 expr3 ;
   Fmt.pf ppf "@]"
-and branch ppf br =
+and pp_branch ppf br =
   Fmt.pf ppf "| " ;
   begin match br.branch_tag with
   | "[]" ->
@@ -430,98 +411,176 @@ and branch ppf br =
   | "::" ->
       let[@warning "-8"] [bdr1; bdr2] = br.branch_fields in
       Fmt.pf ppf "%a :: %a"
-        binder bdr1
-        binder bdr2
+        pp_binder bdr1
+        pp_binder bdr2
   | _ ->
       Fmt.pf ppf "%s%s%a"
         br.branch_tag
         (match br.branch_fields with [] -> "" | _ -> " ")
-        Fmt.(list ~sep:(const char ' ') binder) br.branch_fields
+        Fmt.(list ~sep:(const char ' ') pp_binder) br.branch_fields
   end ;
   Fmt.pf ppf "%a =>@,    @[%a@]@,"
-    Fmt.(option @@ fun ppf -> pf ppf " as %a" local_variable) br.branch_as
-    (expression max_level) br.branch_expr
-and fallback ppf fb =
+    Fmt.(option @@ fun ppf -> pf ppf " as %a" pp_local) br.branch_as
+    (pp_expression max_level) br.branch_expr
+and pp_fallback ppf fb =
   Fmt.pf ppf "|_%a =>@,    @[%a@]@,"
-    Fmt.(option @@ fun ppf -> pf ppf " as %a" local_variable) fb.fallback_as
-    (expression max_level) fb.fallback_expr
-let expression =
-  expression max_level
+    Fmt.(option @@ fun ppf -> pf ppf " as %a" pp_local) fb.fallback_as
+    (pp_expression max_level) fb.fallback_expr
+let pp_expression =
+  pp_expression max_level
 
-let value fresh ppf = function
+let transl_typ ~lib ~mod_ (var, ty) =
+  let var = String.concat "." [lib; mod_; var] in
+  match ty with
+  | Type_product flds ->
+      flds |> List.mapi @@ fun i fld ->
+        Rocq.notation
+          LocalityNormal
+          fld
+          ( fun ppf () ->
+              Fmt.pf ppf {|in_type "%s" %i|}
+                var
+                i
+          )
+          "zoo_proj"
+  | Type_record flds ->
+      flds |> List.mapi @@ fun i fld ->
+        Rocq.notation
+          LocalityNormal
+          fld
+          ( fun ppf () ->
+              Fmt.pf ppf {|in_type "%s" %i|}
+                var
+                i
+          )
+          "zoo_field"
+  | Type_variant tags ->
+      tags |> List.mapi @@ fun i tag ->
+        Rocq.notation
+          LocalityNormal
+          tag
+          ( fun ppf () ->
+              Fmt.pf ppf {|in_type "%s" %i|}
+                var
+                i
+          )
+          "zoo_tag"
+
+let transl_value fresh = function
   | Val_expr (global, expr) ->
-      Fmt.pf ppf "Definition %a : val :=@,  @[%a@]."
-        global_variable global
-        expression expr
+      [ Rocq.definition
+          LocalityNormal
+          global
+          (Some "val")
+          ( fun ppf () ->
+              Fmt.pf ppf "@[%a@]"
+                pp_expression expr
+          )
+      ]
   | Val_fun (global, params, expr) ->
-      Fmt.pf ppf "Definition %a : val :=@,  @[<v>fun: %a =>@,  @[%a@]@]."
-        global_variable global
-        Fmt.(list ~sep:(const char ' ') binder) params
-        expression expr
+      [ Rocq.definition
+          LocalityNormal
+          global
+          (Some "val")
+          ( fun ppf () ->
+              Fmt.pf ppf "@[<v>fun: %a =>@,  @[%a@]@]"
+                Fmt.(list ~sep:(const char ' ') pp_binder) params
+                pp_expression expr
+          )
+      ]
   | Val_recs [global, local, params, body] ->
-      Fmt.pf ppf "Definition %a : val :=@,  @[<v>rec: %a %a =>@,  @[%a@]@]."
-        global_variable global
-        local_variable local
-        Fmt.(list ~sep:(const char ' ') binder) params
-        expression body
+      [ Rocq.definition
+          LocalityNormal
+          global
+          (Some "val")
+          ( fun ppf () ->
+              Fmt.pf ppf "@[<v>rec: %a %a =>@,  @[%a@]@]"
+                pp_local local
+                Fmt.(list ~sep:(const char ' ') pp_binder) params
+                pp_expression body
+          )
+      ]
   | Val_recs recs ->
       let id = fresh () in
-      Fmt.pf ppf "#[local] Definition __zoo_recs_%i := (@,  @[<v>recs: %a@]@,)%%zoo_recs.@,%a@,%a"
-        id
-        Fmt.(
-          list
-            ~sep:(
-              fun ppf () ->
-                pf ppf "@,and: "
+      List.concat
+      [ [ Rocq.definition
+            LocalityLocal
+            (Fmt.str "__zoo_recs_%i" id)
+            None
+            ( fun ppf () ->
+                Fmt.pf ppf "@[<v>( @[<v>recs: %a@]@,)%%zoo_recs@]"
+                  Fmt.(
+                    list ~sep:(any "@,and: ") @@ fun ppf (_, local, params, body) ->
+                      pf ppf "%a %a =>@,  @[%a@]"
+                        pp_local local
+                        (list ~sep:(const char ' ') pp_binder) params
+                        pp_expression body
+                  ) recs
             )
-            ( fun ppf (_, local, params, body) ->
-                pf ppf "%a %a =>@,  @[%a@]"
-                  local_variable local
-                  (list ~sep:(const char ' ') binder) params
-                  expression body
+        ]
+      ; List.mapi (fun i (global, _, _, _) ->
+          Rocq.definition
+            LocalityNormal
+            global
+            None
+            ( fun ppf () ->
+                Fmt.pf ppf "ValRecs %i __zoo_recs_%i"
+                  i
+                  id
             )
         ) recs
-        ( Fmt.list_index (fun ppf i (global, _, _, _) ->
-            Fmt.pf ppf "Definition %a :=@,  ValRecs %i __zoo_recs_%i."
-              global_variable global
-              i
-              id
-          )
+      ; List.mapi (fun i (global, _, _, _) ->
+          Rocq.instance
+            LocalityGlobal
+            None
+            ( fun ppf () ->
+                Fmt.pf ppf "@[<v>AsValRecs' %s %i __zoo_recs_%i [@,  @[<v>%a@]@,]@]"
+                  global
+                  i
+                  id
+                  Fmt.(
+                    list ~sep:(any " ;@,") @@ fun ppf (global, _, _, _) ->
+                      pp_global ppf global
+                  ) recs
+            )
         ) recs
-        ( Fmt.list_index (fun ppf i (global, _, _, _) ->
-            Fmt.pf ppf "#[global] Instance :@,  @[<v>AsValRecs' %a %i __zoo_recs_%i [@,  @[<v>%a@]@,].@]@,Proof.@,  done.@,Qed."
-              global_variable global
-              i
-              id
-              Fmt.(list ~sep:(any " ;@,") (fun ppf (global, _, _, _) -> global_variable ppf global)) recs
-          )
-        ) recs
+      ]
   | Val_opaque global ->
-      Fmt.pf ppf "Parameter %a : val."
-        global_variable global
-let value () =
+      [ Rocq.parameter
+          global
+          "val"
+      ]
+let transl_value () =
   let gen = ref 0 in
-  value (fun () -> let i = !gen in gen := i + 1 ; i)
+  transl_value (fun () -> let i = !gen in gen := i + 1 ; i)
 
-let pp ~code ~pp ~select ppf t =
-  Fmt.pf ppf "@[<v>" ;
-  Fmt.pf ppf "From zoo Require Import@,  prelude.@," ;
-  Fmt.pf ppf "From zoo.language Require Import@,  typeclasses@,  notations.@," ;
-  if not @@ Hashtbl.is_empty t.dependencies then (
-    Fmt.hashtbl (fun ppf (lib, mods) ->
-      Fmt.pf ppf "From %s Require Import@,  @[<v>%a@]."
-        lib
-        (Hashset.pp Fmt.string) mods
-    ) ppf t.dependencies ;
-    Fmt.pf ppf "@,"
-  ) ;
-  if code then
-    Fmt.pf ppf "From %s Require Import@,  %s__types.@,"
-      t.library
-      t.module_ ;
-  Fmt.pf ppf "From zoo Require Import@,  options.@,@," ;
-  Fmt.(list ~sep:(any "@,@,")) pp ppf (select t) ;
-  Fmt.pf ppf "@]@."
-let pp ~ppf_types ~ppf_code t =
-  pp ~code:false ~pp:(typ ~lib:t.library ~mod_:t.module_) ~select:types ppf_types t ;
-  pp ~code:true ~pp:(value ()) ~select:values ppf_code t
+let transl ~code t =
+  let rocq =
+    if code then
+      List.map (transl_value ()) (values t)
+    else
+      List.map (transl_typ ~lib:t.library ~mod_:t.module_) (types t)
+  in
+  let rocq = List.interleave [Rocq.newline] rocq in
+  List.concat (
+    [ [ Rocq.require RequireImport "zoo" ["prelude"]
+      ; Rocq.require RequireImport "zoo.language" ["typeclasses"; "notations"]
+      ]
+    ; Hashtbl.map_list (fun lib mods ->
+        Rocq.require RequireImport lib (List.rev @@ Hashset.to_list mods)
+      ) t.dependencies
+    ; if code then
+        [ Rocq.require RequireImport t.library [t.module_ ^ "__types"]
+        ]
+      else
+        []
+    ; [ Rocq.require RequireImport "zoo" ["options"]
+      ; Rocq.newline
+      ]
+    ] @
+    rocq
+  )
+let transl_types =
+  transl ~code:false
+let transl_code =
+  transl ~code:true

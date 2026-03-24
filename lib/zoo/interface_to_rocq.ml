@@ -1,7 +1,8 @@
-let pp ppf (t : Interface.t) =
-  Fmt.pf ppf "@[<v>" ;
-  Fmt.pf ppf "From %s Require Import@,  %s__code.@,@,"
-    t.library
-    t.module_ ;
-  Fmt.(list @@ fun ppf -> pf ppf "#[global] Opaque %s_%s." t.module_) ppf t.values ;
-  Fmt.pf ppf "@]@."
+let transl (t : Interface.t) =
+  List.concat
+  [ [ Rocq.require RequireImport t.library [t.module_ ^ "__code"]
+    ]
+  ; List.map (fun global ->
+      Rocq.opaque LocalityGlobal (Fmt.str "%s_%s" t.module_ global)
+    ) t.values
+  ]

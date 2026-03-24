@@ -12,5 +12,9 @@ let singleton elt =
   add t elt ;
   t
 
+let to_list =
+  Hashtbl.keys
+
 let pp ?sep pp_elt =
-  Fmt.hashtbl ?sep (fun ppf (elt, ()) -> pp_elt ppf elt)
+  Fmt.hashtbl ?sep @@ fun ppf (elt, ()) ->
+    pp_elt ppf elt

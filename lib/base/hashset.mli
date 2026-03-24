@@ -9,5 +9,8 @@ val singleton :
 val add :
   'a t -> 'a -> unit
 
+val to_list :
+  'a t -> 'a list
+
 val pp :
   ?sep:unit Fmt.t -> 'a Fmt.t -> 'a t Fmt.t

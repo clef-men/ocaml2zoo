@@ -1,2 +1,4 @@
-val pp :
-  ppf_types:Format.formatter -> ppf_code:Format.formatter -> Implementation.t -> unit
+val transl_types :
+  Implementation.t -> Rocq.t
+val transl_code :
+  Implementation.t -> Rocq.t

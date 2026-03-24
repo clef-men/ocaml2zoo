@@ -1,2 +1,2 @@
-val pp :
-  Format.formatter -> Interface.t -> unit
+val transl :
+  Interface.t -> Rocq.t

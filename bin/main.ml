@@ -52,9 +52,12 @@ let implementation ~lib_name ~mod_name ~input ~output =
           | exception Zoo.Implementation_of_cmt.Ignore ->
               ()
           | impl ->
-              let ppf_types = output.output_types |> open_out |> Format.formatter_of_out_channel in
-              let ppf_code = output.output_code |> open_out |> Format.formatter_of_out_channel in
-              Zoo.Implementation_to_rocq.pp ~ppf_types ~ppf_code impl
+              let rocq = Zoo.Implementation_to_rocq.transl_types impl in
+              let ppf = output.output_types |> open_out |> Format.formatter_of_out_channel in
+              Fmt.pf ppf "%a@." Zoo.Rocq.pp rocq ;
+              let rocq = Zoo.Implementation_to_rocq.transl_code impl in
+              let ppf = output.output_code |> open_out |> Format.formatter_of_out_channel in
+              Fmt.pf ppf "%a@." Zoo.Rocq.pp rocq
           end
       | _ ->
           invalid_cmt ": not an implementation"
@@ -74,8 +77,9 @@ let interface ~lib_name ~mod_name ~input ~output =
           | exception Zoo.Interface_of_cmti.Ignore ->
               ()
           | intf ->
+              let rocq = Zoo.Interface_to_rocq.transl intf in
               let ppf = output.output_opaque |> open_out |> Format.formatter_of_out_channel in
-              Zoo.Interface_to_rocq.pp ppf intf
+              Fmt.pf ppf "%a@." Zoo.Rocq.pp rocq
           end
       | _ ->
           invalid_cmti ": not an interface"
