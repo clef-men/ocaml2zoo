@@ -54,7 +54,7 @@ let implementation ~lib_name ~mod_name ~input ~output =
           | impl ->
               let ppf_types = output.output_types |> open_out |> Format.formatter_of_out_channel in
               let ppf_code = output.output_code |> open_out |> Format.formatter_of_out_channel in
-              Zoo.Implementation_to_coq.pp ~ppf_types ~ppf_code impl
+              Zoo.Implementation_to_rocq.pp ~ppf_types ~ppf_code impl
           end
       | _ ->
           invalid_cmt ": not an implementation"
@@ -75,7 +75,7 @@ let interface ~lib_name ~mod_name ~input ~output =
               ()
           | intf ->
               let ppf = output.output_opaque |> open_out |> Format.formatter_of_out_channel in
-              Zoo.Interface_to_coq.pp ppf intf
+              Zoo.Interface_to_rocq.pp ppf intf
           end
       | _ ->
           invalid_cmti ": not an interface"

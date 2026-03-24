@@ -1,8 +1,8 @@
 ## Synopsis
 
-`ocaml2zoo` is a tool to translate OCaml programs into [Zoo](https://github.com/clef-men/zoo), a deeply embedded language living inside [Coq](https://coq.inria.fr/).
+`ocaml2zoo` is a tool to translate OCaml programs into [Zoo](https://github.com/clef-men/zoo), a deeply embedded language living inside [Rocq](https://rocq-prover.org/).
 
-To translate the [`dune`](https://dune.build/) project living in the `proj` directory to the `dst` directory (where Coq files are generated), run:
+To translate the [`dune`](https://dune.build/) project living in the `proj` directory to the `dst` directory (where Rocq files are generated), run:
 
 ```
 ocaml2zoo proj dst
