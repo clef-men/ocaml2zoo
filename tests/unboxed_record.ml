@@ -1,5 +1,5 @@
 type[@unboxed] 'a t =
-  { f: 'a;
+  { f: 'a
   }
 
 let test1 x =

@@ -1,6 +1,6 @@
 type t =
-  { f1: int;
-    f2: int;
+  { f1: int
+  ; f2: int
   }
 
 let test1 () =

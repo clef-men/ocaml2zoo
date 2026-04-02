@@ -58,13 +58,13 @@ let main
       ignore
   in
   let args : Main.arguments =
-    { input;
-      output;
-      force;
-      quiet;
-      ignore;
-      only;
-      describe;
+    { input
+    ; output
+    ; force
+    ; quiet
+    ; ignore
+    ; only
+    ; describe
     }
   in
   try `Ok (Main.main args)

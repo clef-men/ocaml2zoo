@@ -81,14 +81,14 @@ type expression =
   | Resolve of expression * expression * expression
   | Id
 and branch =
-  { branch_tag: tag;
-    branch_fields: binder list;
-    branch_as: binder;
-    branch_expr: expression;
+  { branch_tag: tag
+  ; branch_fields: binder list
+  ; branch_as: binder
+  ; branch_expr: expression
   }
 and fallback =
-  { fallback_as: binder;
-    fallback_expr: expression;
+  { fallback_as: binder
+  ; fallback_expr: expression
   }
 
 type value =
@@ -102,10 +102,10 @@ type definition =
   | Val of value
 
 type t =
-  { library: string;
-    module_: string;
-    dependencies: (string, string Hashset.t) Hashtbl.t;
-    definitions: definition list;
+  { library: string
+  ; module_: string
+  ; dependencies: (string, string Hashset.t) Hashtbl.t
+  ; definitions: definition list
   }
 
 let rec expression_is_value = function

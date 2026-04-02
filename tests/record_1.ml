@@ -1,6 +1,6 @@
 type t =
-  { mutable f1: int;
-    f2: int;
+  { mutable f1: int
+  ; f2: int
   }
 
 let test1 () =

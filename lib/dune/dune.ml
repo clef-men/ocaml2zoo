@@ -1,19 +1,19 @@
 type module_ =
-  { module_name: string;
-    module_impl: string;
-    module_cmt: string;
-    module_cmti: string option;
+  { module_name: string
+  ; module_impl: string
+  ; module_cmt: string
+  ; module_cmti: string option
   }
 
 type library =
-  { library_name: string;
-    library_local: bool;
-    library_modules: (string, module_) Hashtbl.t;
+  { library_name: string
+  ; library_local: bool
+  ; library_modules: (string, module_) Hashtbl.t
   }
 
 type t =
-  { build_context: string;
-    libraries: (string, library) Hashtbl.t;
+  { build_context: string
+  ; libraries: (string, library) Hashtbl.t
   }
 
 type sexp = Csexp.t =
@@ -86,10 +86,10 @@ let module_of_sexp sexp =
   let impl = if !impl = "" then invalid () ; !impl in
   let cmt = if !cmt = "" then invalid () ; !cmt in
   let cmti = !cmti in
-  { module_name= name;
-    module_impl= impl;
-    module_cmt= cmt;
-    module_cmti= cmti;
+  { module_name= name
+  ; module_impl= impl
+  ; module_cmt= cmt
+  ; module_cmti= cmti
   }
 let library_of_sexp sexp =
   let@ sexps = sexp in
@@ -114,9 +114,9 @@ let library_of_sexp sexp =
   ) sexps ;
   let name = if !name = "" then invalid () ; !name in
   let local = Option.get_lazy invalid !local in
-  { library_name= name;
-    library_local= local;
-    library_modules= mods;
+  { library_name= name
+  ; library_local= local
+  ; library_modules= mods
   }
 let of_sexp sexp =
   let@ sexps = sexp in
@@ -134,8 +134,8 @@ let of_sexp sexp =
         ()
   ) sexps ;
   let ctx = if !ctx = "" then invalid () ; !ctx in
-  { build_context= ctx;
-    libraries= libs;
+  { build_context= ctx
+  ; libraries= libs
   }
 let of_sexp sexp =
   try

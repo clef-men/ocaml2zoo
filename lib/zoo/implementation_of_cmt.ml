@@ -30,212 +30,160 @@ module Builtin = struct
     ) Path.Set.empty raising
 
   let paths =
-    [|
-      [|"Stdlib";"ignore"|],
+    [|[|"Stdlib";"ignore"|],
       Fun ([None], Tuple []),
       None
-    ;
-      [|"Stdlib";"not"|],
+    ; [|"Stdlib";"not"|],
       Fun ([Some "1"], Unop (Unop_neg, Local "1")),
       None
-    ;
-      [|"Stdlib";"~-"|],
+    ; [|"Stdlib";"~-"|],
       Fun ([Some "1"], Unop (Unop_minus, Local "1")),
       None
-    ;
-      [|"Stdlib";"+"|],
+    ; [|"Stdlib";"+"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_plus, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"-"|],
+    ; [|"Stdlib";"-"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_minus, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"*"|],
+    ; [|"Stdlib";"*"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_mult, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"/"|],
+    ; [|"Stdlib";"/"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_quot, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"mod"|],
+    ; [|"Stdlib";"mod"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_rem, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"land"|],
+    ; [|"Stdlib";"land"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_land, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"lor"|],
+    ; [|"Stdlib";"lor"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_lor, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"lsl"|],
+    ; [|"Stdlib";"lsl"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_lsl, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"lsr"|],
+    ; [|"Stdlib";"lsr"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_lsr, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"=="|],
+    ; [|"Stdlib";"=="|],
       Fun ([Some "1"; Some "2"], Binop (Binop_eq, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"!="|],
+    ; [|"Stdlib";"!="|],
       Fun ([Some "1"; Some "2"], Binop (Binop_ne, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"<="|],
+    ; [|"Stdlib";"<="|],
       Fun ([Some "1"; Some "2"], Binop (Binop_le, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"<"|],
+    ; [|"Stdlib";"<"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_lt, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";">="|],
+    ; [|"Stdlib";">="|],
       Fun ([Some "1"; Some "2"], Binop (Binop_ge, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";">"|],
+    ; [|"Stdlib";">"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_gt, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"&&"|],
+    ; [|"Stdlib";"&&"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_and, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"||"|],
+    ; [|"Stdlib";"||"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_or, Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"="|],
+    ; [|"Stdlib";"="|],
       Fun ([Some "1"; Some "2"], Binop (Binop_structeq, Local "1", Local "2")),
       Some Dependency.structeq
-    ;
-      [|"Stdlib";"<>"|],
+    ; [|"Stdlib";"<>"|],
       Fun ([Some "1"; Some "2"], Binop (Binop_structne, Local "1", Local "2")),
       Some Dependency.structeq
-    ;
-      [|"Stdlib";"ref"|],
+    ; [|"Stdlib";"ref"|],
       Fun ([Some "1"], Ref (Local "1")),
       None
-    ;
-      [|"Stdlib";"!"|],
+    ; [|"Stdlib";"!"|],
       Fun ([Some "1"], Ref_get (Local "1")),
       None
-    ;
-      [|"Stdlib";":="|],
+    ; [|"Stdlib";":="|],
       Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"Obj";"repr"|],
+    ; [|"Stdlib";"Obj";"repr"|],
       Fun ([Some "1"], Local "1"),
       None
-    ;
-      [|"Stdlib";"Obj";"obj"|],
+    ; [|"Stdlib";"Obj";"obj"|],
       Fun ([Some "1"], Local "1"),
       None
-    ;
-      [|"Stdlib";"Obj";"magic"|],
+    ; [|"Stdlib";"Obj";"magic"|],
       Fun ([Some "1"], Local "1"),
       None
-    ;
-      [|"Stdlib";"Obj";"is_int"|],
+    ; [|"Stdlib";"Obj";"is_int"|],
       Fun ([Some "1"], Is_immediate (Local "1")),
       None
-    ;
-      [|"Stdlib";"Obj";"tag"|],
+    ; [|"Stdlib";"Obj";"tag"|],
       Fun ([Some "1"], Get_tag (Local "1")),
       None
-    ;
-      [|"Stdlib";"Obj";"size"|],
+    ; [|"Stdlib";"Obj";"size"|],
       Fun ([Some "1"], Get_size (Local "1")),
       None
-    ;
-      [|"Stdlib";"Obj";"field"|],
+    ; [|"Stdlib";"Obj";"field"|],
       Fun ([Some "1"; Some "2"], Load (Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"Obj";"set_field"|],
+    ; [|"Stdlib";"Obj";"set_field"|],
       Fun ([Some "1"; Some "2"; Some "3"], Store (Local "1", Local "2", Local "3")),
       None
-    ;
-      [|"Stdlib";"Obj";"new_block"|],
+    ; [|"Stdlib";"Obj";"new_block"|],
       Fun ([Some "1"; Some "2"], Alloc (Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"get"|],
+    ; [|"Stdlib";"Atomic";"Loc";"get"|],
       Fun ([Some "1"], Load (Proj (Local "1", "0"), Proj (Local "1", "1"))),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"set"|],
+    ; [|"Stdlib";"Atomic";"Loc";"set"|],
       Fun ([Some "1"; Some "2"], Store (Proj (Local "1", "0"), Proj (Local "1", "1"), Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"exchange"|],
+    ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
       Fun ([Some "1"; Some "2"], Xchg (Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
+    ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
       Fun ([Some "1"; Some "2"; Some "3"], Cas (Local "1", Local "2", Local "3")),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
+    ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
       Fun ([Some "1"; Some "2"], Faa (Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"decr"|],
+    ; [|"Stdlib";"Atomic";"Loc";"decr"|],
       Fun ([Some "1"], Seq (Faa (Local "1", Int (-1)), Tuple [])),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"incr"|],
+    ; [|"Stdlib";"Atomic";"Loc";"incr"|],
       Fun ([Some "1"], Seq (Faa (Local "1", Int 1), Tuple [])),
       None
-    ;
-      [|"Stdlib";"Atomic";"make"|],
+    ; [|"Stdlib";"Atomic";"make"|],
       Fun ([Some "1"], Ref (Local "1")),
       None
-    ;
-      [|"Stdlib";"Atomic";"get"|],
+    ; [|"Stdlib";"Atomic";"get"|],
       Fun ([Some "1"], Ref_get (Local "1")),
       None
-    ;
-      [|"Stdlib";"Atomic";"set"|],
+    ; [|"Stdlib";"Atomic";"set"|],
       Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"exchange"|],
+    ; [|"Stdlib";"Atomic";"exchange"|],
       Fun ([Some "1"; Some "2"], Xchg (Atomic_loc (Local "1", "contents"), Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"compare_and_set"|],
+    ; [|"Stdlib";"Atomic";"compare_and_set"|],
       Fun ([Some "1"; Some "2"; Some "3"], Cas (Atomic_loc (Local "1", "contents"), Local "2", Local "3")),
       None
-    ;
-      [|"Stdlib";"Atomic";"fetch_and_add"|],
+    ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       Fun ([Some "1"; Some "2"], Faa (Atomic_loc (Local "1", "contents"), Local "2")),
       None
-    ;
-      [|"Stdlib";"Atomic";"decr"|],
+    ; [|"Stdlib";"Atomic";"decr"|],
       Fun ([Some "1"], Seq (Faa (Atomic_loc (Local "1", "contents"), Int (-1)), Tuple [])),
       None
-    ;
-      [|"Stdlib";"Atomic";"incr"|],
+    ; [|"Stdlib";"Atomic";"incr"|],
       Fun ([Some "1"], Seq (Faa (Atomic_loc (Local "1", "contents"), Int 1), Tuple [])),
       None
-    ;
-      [|"Zoo";"resolve_with"|],
+    ; [|"Zoo";"resolve_with"|],
       Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")),
       None
-    ;
-      [|"Zoo";"resolve_silent"|],
+    ; [|"Zoo";"resolve_silent"|],
       Fun ([Some "1"; Some "2"], Resolve (Skip, Local "1", Local "2")),
       None
-    ;
-      [|"Zoo";"resolve"|],
+    ; [|"Zoo";"resolve"|],
       Fun ([Some "1"; Some "2"], Seq (Resolve (Skip, Local "1", Local "2"), Local "2")),
       None
     |]
@@ -254,220 +202,166 @@ module Builtin = struct
     | Opaque of expression
     | Transparent of (expression list -> expression option)
   let apps =
-    [|
-      [|"Stdlib";"ignore"|],
+    [|[|"Stdlib";"ignore"|],
       (function [expr] -> Some (Seq (expr, Tuple [])) | _ -> None),
       None
-    ;
-      [|"Stdlib";"not"|],
+    ; [|"Stdlib";"not"|],
       (function [expr] -> Some (Unop (Unop_neg, expr)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"~-"|],
+    ; [|"Stdlib";"~-"|],
       (function [expr] -> Some (Unop (Unop_minus, expr)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"+"|],
+    ; [|"Stdlib";"+"|],
       (function [expr1; expr2] -> Some (Binop (Binop_plus, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"-"|],
+    ; [|"Stdlib";"-"|],
       (function [expr1; expr2] -> Some (Binop (Binop_minus, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"*"|],
+    ; [|"Stdlib";"*"|],
       (function [expr1; expr2] -> Some (Binop (Binop_mult, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"/"|],
+    ; [|"Stdlib";"/"|],
       (function [expr1; expr2] -> Some (Binop (Binop_quot, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"mod"|],
+    ; [|"Stdlib";"mod"|],
       (function [expr1; expr2] -> Some (Binop (Binop_rem, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"land"|],
+    ; [|"Stdlib";"land"|],
       (function [expr1; expr2] -> Some (Binop (Binop_land, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"lor"|],
+    ; [|"Stdlib";"lor"|],
       (function [expr1; expr2] -> Some (Binop (Binop_lor, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"lsl"|],
+    ; [|"Stdlib";"lsl"|],
       (function [expr1; expr2] -> Some (Binop (Binop_lsl, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"lsr"|],
+    ; [|"Stdlib";"lsr"|],
       (function [expr1; expr2] -> Some (Binop (Binop_lsr, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"=="|],
+    ; [|"Stdlib";"=="|],
       (function [expr1; expr2] -> Some (Binop (Binop_eq, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"!="|],
+    ; [|"Stdlib";"!="|],
       (function [expr1; expr2] -> Some (Binop (Binop_ne, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"<="|],
+    ; [|"Stdlib";"<="|],
       (function [expr1; expr2] -> Some (Binop (Binop_le, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"<"|],
+    ; [|"Stdlib";"<"|],
       (function [expr1; expr2] -> Some (Binop (Binop_lt, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";">="|],
+    ; [|"Stdlib";">="|],
       (function [expr1; expr2] -> Some (Binop (Binop_ge, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";">"|],
+    ; [|"Stdlib";">"|],
       (function [expr1; expr2] -> Some (Binop (Binop_gt, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"&&"|],
+    ; [|"Stdlib";"&&"|],
       (function [expr1; expr2] -> Some (Binop (Binop_and, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"||"|],
+    ; [|"Stdlib";"||"|],
       (function [expr1; expr2] -> Some (Binop (Binop_or, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"="|],
+    ; [|"Stdlib";"="|],
       (function [expr1; expr2] -> Some (Binop (Binop_structeq, expr1, expr2)) | _ -> None),
       Some Dependency.structeq
-    ;
-      [|"Stdlib";"<>"|],
+    ; [|"Stdlib";"<>"|],
       (function [expr1; expr2] -> Some (Binop (Binop_structne, expr1, expr2)) | _ -> None),
       Some Dependency.structeq
-    ;
-      [|"Stdlib";"ref"|],
+    ; [|"Stdlib";"ref"|],
       (function [expr] -> Some (Ref expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";"!"|],
+    ; [|"Stdlib";"!"|],
       (function [expr] -> Some (Ref_get expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";":="|],
+    ; [|"Stdlib";":="|],
       (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"repr"|],
+    ; [|"Stdlib";"Obj";"repr"|],
       (function [expr] -> Some expr | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"obj"|],
+    ; [|"Stdlib";"Obj";"obj"|],
       (function [expr] -> Some expr | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"magic"|],
+    ; [|"Stdlib";"Obj";"magic"|],
       (function [expr] -> Some expr | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"is_int"|],
+    ; [|"Stdlib";"Obj";"is_int"|],
       (function [expr] -> Some (Is_immediate expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"tag"|],
+    ; [|"Stdlib";"Obj";"tag"|],
       (function [expr] -> Some (Get_tag expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"size"|],
+    ; [|"Stdlib";"Obj";"size"|],
       (function [expr] -> Some (Get_size expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"field"|],
+    ; [|"Stdlib";"Obj";"field"|],
       (function [expr1; expr2] -> Some (Load (expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"set_field"|],
+    ; [|"Stdlib";"Obj";"set_field"|],
       (function [expr1; expr2; expr3] -> Some (Store (expr1, expr2, expr3)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Obj";"new_block"|],
+    ; [|"Stdlib";"Obj";"new_block"|],
       (function [expr1; expr2] -> Some (Alloc (expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"get"|],
+    ; [|"Stdlib";"Atomic";"Loc";"get"|],
       (function [expr] -> Some (Load (Proj (expr, "0"), Proj (expr, "1"))) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"set"|],
+    ; [|"Stdlib";"Atomic";"Loc";"set"|],
       (function [expr1; expr2] -> Some (Store (Proj (expr1, "0"), Proj (expr1, "1"), expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"exchange"|],
+    ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
       (function [expr1; expr2] -> Some (Xchg (expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
+    ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
       (function [expr1; expr2; expr3] -> Some (Cas (expr1, expr2, expr3)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
+    ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
       (function [expr1; expr2] -> Some (Faa (expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"decr"|],
+    ; [|"Stdlib";"Atomic";"Loc";"decr"|],
       (function [expr] -> Some (Seq (Faa (expr, Int (-1)), Tuple [])) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"Loc";"incr"|],
+    ; [|"Stdlib";"Atomic";"Loc";"incr"|],
       (function [expr] -> Some (Seq (Faa (expr, Int 1), Tuple [])) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"make"|],
+    ; [|"Stdlib";"Atomic";"make"|],
       (function [expr] -> Some (Ref expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"get"|],
+    ; [|"Stdlib";"Atomic";"get"|],
       (function [expr] -> Some (Ref_get expr) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"set"|],
+    ; [|"Stdlib";"Atomic";"set"|],
       (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"exchange"|],
+    ; [|"Stdlib";"Atomic";"exchange"|],
       (function [expr1; expr2] -> Some (Xchg (Atomic_loc (expr1, "contents"), expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"compare_and_set"|],
+    ; [|"Stdlib";"Atomic";"compare_and_set"|],
       (function [expr1; expr2; expr3] -> Some (Cas (Atomic_loc (expr1, "contents"), expr2, expr3)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"fetch_and_add"|],
+    ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       (function [expr1; expr2] -> Some (Faa (Atomic_loc (expr1, "contents"), expr2)) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"decr"|],
+    ; [|"Stdlib";"Atomic";"decr"|],
       (function [expr] -> Some (Seq (Faa (Atomic_loc (expr, "contents"), Int (-1)), Tuple [])) | _ -> None),
       None
-    ;
-      [|"Stdlib";"Atomic";"incr"|],
+    ; [|"Stdlib";"Atomic";"incr"|],
       (function [expr] -> Some (Seq (Faa (Atomic_loc (expr, "contents"), Int 1), Tuple [])) | _ -> None),
       None
-    ;
-      [|"Zoo";"proph"|],
+    ; [|"Zoo";"proph"|],
       (function [_expr] -> Some Proph | _ -> None),
       None
-    ;
-      [|"Zoo";"resolve_with"|],
+    ; [|"Zoo";"resolve_with"|],
       (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None),
       None
-    ;
-      [|"Zoo";"resolve_silent"|],
+    ; [|"Zoo";"resolve_silent"|],
       (function [expr1; expr2] -> Some (Resolve (Skip, expr1, expr2)) | _ -> None),
       None
-    ;
-      [|"Zoo";"resolve"|],
+    ; [|"Zoo";"resolve"|],
       (function [expr1; expr2] -> Some (Let (Pat_var temporary_local, expr2, Seq (Resolve (Skip, expr1, Local temporary_local), Local temporary_local))) | _ -> None),
       None
-    ;
-      [|"Zoo";"id"|],
+    ; [|"Zoo";"id"|],
       (function [_expr] -> Some Id | _ -> None),
       Some Dependency.identifier
     |]
@@ -702,23 +596,23 @@ let inline_record_type_is_mutable constr_attrs ty =
 
 module Context = struct
   type t =
-    { mutable prefix: string;
-      mutable env: Env.t;
-      final_env: Env.t;
-      global_names: (string, int) Hashtbl.t;
-      global_ids: variable Ident.Tbl.t;
-      mutable locals: Ident.Set.t;
-      dependencies: (string, string Hashset.t) Hashtbl.t;
+    { mutable prefix: string
+    ; mutable env: Env.t
+    ; final_env: Env.t
+    ; global_names: (string, int) Hashtbl.t
+    ; global_ids: variable Ident.Tbl.t
+    ; mutable locals: Ident.Set.t
+    ; dependencies: (string, string Hashset.t) Hashtbl.t
     }
 
   let create mod_ final_env =
-    { prefix= mod_ ^ "_";
-      env= Env.empty;
-      final_env;
-      global_names= Hashtbl.create ();
-      global_ids= Ident.Tbl.create 17;
-      locals= Ident.Set.empty;
-      dependencies= Hashtbl.create ();
+    { prefix= mod_ ^ "_"
+    ; env= Env.empty
+    ; final_env
+    ; global_names= Hashtbl.create ()
+    ; global_ids= Ident.Tbl.create 17
+    ; locals= Ident.Set.empty
+    ; dependencies= Hashtbl.create ()
     }
 
   let set_prefix t pref =
@@ -1400,11 +1294,11 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
           let env = Context.env ctx in
           let add env id =
             let val_descr : Types.value_description =
-              { val_type= Ctype.newvar ();
-                val_attributes= [];
-                val_kind= Val_reg;
-                val_loc= loc;
-                val_uid= Types.Uid.of_compilation_unit_id (Ident.create_persistent mod_);
+              { val_type= Ctype.newvar ()
+              ; val_attributes= []
+              ; val_kind= Val_reg
+              ; val_loc= loc
+              ; val_uid= Types.Uid.of_compilation_unit_id (Ident.create_persistent mod_)
               }
             in
             Env.add_value id val_descr env
@@ -1557,8 +1451,8 @@ let transl_structure ~lib ~mod_ (str : Typedtree.structure) =
   let ctx = Context.create mod_ final_env in
   let definitions = List.concat_map (transl_structure_item ~ctx mod_) str.str_items in
   let dependencies = Context.dependencies ctx in
-  { library= lib;
-    module_= mod_;
-    dependencies;
-    definitions;
+  { library= lib
+  ; module_= mod_
+  ; dependencies
+  ; definitions
   }

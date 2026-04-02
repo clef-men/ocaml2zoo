@@ -1,11 +1,11 @@
 type arguments =
-  { input: string;
-    output: string;
-    force: bool;
-    quiet: bool;
-    ignore: string list;
-    only: string list;
-    describe: bool;
+  { input: string
+  ; output: string
+  ; force: bool
+  ; quiet: bool
+  ; ignore: string list
+  ; only: string list
+  ; describe: bool
   }
 
 exception Error of unit Cmdliner.Term.ret
@@ -22,15 +22,15 @@ let invalid_directory ?(usage = true) fmt =
   error ~usage ("invalid directory" ^^ fmt)
 
 type output =
-  { output_types: string;
-    output_code: string;
-    output_opaque: string;
+  { output_types: string
+  ; output_code: string
+  ; output_opaque: string
   }
 let output output_dir mod_name =
   let output = Filename.concat output_dir mod_name in
-  { output_types= output ^ "__types.v";
-    output_code= output ^ "__code.v";
-    output_opaque= output ^ "__opaque.v";
+  { output_types= output ^ "__types.v"
+  ; output_code= output ^ "__code.v"
+  ; output_opaque= output ^ "__opaque.v"
   }
 
 let implementation ~lib_name ~mod_name ~input ~output =

@@ -16,7 +16,7 @@ let test2 loc =
   Atomic.Loc.incr loc
 
 type 'a t =
-  { mutable f: 'a [@atomic];
+  { mutable f: 'a [@atomic]
   }
 
 let test3 t =

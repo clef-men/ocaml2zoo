@@ -1,6 +1,6 @@
 type[@zoo.force_record] t1 =
-  { f1: int;
-    f2: int;
+  { f1: int
+  ; f2: int
   }
 
 let test1 () =
