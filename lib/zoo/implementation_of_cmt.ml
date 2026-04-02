@@ -424,7 +424,8 @@ module Unsupported = struct
     | Expr_let_op
     | Expr_unreachable
     | Expr_extension
-    | Label
+    | Argument_optional
+    | Argument_omitted
     | Functor
     | Type_extensible
     | Def_recursive
@@ -511,8 +512,10 @@ module Unsupported = struct
         "unreachable branch"
     | Expr_extension ->
         "extension"
-    | Label ->
-        "labeled parameter"
+    | Argument_optional ->
+        "optional function argument"
+    | Argument_omitted ->
+        "omitted function argument"
     | Functor ->
         "module functor"
     | Type_extensible ->
@@ -838,6 +841,13 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_lazy _ ->
       unsupported ~loc:pat.pat_loc Pattern_lazy
 
+let check_argument_label ~loc (lbl : Asttypes.arg_label) =
+  match lbl with
+  | Nolabel
+  | Labelled _ ->
+      ()
+  | Optional _ ->
+      unsupported ~loc Argument_optional
 let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let fld = lbl.lbl_name in
   let rcd = Context.add_dependency_from_label ctx ~loc lbl in
@@ -880,8 +890,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let restore_locals = Context.save_locals ctx in
       let bdrs =
         List.map (fun (param : Typedtree.function_param) ->
-          if param.fp_arg_label <> Nolabel then
-            unsupported ~loc:param.fp_loc Label;
+          check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
           let[@warning "-8"] Typedtree.Tparam_pat pat = param.fp_kind in
           pattern_to_binder ~ctx ~err:Pattern_non_trivial pat
         ) params
@@ -901,9 +910,12 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_apply (expr', exprs) ->
       let arguments () =
         List.map (fun (lbl, expr') ->
-          if lbl <> Asttypes.Nolabel then
-            unsupported ~loc:expr.exp_loc Label ;
-          transl_expression ~ctx (Option.get expr')
+          check_argument_label ~loc:expr.exp_loc lbl ;
+          match expr' with
+          | None ->
+              unsupported ~loc:expr.exp_loc Argument_omitted
+          | Some expr' ->
+              transl_expression ~ctx expr'
         ) exprs
       in
       let default exprs =

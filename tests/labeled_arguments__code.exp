@@ -1,0 +1,28 @@
+From zoo Require Import
+  prelude.
+From zoo.language Require Import
+  typeclasses
+  notations.
+From tests Require Import
+  labeled_arguments__types.
+From zoo Require Import
+  options.
+
+Definition labeled_arguments_test1 : val :=
+  fun: "x1" "x2" "x3" "x4" =>
+    "x1" ;;
+    "x2" ;;
+    "x3" ;;
+    "x4" ;;
+    ().
+
+Definition labeled_arguments_test2 : val :=
+  fun: "x1" <> "x3" "x4" =>
+    "x1" ;;
+    "x3" ;;
+    "x4" ;;
+    ().
+
+Definition labeled_arguments_test3 : val :=
+  fun: <> =>
+    labeled_arguments_test1 1 2 3 4.
