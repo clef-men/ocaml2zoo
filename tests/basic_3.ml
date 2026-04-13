@@ -7,5 +7,5 @@ let test2 x _ =
 let test3 x1 x2 x3 =
   x1 + x2 + x3
 
-let test3 _ x _ =
+let test4 _ x _ =
   x

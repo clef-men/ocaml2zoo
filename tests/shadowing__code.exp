@@ -1,0 +1,54 @@
+From zoo Require Import
+  prelude.
+From zoo.language Require Import
+  typeclasses
+  notations.
+From tests Require Import
+  shadowing__types.
+From zoo Require Import
+  options.
+
+Definition shadowing_test₀ : val :=
+  ().
+
+Definition shadowing_test₁ : val :=
+  ().
+
+Definition shadowing_test₂ : val :=
+  ().
+
+Definition shadowing_test₃ : val :=
+  ().
+
+Definition shadowing_test₄ : val :=
+  ().
+
+Definition shadowing_test₅ : val :=
+  ().
+
+Definition shadowing_test₆ : val :=
+  ().
+
+Definition shadowing_test₇ : val :=
+  ().
+
+Definition shadowing_test₈ : val :=
+  ().
+
+Definition shadowing_test₉ : val :=
+  ().
+
+Definition shadowing_test₁₀ : val :=
+  ().
+
+Definition shadowing_test₁₁ : val :=
+  ().
+
+Definition shadowing_test₁₂ : val :=
+  ().
+
+Definition shadowing_test₁₃ : val :=
+  ().
+
+Definition shadowing_test : val :=
+  ().

@@ -649,7 +649,7 @@ module Context = struct
       if cnt = 0 then
         global
       else
-        global ^ "_" ^ Int.to_string idx
+        global ^ Int.to_string_subscript idx
     in
     Ident.Tbl.add t.global_ids id global ;
     global
