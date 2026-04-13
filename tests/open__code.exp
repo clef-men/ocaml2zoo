@@ -8,6 +8,6 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition open_test : val :=
+Definition open٠test : val :=
   fun: <> =>
     ().

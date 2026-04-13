@@ -8,7 +8,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition operators_1_test1 : val :=
+Definition operators_1٠test1 : val :=
   fun: "i" =>
     ~ true ;;
     - "i" ;;
@@ -36,7 +36,7 @@ Definition operators_1_test1 : val :=
     (true or true) and true ;;
     ().
 
-Definition operators_1_test2 : val :=
+Definition operators_1٠test2 : val :=
   fun: "i" =>
     (fun: "1" "2" => "1" + "2") ;;
     (fun: "1" "2" => "1" + "2") "i" ;;

@@ -8,6 +8,6 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition truc_test : val :=
+Definition truc٠test : val :=
   fun: <> =>
     ().

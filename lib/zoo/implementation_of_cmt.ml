@@ -609,7 +609,7 @@ module Context = struct
     }
 
   let create mod_ final_env =
-    { prefix= mod_ ^ "_"
+    { prefix= mod_ ^ Common.separator
     ; env= Env.empty
     ; final_env
     ; global_names= Hashtbl.create ()
@@ -619,7 +619,7 @@ module Context = struct
     }
 
   let set_prefix t pref =
-    t.prefix <- if pref = "" then "" else pref ^ "_"
+    t.prefix <- if pref = "" then "" else pref ^ Common.separator
 
   let env t =
     t.env
@@ -735,7 +735,7 @@ module Context = struct
                 in
                 add_dependency' t lib mod_ ;
                 let path' = List.map String.uncapitalize_ascii path' in
-                let global = String.concat "_" (path' @ [global]) in
+                let global = String.concat Common.separator (path' @ [global]) in
                 Global global
         end
     | Papply _ ->
@@ -1334,6 +1334,7 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
           begin match String.split_on_char '.' raw with
           | [lib; mod_; global'] ->
               Context.add_dependency' ctx lib mod_ ;
+              let global' = Printf.sprintf "%s%s%s" mod_ Common.separator global' in
               Val_expr (global, Global global')
           | _ ->
               error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)

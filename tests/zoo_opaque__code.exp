@@ -8,10 +8,10 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Parameter zoo_opaque_test1 : val.
+Parameter zoo_opaque٠test1 : val.
 
-Parameter zoo_opaque_test2 : val.
+Parameter zoo_opaque٠test2 : val.
 
-Parameter zoo_opaque_test3 : val.
+Parameter zoo_opaque٠test3 : val.
 
-Parameter zoo_opaque_test4 : val.
+Parameter zoo_opaque٠test4 : val.

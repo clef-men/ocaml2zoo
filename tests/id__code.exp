@@ -10,6 +10,6 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition id_test : val :=
+Definition id٠test : val :=
   fun: <> =>
     Id.

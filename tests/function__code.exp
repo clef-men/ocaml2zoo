@@ -8,7 +8,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition function_test1 : val :=
+Definition function٠test1 : val :=
   fun: "param" =>
     match: "param" with
     | [] =>
@@ -17,7 +17,7 @@ Definition function_test1 : val :=
         ()
     end.
 
-Definition function_test2 : val :=
+Definition function٠test2 : val :=
   rec: "test2" "param" =>
     match: "param" with
     | [] =>

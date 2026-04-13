@@ -8,18 +8,18 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition unboxed_variant_test1 : val :=
+Definition unboxed_variant٠test1 : val :=
   fun: "x" =>
     "x".
 
-Definition unboxed_variant_test2 : val :=
+Definition unboxed_variant٠test2 : val :=
   fun: "t" =>
     match: "t" with
     |_ as "x" =>
         "x"
     end.
 
-Definition unboxed_variant_test3 : val :=
+Definition unboxed_variant٠test3 : val :=
   fun: "t" =>
     match: "t" with
     |_ as "x" =>

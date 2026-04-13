@@ -8,7 +8,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition if_test1 : val :=
+Definition if٠test1 : val :=
   fun: "b" =>
     if: "b" then (
       0
@@ -16,7 +16,7 @@ Definition if_test1 : val :=
       1
     ).
 
-Definition if_test2 : val :=
+Definition if٠test2 : val :=
   fun: "b0" "b1" =>
     if: "b0" then (
       0
@@ -26,7 +26,7 @@ Definition if_test2 : val :=
       2
     ).
 
-Definition if_test3 : val :=
+Definition if٠test3 : val :=
   fun: "b0" "b1" "b2" =>
     if: "b0" then (
       0

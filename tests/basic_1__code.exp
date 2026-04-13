@@ -8,32 +8,32 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition basic_1_test1 : val :=
+Definition basic_1٠test1 : val :=
   0.
 
-Definition basic_1_test2 : val :=
+Definition basic_1٠test2 : val :=
   (-1).
 
-Definition basic_1_test3 : val :=
-  basic_1_test1.
+Definition basic_1٠test3 : val :=
+  basic_1٠test1.
 
-Definition basic_1_test4 : val :=
+Definition basic_1٠test4 : val :=
   (0, true).
 
-Definition basic_1_test5 : val :=
-  (basic_1_test2, basic_1_test3).
+Definition basic_1٠test5 : val :=
+  (basic_1٠test2, basic_1٠test3).
 
-Definition basic_1_test6 : val :=
+Definition basic_1٠test6 : val :=
   §None.
 
-Definition basic_1_test7 : val :=
+Definition basic_1٠test7 : val :=
   ‘Some( 0 ).
 
-Definition basic_1_test8 : val :=
+Definition basic_1٠test8 : val :=
   ‘Some( fun: <> => () ).
 
-Definition basic_1_test9 : val :=
+Definition basic_1٠test9 : val :=
   ‘Some( §None ).
 
-Definition basic_1_test10 : val :=
+Definition basic_1٠test10 : val :=
   ‘Some( (‘Some( fun: <> => () ), ‘Some( () )) ).

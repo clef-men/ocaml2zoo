@@ -10,7 +10,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition operators_2_test : val :=
+Definition operators_2٠test : val :=
   fun: "x" "y" =>
     "x" = "y" ;;
     "x" ≠ "y" ;;

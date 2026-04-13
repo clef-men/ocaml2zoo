@@ -8,16 +8,16 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition ignore_test1 : val :=
+Definition ignore٠test1 : val :=
   fun: <> =>
     () ;;
     ().
 
-Definition ignore_test2 : val :=
+Definition ignore٠test2 : val :=
   fun: "x" =>
     "x" ;;
     ().
 
-Definition ignore_test3 : val :=
+Definition ignore٠test3 : val :=
   fun: <> =>
     fun: <> => ().

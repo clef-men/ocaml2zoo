@@ -8,7 +8,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition variant_4_test1 : val :=
+Definition variant_4٠test1 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -17,7 +17,7 @@ Definition variant_4_test1 : val :=
         "r".{f1}
     end.
 
-Definition variant_4_test2 : val :=
+Definition variant_4٠test2 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -28,7 +28,7 @@ Definition variant_4_test2 : val :=
         "r".{f1}
     end.
 
-Definition variant_4_test3 : val :=
+Definition variant_4٠test3 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -37,7 +37,7 @@ Definition variant_4_test3 : val :=
         "r"
     end.
 
-Definition variant_4_test4 : val :=
+Definition variant_4٠test4 : val :=
   fun: "t" =>
     match: "t" with
     | A =>

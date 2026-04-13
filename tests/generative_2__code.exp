@@ -8,7 +8,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition generative_2_test : val :=
+Definition generative_2٠test : val :=
   fun: <> =>
     ‘A@[ () ] ;;
     ‘B( () ) ;;

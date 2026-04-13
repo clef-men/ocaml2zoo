@@ -8,13 +8,13 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition option_test1 : val :=
+Definition option٠test1 : val :=
   fun: <> =>
     §None ;;
     ‘Some( 0 ) ;;
     ().
 
-Definition option_test2 : val :=
+Definition option٠test2 : val :=
   fun: "o" =>
     match: "o" with
     | None =>

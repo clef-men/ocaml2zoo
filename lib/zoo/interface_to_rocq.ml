@@ -4,6 +4,6 @@ let transl (t : Interface.t) =
     ; Rocq.newline
     ]
   ; List.map (fun global ->
-      Rocq.opaque LocalityGlobal (Fmt.str "%s_%s" t.module_ global)
+      Rocq.opaque LocalityGlobal (Fmt.str "%s%s%s" t.module_ Common.separator global)
     ) t.values
   ]

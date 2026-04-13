@@ -8,11 +8,11 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition variant_3_test1 : val :=
+Definition variant_3٠test1 : val :=
   fun: <> =>
     ‘B( 0, 0 ).
 
-Definition variant_3_test2 : val :=
+Definition variant_3٠test2 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -21,7 +21,7 @@ Definition variant_3_test2 : val :=
         "f1" + "f2"
     end.
 
-Definition variant_3_test3 : val :=
+Definition variant_3٠test3 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -31,7 +31,7 @@ Definition variant_3_test3 : val :=
         "f1" + "f2"
     end.
 
-Definition variant_3_test4 : val :=
+Definition variant_3٠test4 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -40,7 +40,7 @@ Definition variant_3_test4 : val :=
         "x1" + "x2"
     end.
 
-Definition variant_3_test5 : val :=
+Definition variant_3٠test5 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -50,7 +50,7 @@ Definition variant_3_test5 : val :=
         "x1" + "x2"
     end.
 
-Definition variant_3_test6 : val :=
+Definition variant_3٠test6 : val :=
   fun: "t" =>
     match: "t" with
     | A =>
@@ -59,7 +59,7 @@ Definition variant_3_test6 : val :=
         "r".<f1> + "r".<f2>
     end.
 
-Definition variant_3_test7 : val :=
+Definition variant_3٠test7 : val :=
   fun: "t" =>
     match: "t" with
     | A =>

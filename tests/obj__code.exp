@@ -8,7 +8,7 @@ From tests Require Import
 From zoo Require Import
   options.
 
-Definition obj_test : val :=
+Definition obj٠test : val :=
   fun: <> =>
     let: "x" := () in
     "x" ;;
