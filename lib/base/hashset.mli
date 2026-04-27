@@ -14,3 +14,11 @@ val to_list :
 
 val pp :
   ?sep:unit Fmt.t -> 'a Fmt.t -> 'a t Fmt.t
+
+include module type of struct
+  include Hashset_intf
+end
+
+module Make
+  (H : Hashtbl.HashedType)
+: S with type elt = H.t

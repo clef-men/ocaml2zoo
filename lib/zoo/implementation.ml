@@ -1,8 +1,5 @@
-type variable =
-  string
-
 type binder =
-  variable option
+  Name.t option
 
 type field =
   string
@@ -26,7 +23,7 @@ type typ =
   | Type_variant of tag list
 
 type pattern =
-  | Pat_var of variable
+  | Pat_var of Name.t
   | Pat_tuple of binder list
   | Pat_constr of tag * binder list
 
@@ -42,12 +39,12 @@ type binop =
   | Binop_structeq | Binop_structne
 
 type expression =
-  | Global of variable
-  | Local of variable
+  | Global of Spath.t
+  | Local of Name.t
   | Bool of bool
   | Int of int
   | Let of pattern * expression * expression
-  | Letrec of rec_flag * variable * binder list * expression * expression
+  | Letrec of rec_flag * Name.t * binder list * expression * expression
   | Seq of expression * expression
   | Fun of binder list * expression
   | Apply of expression * expression list
@@ -92,13 +89,13 @@ and fallback =
   }
 
 type value =
-  | Val_expr of variable * expression
-  | Val_fun of variable * binder list * expression
-  | Val_recs of (variable * variable * binder list * expression) list
-  | Val_opaque of variable
+  | Val_expr of Name.t * expression
+  | Val_fun of Name.t * binder list * expression
+  | Val_recs of (Name.t * Name.t * binder list * expression) list
+  | Val_opaque of Name.t
 
 type definition =
-  | Type of variable * typ
+  | Type of Name.t * typ
   | Val of value
 
 type t =
@@ -153,6 +150,6 @@ let rec expression_is_value = function
       false
 
 let types str =
-  List.filter_map (function Type (var, ty) -> Some (var, ty) | _ -> None) str.definitions
+  List.filter_map (function Type (global, ty) -> Some (global, ty) | _ -> None) str.definitions
 let values str =
   List.filter_map (function Val val_ -> Some val_ | _ -> None) str.definitions

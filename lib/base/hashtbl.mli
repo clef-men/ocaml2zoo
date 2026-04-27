@@ -16,3 +16,11 @@ val map_list :
 
 val keys :
   ('a, 'b) t -> 'a list
+
+include module type of struct
+  include Hashtbl_intf
+end
+
+module Make
+  (H : HashedType)
+: S with type key = H.t

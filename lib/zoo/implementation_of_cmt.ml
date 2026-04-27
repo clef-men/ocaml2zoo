@@ -1,10 +1,5 @@
 open Implementation
 
-let internal_local =
-  Printf.sprintf "@%s"
-let temporary_local =
-  internal_local "tmp"
-
 module Dependency = struct
   let structeq =
     "zoo", "structural_equality"
@@ -193,7 +188,7 @@ module Builtin = struct
     ) Path.Map.empty paths
   let paths =
     Path.Set.fold (fun path acc ->
-      let expr = Fun ([None], Apply (Global "diverge", [Tuple []])) in
+      let expr = Fun ([None], Apply (Global Spath.Builtin.diverge, [Tuple []])) in
       let dep = Some Dependency.diverge in
       Path.Map.add path (expr, dep) acc
     ) raising paths
@@ -359,7 +354,7 @@ module Builtin = struct
       (function [expr1; expr2] -> Some (Resolve (Skip, expr1, expr2)) | _ -> None),
       None
     ; [|"Zoo";"resolve"|],
-      (function [expr1; expr2] -> Some (Let (Pat_var temporary_local, expr2, Seq (Resolve (Skip, expr1, Local temporary_local), Local temporary_local))) | _ -> None),
+      (function [expr1; expr2] -> Some (Let (Pat_var Name.temporary, expr2, Seq (Resolve (Skip, expr1, Local Name.temporary), Local Name.temporary))) | _ -> None),
       None
     ; [|"Zoo";"id"|],
       (function [_expr] -> Some Id | _ -> None),
@@ -371,7 +366,7 @@ module Builtin = struct
     ) Path.Map.empty apps
   let apps =
     Path.Set.fold (fun path acc ->
-      let expr = Apply (Global "diverge", [Tuple []]) in
+      let expr = Apply (Global Spath.Builtin.diverge, [Tuple []]) in
       let dep = Some Dependency.diverge in
       Path.Map.add path (Opaque expr, dep) acc
     ) raising apps
@@ -598,8 +593,8 @@ module Context = struct
     { mutable module_: string
     ; mutable env: Env.t
     ; final_env: Env.t
-    ; global_names: (string, int) Hashtbl.t
-    ; global_ids: variable Ident.Tbl.t
+    ; global_names: int Name.Hashtbl.t
+    ; global_ids: Spath.t Ident.Tbl.t
     ; mutable locals: Ident.Set.t
     ; dependencies: (string, string Hashset.t) Hashtbl.t
     }
@@ -608,7 +603,7 @@ module Context = struct
     { module_= mod_
     ; env= Env.empty
     ; final_env
-    ; global_names= Hashtbl.create ()
+    ; global_names= Name.Hashtbl.create ()
     ; global_ids= Ident.Tbl.create 17
     ; locals= Ident.Set.empty
     ; dependencies= Hashtbl.create ()
@@ -625,9 +620,8 @@ module Context = struct
   let find_global t id =
     Ident.Tbl.find t.global_ids id
   let add_global t id =
-    let name = Ident.name id in
-    let idx = Hashtbl.add_update t.global_names name 0 ((+) 1) in
-    let global = Printf.sprintf "%s%s%s" t.module_ Common.separator name in
+    let global = Ident.name id in
+    let idx = Name.Hashtbl.add_update t.global_names global 0 ((+) 1) in
     let global =
       let[@warning "-8"] Some cnt = Env.find_value_index id t.final_env in
       if cnt = 0 then
@@ -635,7 +629,7 @@ module Context = struct
       else
         global ^ Int.to_string_subscript idx
     in
-    Ident.Tbl.add t.global_ids id global ;
+    Ident.Tbl.add t.global_ids id (Spath.of_list [t.module_; global]) ;
     global
 
   let mem_local t id =
@@ -719,8 +713,7 @@ module Context = struct
                 in
                 add_dependency' t lib mod_ ;
                 let path' = List.map String.uncapitalize_ascii path' in
-                let global = String.concat Common.separator (path' @ [global]) in
-                Global global
+                Global (Spath.of_list (path' @ [global]))
         end
     | Papply _ ->
         unsupported ~loc Functor
@@ -933,7 +926,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       | Unop (Unop_neg, expr1), Texp_apply ({ exp_desc= Texp_ident (path, _, _); _ }, _), None
         when Path.Set.mem path Builtin.raising ->
           Context.add_dependency ctx Dependency.assume ;
-          Apply (Global "assume", [expr1])
+          Apply (Global Spath.Builtin.assume, [expr1])
       | _ ->
           let expr2 = transl_expression ~ctx expr2 in
           let expr3 = Option.map (transl_expression ~ctx) expr3 in
@@ -1058,7 +1051,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_assert (expr, _) ->
       Context.add_dependency ctx Dependency.assert_ ;
       let expr = transl_expression ~ctx expr in
-      Apply (Global "assert", [expr])
+      Apply (Global Spath.Builtin.assert_, [expr])
   | Texp_open (open_, expr) ->
       transl_open_declaration ~loc:expr.exp_loc ~err:Expr_open open_ ;
       transl_expression ~ctx expr
@@ -1102,7 +1095,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
     | None ->
-        Either.Left temporary_local
+        Either.Left Name.temporary
     | Some ext_expr ->
         match transl_expression ~ctx ext_expr with
         | Local local ->
@@ -1115,7 +1108,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
       let expr =
         match def with
         | Typedtree.Kept _ ->
-            transl_expression_field ~ctx ~loc (Local (Either.get_left ~right:temporary_local ext_expr)) lbl
+            transl_expression_field ~ctx ~loc (Local (Either.get_left ~right:Name.temporary ext_expr)) lbl
         | Overridden (_, expr) ->
             transl_expression ~ctx expr
       in
@@ -1127,7 +1120,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   | Left _ ->
       expr
   | Right ext_expr ->
-      Let (Pat_var temporary_local, ext_expr, expr)
+      Let (Pat_var Name.temporary, ext_expr, expr)
 and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * fallback option = fun ~ctx brs ->
   let rec aux1 acc = function
     | [] ->
@@ -1318,8 +1311,7 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
           begin match String.split_on_char '.' raw with
           | [lib; mod_; global'] ->
               Context.add_dependency' ctx lib mod_ ;
-              let global' = Printf.sprintf "%s%s%s" mod_ Common.separator global' in
-              Val_expr (global, Global global')
+              Val_expr (global, Global (Spath.of_list [mod_; global']))
           | _ ->
               error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
           end
@@ -1364,7 +1356,7 @@ let transl_type_declaration_record attrs lbls =
   else
     Type_product lbls
 let transl_type_declaration (ty : Typedtree.type_declaration) =
-  let var = ty.typ_name.txt in
+  let gid = ty.typ_name.txt in
   match ty.typ_type.type_kind with
   | Type_abstract _ ->
       []
@@ -1372,7 +1364,7 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
       []
   | Type_record (lbls, _) ->
       let ty = transl_type_declaration_record ty.typ_attributes lbls in
-      [Type (var, ty)]
+      [Type (gid, ty)]
   | Type_variant (_, Variant_unboxed) ->
       []
   | Type_variant (constrs, _) ->
@@ -1383,14 +1375,14 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
             match constr.cd_args with
             | Cstr_record lbls ->
                 let ty = transl_type_declaration_record constr.cd_attributes lbls in
-                Type (Printf.sprintf "%s.%s" var tag, ty) :: defs
+                Type (Printf.sprintf "%s.%s" gid tag, ty) :: defs
             | _ ->
                 defs
           in
           tag :: tags, defs
         ) constrs ([], [])
       in
-      Type (var, Type_variant tags) :: defs
+      Type (gid, Type_variant tags) :: defs
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 

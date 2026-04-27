@@ -8,8 +8,6 @@ let pp_integer ppf int =
   else
     Fmt.pf ppf "%i" int
 
-let pp_global =
-  Fmt.string
 let pp_local ppf local =
   Fmt.pf ppf {|"%s"|} local
 
@@ -20,8 +18,8 @@ let pp_binder ppf = function
       pp_local ppf local
 
 let pp_pattern ppf = function
-  | Pat_var var ->
-      pp_local ppf var
+  | Pat_var local ->
+      pp_local ppf local
   | Pat_tuple bdrs ->
       Fmt.(list ~sep:(const string ", ") pp_binder) ppf bdrs
   | Pat_constr (tag, bdrs) ->
@@ -191,8 +189,8 @@ let level = function
       max_level
 
 let rec pp_expression' lvl ppf = function
-  | Global global ->
-      pp_global ppf global
+  | Global spath ->
+      Spath.pp ppf spath
   | Local local ->
       pp_local ppf local
   | Bool bool ->
@@ -429,8 +427,8 @@ and pp_fallback ppf fb =
 let pp_expression =
   pp_expression max_level
 
-let transl_typ ~lib ~mod_ (var, ty) =
-  let var = String.concat "." [lib; mod_; var] in
+let transl_typ ~lib ~mod_ (global, ty) =
+  let spath = String.concat "." [lib; mod_; global] in
   match ty with
   | Type_product flds ->
       flds |> List.mapi @@ fun i fld ->
@@ -439,7 +437,7 @@ let transl_typ ~lib ~mod_ (var, ty) =
           fld
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%s" %i|}
-                var
+                spath
                 i
           )
           "zoo_proj"
@@ -450,7 +448,7 @@ let transl_typ ~lib ~mod_ (var, ty) =
           fld
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%s" %i|}
-                var
+                spath
                 i
           )
           "zoo_field"
@@ -461,16 +459,16 @@ let transl_typ ~lib ~mod_ (var, ty) =
           tag
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%s" %i|}
-                var
+                spath
                 i
           )
           "zoo_tag"
 
-let transl_value fresh = function
+let transl_value ~mod_ fresh = function
   | Val_expr (global, expr) ->
       [ Rocq.definition
           LocalityNormal
-          global
+          Spath.([mod_; global] |> of_list |> to_string)
           (Some "val")
           ( fun ppf () ->
               Fmt.pf ppf "@[%a@]"
@@ -480,7 +478,7 @@ let transl_value fresh = function
   | Val_fun (global, params, expr) ->
       [ Rocq.definition
           LocalityNormal
-          global
+          Spath.([mod_; global] |> of_list |> to_string)
           (Some "val")
           ( fun ppf () ->
               Fmt.pf ppf "@[<v>fun: %a =>@,  @[%a@]@]"
@@ -491,7 +489,7 @@ let transl_value fresh = function
   | Val_recs [global, local, params, body] ->
       [ Rocq.definition
           LocalityNormal
-          global
+          Spath.([mod_; global] |> of_list |> to_string)
           (Some "val")
           ( fun ppf () ->
               Fmt.pf ppf "@[<v>rec: %a %a =>@,  @[%a@]@]"
@@ -521,7 +519,7 @@ let transl_value fresh = function
       ; List.mapi (fun i (global, _, _, _) ->
           Rocq.definition
             LocalityNormal
-            global
+            Spath.([mod_; global] |> of_list |> to_string)
             None
             ( fun ppf () ->
                 Fmt.pf ppf "ValRecs %i __zoo_recs_%i"
@@ -534,30 +532,30 @@ let transl_value fresh = function
             LocalityGlobal
             None
             ( fun ppf () ->
-                Fmt.pf ppf "@[<v>AsValRecs' %s %i __zoo_recs_%i [@,  @[<v>%a@]@,]@]"
-                  global
+                Fmt.pf ppf "@[<v>AsValRecs' %a %i __zoo_recs_%i [@,  @[<v>%a@]@,]@]"
+                  Spath.pp Spath.([mod_; global] |> of_list)
                   i
                   id
                   Fmt.(
                     list ~sep:(any " ;@,") @@ fun ppf (global, _, _, _) ->
-                      pp_global ppf global
+                      Spath.([mod_; global] |> of_list |> pp ppf)
                   ) recs
             )
         ) recs
       ]
   | Val_opaque global ->
       [ Rocq.parameter
-          global
+          Spath.([mod_; global] |> of_list |> to_string)
           "val"
       ]
-let transl_value () =
+let transl_value ~mod_ =
   let gen = ref 0 in
-  transl_value (fun () -> let i = !gen in gen := i + 1 ; i)
+  transl_value ~mod_ (fun () -> let i = !gen in gen := i + 1 ; i)
 
 let transl ~code t =
   let rocq =
     if code then
-      List.map (transl_value ()) (values t)
+      List.map (transl_value ~mod_:t.module_) (values t)
     else
       List.map (transl_typ ~lib:t.library ~mod_:t.module_) (types t)
   in
