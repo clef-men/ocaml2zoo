@@ -624,18 +624,9 @@ module Context = struct
 
   let find_global t id =
     Ident.Tbl.find t.global_ids id
-  let add_global t name =
-    match Hashtbl.find_opt t.global_names name with
-    | None ->
-        Hashtbl.add t.global_names name 0 ;
-        0
-    | Some cnt ->
-        let cnt = cnt + 1 in
-        Hashtbl.replace t.global_names name cnt ;
-        cnt
   let add_global t id =
     let name = Ident.name id in
-    let idx = add_global t name in
+    let idx = Hashtbl.add_update t.global_names name 0 ((+) 1) in
     let global = Printf.sprintf "%s%s%s" t.module_ Common.separator name in
     let global =
       let[@warning "-8"] Some cnt = Env.find_value_index id t.final_env in

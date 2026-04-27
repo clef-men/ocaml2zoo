@@ -8,6 +8,9 @@ val create :
 val is_empty :
   ('a, 'b) t -> bool
 
+val add_update :
+  ('a, 'b) t -> 'a -> 'b -> ('b -> 'b) -> 'b
+
 val map_list :
   ('a -> 'b -> 'c) -> ('a, 'b) t -> 'c list
 
