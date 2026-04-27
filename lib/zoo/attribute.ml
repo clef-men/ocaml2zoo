@@ -14,11 +14,6 @@ let ignore =
 let has_ignore =
   has ignore
 
-let prefix =
-  zoo ^ ".prefix"
-let has_prefix =
-  has prefix
-
 let force_record =
   zoo ^ ".force_record"
 let has_force_record =

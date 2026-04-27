@@ -11,11 +11,6 @@ val ignore :
 val has_ignore :
   t list -> bool
 
-val prefix :
-  string
-val has_prefix :
-  t list -> bool
-
 val force_record :
   string
 val has_force_record :

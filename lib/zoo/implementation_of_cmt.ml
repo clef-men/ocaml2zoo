@@ -552,7 +552,6 @@ end
 module Error = struct
   type t =
     | Unsupported of Unsupported.t
-    | Attribute_prefix_invalid_payload
     | Attribute_overwrite_invalid_payload of Attribute.overwrite_kind
     | Envaux of Envaux.error
 
@@ -560,9 +559,6 @@ module Error = struct
     | Unsupported unsupported ->
         Fmt.pf ppf "unsupported feature: %a"
           Unsupported.pp unsupported
-    | Attribute_prefix_invalid_payload ->
-        Fmt.pf ppf {|payload of attribute "%s" must be a string|}
-          Attribute.prefix
     | Attribute_overwrite_invalid_payload kind ->
         Fmt.pf ppf {|payload of attribute "%s%s" must be %s|}
           Attribute.overwrite
@@ -599,7 +595,7 @@ let inline_record_type_is_mutable constr_attrs ty =
 
 module Context = struct
   type t =
-    { mutable prefix: string
+    { mutable module_: string
     ; mutable env: Env.t
     ; final_env: Env.t
     ; global_names: (string, int) Hashtbl.t
@@ -609,7 +605,7 @@ module Context = struct
     }
 
   let create mod_ final_env =
-    { prefix= mod_ ^ Common.separator
+    { module_= mod_
     ; env= Env.empty
     ; final_env
     ; global_names= Hashtbl.create ()
@@ -617,9 +613,6 @@ module Context = struct
     ; locals= Ident.Set.empty
     ; dependencies= Hashtbl.create ()
     }
-
-  let set_prefix t pref =
-    t.prefix <- if pref = "" then "" else pref ^ Common.separator
 
   let env t =
     t.env
@@ -643,7 +636,7 @@ module Context = struct
   let add_global t id =
     let name = Ident.name id in
     let idx = add_global t name in
-    let global = t.prefix ^ name in
+    let global = Printf.sprintf "%s%s%s" t.module_ Common.separator name in
     let global =
       let[@warning "-8"] Some cnt = Env.find_value_index id t.final_env in
       if cnt = 0 then
@@ -1423,13 +1416,6 @@ let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   | Tstr_attribute attr ->
       if Attribute.has_ignore [attr] then
         raise Ignore ;
-      if Attribute.has_prefix [attr] then (
-        match attr.attr_payload with
-        | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (pref, _, _); _ }; _ }, _); _ }] ->
-            Context.set_prefix ctx pref
-        | _ ->
-            error ~loc:attr.attr_loc Attribute_prefix_invalid_payload
-      ) ;
       []
   | Tstr_eval _ ->
       unsupported ~loc:str_item.str_loc Def_eval
