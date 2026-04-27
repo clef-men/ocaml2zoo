@@ -9,19 +9,6 @@ let rec head = function
   | Papply _ ->
       None
 
-let rec flatten acc = function
-  | Pident id ->
-      Some (id, acc)
-  | Pdot (t, s)
-  | Pextra_ty (t, Pcstr_ty s) ->
-      flatten (s :: acc) t
-  | Pextra_ty (t, Pext_ty) ->
-      flatten acc t
-  | Papply _ ->
-      None
-let flatten =
-  flatten []
-
 let rec of_array arr len i t =
   if i = len then
     t
@@ -29,6 +16,19 @@ let rec of_array arr len i t =
     of_array arr len (i + 1) (Pdot (t, arr.(i)))
 let of_array arr =
   of_array arr (Array.length arr) 1 (Pident (Ident.create_persistent arr.(0)))
+
+let rec to_list acc = function
+  | Pident id ->
+      Some (id, acc)
+  | Pdot (t, s)
+  | Pextra_ty (t, Pcstr_ty s) ->
+      to_list (s :: acc) t
+  | Pextra_ty (t, Pext_ty) ->
+      to_list acc t
+  | Papply _ ->
+      None
+let to_list =
+  to_list []
 
 let rec to_string' sep acc = function
   | Pident id ->

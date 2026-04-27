@@ -662,7 +662,7 @@ module Context = struct
     | Pident _ ->
         ()
     | Pdot (path', _) ->
-        begin match Path.flatten path' with
+        begin match Path.to_list path' with
         | None ->
             unsupported ~loc Functor
         | Some (id, path') ->
@@ -705,7 +705,7 @@ module Context = struct
             Option.iter (add_dependency t) dep ;
             expr
         | None ->
-            match Path.flatten path' with
+            match Path.to_list path' with
             | None ->
                 unsupported ~loc Functor
             | Some (id, path') ->
