@@ -1002,7 +1002,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
               | Nongenerative ->
                   Immutable_nongenerative
               | Generative ->
-                  if Attribute.has_reveal constr.cstr_attributes then
+                  if Attribute.has_generative_strong constr.cstr_attributes then
                     Immutable_generative_strong
                   else
                     Immutable_generative_weak

@@ -1,5 +1,5 @@
 type 'a t =
-  | A of 'a [@generative] [@zoo.reveal]
+  | A of 'a [@generative] [@zoo.generative_strong]
   | B of 'a
 
 let test () =

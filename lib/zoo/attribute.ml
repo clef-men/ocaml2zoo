@@ -19,10 +19,10 @@ let force_record =
 let has_force_record =
   has force_record
 
-let reveal =
-  zoo ^ ".reveal"
-let has_reveal =
-  has reveal
+let generative_strong =
+  zoo ^ ".generative_strong"
+let has_generative_strong =
+  has generative_strong
 
 let opaque =
   zoo ^ ".opaque"

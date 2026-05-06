@@ -16,9 +16,9 @@ val force_record :
 val has_force_record :
   t list -> bool
 
-val reveal :
+val generative_strong :
   string
-val has_reveal :
+val has_generative_strong :
   t list -> bool
 
 val opaque :
