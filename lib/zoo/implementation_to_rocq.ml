@@ -503,7 +503,7 @@ let transl_value ~mod_ fresh = function
       List.concat
       [ [ Rocq.definition
             LocalityLocal
-            (Fmt.str "__zoo_recs_%i" id)
+            (Printf.sprintf "__zoo_recs_%i" id)
             None
             ( fun ppf () ->
                 Fmt.pf ppf "@[<v>( @[<v>recs: %a@]@,)%%zoo_recs@]"
