@@ -2,9 +2,9 @@ open Implementation
 
 module Dependency = struct
   let structeq =
-    "zoo", "structural_equality"
+    "zoo", "program_logic.structural_equality"
   let identifier =
-    "zoo", "identifier"
+    "zoo", "program_logic.identifier"
   let diverge =
     "zoo_std", "diverge"
   let assert_ =

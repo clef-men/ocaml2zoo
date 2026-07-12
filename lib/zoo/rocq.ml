@@ -37,8 +37,8 @@ type t =
 
 let newline =
   Newline
-let[@inline] require kind path paths =
-  Require (kind, path, paths)
+let[@inline] require kind base paths =
+  Require (kind, base, paths)
 let[@inline] parameter id tm =
   Parameter (id, tm)
 let[@inline] definition local id tm custom =
@@ -69,12 +69,14 @@ let pp_locality ppf = function
 let pp_item ppf = function
   | Newline ->
       ()
-  | Require (kind, path, paths) ->
+  | Require (kind, base, paths) ->
       if not @@ List.is_empty paths then
-        Fmt.pf ppf "From %s Require%a@,  %a."
-          path
-          pp_require_kind kind
-          Fmt.(list ~sep:(any "@,  ") string) paths
+        Fmt.list (fun ppf path ->
+          Fmt.pf ppf "Require%a %s.%s."
+            pp_require_kind kind
+            base
+            path
+        ) ppf paths
   | Parameter (id, tm) ->
       Fmt.pf ppf "Parameter %s : %s."
         id

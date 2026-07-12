@@ -1,12 +1,8 @@
-From zoo Require Import
-  prelude.
-From zoo.language Require Import
-  typeclasses
-  notations.
-From tests Require Import
-  obj__types.
-From zoo Require Import
-  options.
+Require Import zoo.prelude.
+Require Import zoo.language.typeclasses.
+Require Import zoo.language.notations.
+Require Import tests.obj__types.
+Require Import zoo.options.
 
 Definition obj٠test : val :=
   fun: <> =>

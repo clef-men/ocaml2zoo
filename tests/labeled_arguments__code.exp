@@ -1,12 +1,8 @@
-From zoo Require Import
-  prelude.
-From zoo.language Require Import
-  typeclasses
-  notations.
-From tests Require Import
-  labeled_arguments__types.
-From zoo Require Import
-  options.
+Require Import zoo.prelude.
+Require Import zoo.language.typeclasses.
+Require Import zoo.language.notations.
+Require Import tests.labeled_arguments__types.
+Require Import zoo.options.
 
 Definition labeled_arguments٠test1 : val :=
   fun: "x1" "x2" "x3" "x4" =>
