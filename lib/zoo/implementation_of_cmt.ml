@@ -631,7 +631,13 @@ module Context = struct
     t.locals <- Ident.Set.add id t.locals
   let save_locals t =
     let locals = t.locals in
-    fun () -> t.locals <- locals
+    fun () ->
+      t.locals <- locals
+  let protect_locals t fn =
+    let locals = t.locals in
+    let res = fn () in
+    t.locals <- locals ;
+    res
 
   let dependencies t =
     t.dependencies
@@ -835,48 +841,44 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       unsupported ~loc:expr.exp_loc Literal_non_integer
   | Texp_let (rec_flag, [bdg], expr2) ->
       let expr1 = transl_expression ~ctx bdg.vb_expr in
-      let restore_locals = Context.save_locals ctx in
-      begin match transl_pattern ~ctx bdg.vb_pat with
-      | None ->
-          let expr2 = transl_expression ~ctx expr2 in
-          Seq (expr1, expr2)
-      | Some pat ->
-          match expr1 with
-          | Fun (bdrs, expr1) ->
-              let[@warning "-8"] Pat_var local = pat in
-              let expr2 = transl_expression ~ctx expr2 in
-              restore_locals () ;
-              Letrec (rec_flag, local, bdrs, expr1, expr2)
-          | _ ->
-              if rec_flag = Recursive then
-                unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
-              let expr2 = transl_expression ~ctx expr2 in
-              restore_locals () ;
-              Let (pat, expr1, expr2)
-      end
+      Context.protect_locals ctx @@ fun () ->
+        begin match transl_pattern ~ctx bdg.vb_pat with
+        | None ->
+            let expr2 = transl_expression ~ctx expr2 in
+            Seq (expr1, expr2)
+        | Some pat ->
+            match expr1 with
+            | Fun (bdrs, expr1) ->
+                let[@warning "-8"] Pat_var local = pat in
+                let expr2 = transl_expression ~ctx expr2 in
+                Letrec (rec_flag, local, bdrs, expr1, expr2)
+            | _ ->
+                if rec_flag = Recursive then
+                  unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
+                let expr2 = transl_expression ~ctx expr2 in
+                Let (pat, expr1, expr2)
+        end
   | Texp_let (_, _, _) ->
       unsupported ~loc:expr.exp_loc Expr_let_mutual
   | Texp_function (params, body) ->
-      let restore_locals = Context.save_locals ctx in
-      let bdrs =
-        List.map (fun (param : Typedtree.function_param) ->
-          check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
-          let[@warning "-8"] Typedtree.Tparam_pat pat = param.fp_kind in
-          pattern_to_binder ~ctx ~err:Pattern_non_trivial pat
-        ) params
-      in
-      begin match body with
-      | Tfunction_body expr ->
-          let expr = transl_expression ~ctx expr in
-          restore_locals () ;
-          Fun (bdrs, expr)
-      | Tfunction_cases { cases= brs; param= id; _ } ->
-          Context.add_local ctx id ;
-          let brs, fb = transl_branches ~ctx brs in
-          restore_locals () ;
-          let local = Ident.name id in
-          Fun (bdrs @ [Some local], Match (Local local, brs, fb))
-      end
+      Context.protect_locals ctx @@ fun () ->
+        let bdrs =
+          List.map (fun (param : Typedtree.function_param) ->
+            check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
+            let[@warning "-8"] Typedtree.Tparam_pat pat = param.fp_kind in
+            pattern_to_binder ~ctx ~err:Pattern_non_trivial pat
+          ) params
+        in
+        begin match body with
+        | Tfunction_body expr ->
+            let expr = transl_expression ~ctx expr in
+            Fun (bdrs, expr)
+        | Tfunction_cases { cases= brs; param= id; _ } ->
+            Context.add_local ctx id ;
+            let brs, fb = transl_branches ~ctx brs in
+            let local = Ident.name id in
+            Fun (bdrs @ [Some local], Match (Local local, brs, fb))
+        end
   | Texp_apply (expr', exprs) ->
       let arguments () =
         List.map (fun (lbl, expr') ->
@@ -955,11 +957,10 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         | _ ->
             Binop (Binop_plus, expr2, Int 1)
       in
-      let restore_locals = Context.save_locals ctx in
-      Context.add_local ctx id ;
-      let expr3 = transl_expression ~ctx expr3 in
-      restore_locals () ;
-      For (bdr, expr1, expr2, expr3)
+      Context.protect_locals ctx @@ fun () ->
+        Context.add_local ctx id ;
+        let expr3 = transl_expression ~ctx expr3 in
+        For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
       unsupported ~loc:expr.exp_loc Expr_for_downward
   | Texp_tuple exprs ->
@@ -1241,17 +1242,19 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
   List.rev brs, fb
 
 let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id rec_flag' expr =
-  let restore_locals = Context.save_locals ctx in
-  begin match rec_flag, rec_flag' with
-  | Recursive, _ ->
-      List.iter (fun (_, _, id, _) -> Context.add_local ctx id) bdgs
-  | Nonrecursive, Recursive ->
-      Context.add_local ctx id
-  | Nonrecursive, Nonrecursive ->
-      ()
-  end ;
-  let expr = transl_expression ~ctx expr in
-  restore_locals () ;
+  let rec_flag, rec_flag', expr =
+    Context.protect_locals ctx @@ fun () ->
+      begin match rec_flag, rec_flag' with
+      | Recursive, _ ->
+          List.iter (fun (_, _, id, _) -> Context.add_local ctx id) bdgs
+      | Nonrecursive, Recursive ->
+          Context.add_local ctx id
+      | Nonrecursive, Nonrecursive ->
+          ()
+      end ;
+      let expr = transl_expression ~ctx expr in
+      rec_flag, rec_flag', expr
+  in
   let rec_ = rec_flag = Recursive || rec_flag' = Recursive in
   match expr with
   | Fun (bdrs, expr) ->
