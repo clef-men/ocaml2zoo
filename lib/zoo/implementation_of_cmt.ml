@@ -541,26 +541,39 @@ module Unsupported = struct
     Fmt.string ppf (to_string t)
 end
 
-module Error = struct
+module Error_overwrite = struct
   type t =
-    | Unsupported of Unsupported.t
-    | Attribute_overwrite_invalid_payload of Attribute.overwrite_kind
-    | Envaux of Envaux.error
+    | Invalid
+    | Ill_typed
 
-  let pp ppf = function
-    | Unsupported unsupported ->
-        Fmt.pf ppf "unsupported feature: %a"
-          Unsupported.pp unsupported
-    | Attribute_overwrite_invalid_payload kind ->
-        Fmt.pf ppf {|payload of attribute "%s%s" must be %s|}
-          Attribute.overwrite
-          (Attribute.overwrite_kind_to_string kind)
+  let pp (kind : Attribute.overwrite_kind) ppf = function
+    | Invalid ->
+        Fmt.pf ppf "payload must be %s"
           begin match kind with
           | Overwrite _ ->
               "an expression"
           | Raw ->
               "of the form library.module.identifier"
           end
+    | Ill_typed ->
+        Fmt.pf ppf "cannot infer type"
+end
+
+module Error = struct
+  type t =
+    | Unsupported of Unsupported.t
+    | Overwrite of Attribute.overwrite_kind * Error_overwrite.t
+    | Envaux of Envaux.error
+
+  let pp ppf = function
+    | Unsupported unsupported ->
+        Fmt.pf ppf "unsupported feature: %a"
+          Unsupported.pp unsupported
+    | Overwrite (kind, err) ->
+        Fmt.pf ppf {|attribute "%s%s": %a|}
+          Attribute.overwrite
+          (Attribute.overwrite_kind_to_string kind)
+          (Error_overwrite.pp kind) err
     | Envaux err ->
         Fmt.pf ppf "internal Envaux error: %a"
           Envaux.report_error err
@@ -572,6 +585,8 @@ let error ~loc err =
   raise @@ Error (loc, err)
 let unsupported ~loc err =
   error ~loc (Unsupported err)
+let error_overwrite ~loc kind err =
+  error ~loc (Overwrite (kind, err))
 
 exception Ignore
 
@@ -1293,10 +1308,15 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
             | Nonrecursive, Nonrecursive ->
                 env
           in
-          let expr = Typecore.type_expression env expr in
+          let expr =
+            try
+              Typecore.type_expression env expr
+            with Typecore.Error _ ->
+              error_overwrite ~loc:attr.attr_loc kind Ill_typed
+          in
           transl_value_binding ~ctx rec_flag bdgs bdg global id rec_flag' expr
       | _ ->
-          error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload kind)
+          error_overwrite ~loc:attr.attr_loc kind Invalid
       end
   | Some (Raw, attr) ->
       begin match attr.attr_payload with
@@ -1306,10 +1326,10 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
               Context.add_dependency' ctx lib mod_ ;
               Val_expr (global, Global (Spath.of_list [mod_; global']))
           | _ ->
-              error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
+              error_overwrite ~loc:attr.attr_loc Raw Invalid
           end
       | _ ->
-          error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload Raw)
+          error_overwrite ~loc:attr.attr_loc Raw Invalid
       end
 
 let transl_value_bindings ~ctx mod_ rec_flag bdgs =
