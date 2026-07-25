@@ -401,7 +401,6 @@ module Unsupported = struct
     | Expr_let_rec_non_function
     | Expr_let_mutual
     | Expr_for_downward
-    | Expr_open
     | Expr_array
     | Expr_try
     | Expr_variant
@@ -431,10 +430,10 @@ module Unsupported = struct
     | Def_exception
     | Def_module
     | Def_module_type
-    | Def_open
     | Def_class
     | Def_class_type
     | Def_include
+    | Open
 
   let to_string = function
     | Literal_non_integer ->
@@ -471,8 +470,6 @@ module Unsupported = struct
         "mutually recursive let-bindings"
     | Expr_for_downward ->
         {|downward "for" loop|}
-    | Expr_open ->
-        "opened module must be an identifier"
     | Expr_array ->
         "array expression"
     | Expr_try ->
@@ -531,14 +528,14 @@ module Unsupported = struct
         "module definition"
     | Def_module_type ->
         "module type definition"
-    | Def_open ->
-        "opened module must be an identifier"
     | Def_class ->
         "class definition"
     | Def_class_type ->
         "class type definition"
     | Def_include ->
         {|"include" declaration|}
+    | Open ->
+        "opened module must be an identifier"
 
   let pp ppf t =
     Fmt.string ppf (to_string t)
@@ -717,12 +714,12 @@ module Context = struct
         resolve_path t ~loc path
 end
 
-let transl_open_declaration ~loc ~err (open_ : Typedtree.open_declaration) =
+let transl_open_declaration ~loc (open_ : Typedtree.open_declaration) =
   match open_.open_expr.mod_desc with
   | Tmod_ident _ ->
       ()
   | _ ->
-      unsupported ~loc err
+      unsupported ~loc Open
 
 let rec pattern_is_neutral (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -1049,7 +1046,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let expr = transl_expression ~ctx expr in
       Apply (Global Spath.Builtin.assert_, [expr])
   | Texp_open (open_, expr) ->
-      transl_open_declaration ~loc:expr.exp_loc ~err:Expr_open open_ ;
+      transl_open_declaration ~loc:expr.exp_loc open_ ;
       transl_expression ~ctx expr
   | Texp_array _ ->
       unsupported ~loc:expr.exp_loc Expr_array
@@ -1390,7 +1387,7 @@ let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   | Tstr_type (_, tys) ->
       List.concat_map transl_type_declaration tys
   | Tstr_open open_ ->
-      transl_open_declaration ~loc:str_item.str_loc ~err:Def_open open_ ;
+      transl_open_declaration ~loc:str_item.str_loc open_ ;
       []
   | Tstr_attribute attr ->
       if Attribute.has_ignore [attr] then
