@@ -11,11 +11,6 @@ val ignore :
 val has_ignore :
   t list -> bool
 
-val force_record :
-  string
-val has_force_record :
-  t list -> bool
-
 val generative_strong :
   string
 val has_generative_strong :

@@ -578,15 +578,11 @@ let unsupported ~loc err =
 
 exception Ignore
 
-let record_is_mutable attrs lbls =
-  List.exists (fun lbl -> lbl.Types.ld_mutable = Mutable) lbls ||
-  Attribute.has_force_record attrs
+let record_is_mutable =
+  List.exists @@ fun lbl -> lbl.Types.ld_mutable = Mutable
 let record_type_is_mutable ty =
   let[@warning "-8"] Types.Type_record (lbls, _) = ty.Types.type_kind in
-  record_is_mutable ty.type_attributes lbls
-let inline_record_type_is_mutable constr_attrs ty =
-  let[@warning "-8"] Types.Type_record (lbls, _) = ty.Types.type_kind in
-  record_is_mutable constr_attrs lbls
+  record_is_mutable lbls
 
 module Context = struct
   type t =
@@ -789,7 +785,7 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
       transl_pattern ~ctx pat
   | Tpat_record (((_, lbl, _) :: _) as pats, Closed) ->
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
-      if record_type_is_mutable (Context.find_type ctx rcd) then
+      if record_type_is_mutable @@ Context.find_type ctx rcd then
         unsupported ~loc:pat.pat_loc Pattern_record ;
       let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_nested pat) pats in
       Some (Pat_tuple bdrs)
@@ -828,7 +824,7 @@ let check_argument_label ~loc (lbl : Asttypes.arg_label) =
 let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let fld = lbl.lbl_name in
   let rcd = Context.add_dependency_from_label ctx ~loc lbl in
-  if record_type_is_mutable (Context.find_type ctx rcd) then
+  if record_type_is_mutable @@ Context.find_type ctx rcd then
     Record_get (expr, fld)
   else
     Proj (expr, fld)
@@ -980,7 +976,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             expr
         | _ ->
             let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc expr.exp_type in
-            if record_type_is_mutable (Context.find_type ctx rcd) then
+            if record_type_is_mutable @@ Context.find_type ctx rcd then
               Record exprs
             else
               Tuple exprs
@@ -1020,7 +1016,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
                   transl_expression_ident ~ctx ~loc:expr.exp_loc path
               | Texp_record rcd ->
                   transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
-                    if inline_record_type_is_mutable constr.cstr_attributes ty then
+                    if record_type_is_mutable ty then
                       Constr (Mutable, tag, exprs)
                     else
                       mk_immutable exprs
@@ -1229,7 +1225,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                         let bdrs = List.make (List.length lbls) None in
                         bdrs, bdr, expr
                     | Tpat_record (pats, Closed) ->
-                        if inline_record_type_is_mutable constr.cstr_attributes ty then
+                        if record_type_is_mutable ty then
                           unsupported ~loc:pat.pat_loc Pattern_invalid ;
                         let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_invalid pat) pats in
                         let expr = transl_expression ~ctx br.c_rhs in
@@ -1348,8 +1344,8 @@ let transl_value_bindings ~ctx mod_ rec_flag bdgs =
         let recs = List.concat_map (function Val_recs recs -> recs | _ -> assert false) vals in
         [Val_recs recs]
 
-let transl_type_declaration_record attrs lbls =
-  let is_mut = record_is_mutable attrs lbls in
+let transl_type_declaration_record lbls =
+  let is_mut = record_is_mutable lbls in
   let lbls = List.map (fun lbl -> Ident.name lbl.Types.ld_id) lbls in
   if is_mut then
     Type_record lbls
@@ -1363,7 +1359,7 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
   | Type_record (_, Record_unboxed _) ->
       []
   | Type_record (lbls, _) ->
-      let ty = transl_type_declaration_record ty.typ_attributes lbls in
+      let ty = transl_type_declaration_record lbls in
       [Type (gid, ty)]
   | Type_variant (_, Variant_unboxed) ->
       []
@@ -1374,7 +1370,7 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
           let defs =
             match constr.cd_args with
             | Cstr_record lbls ->
-                let ty = transl_type_declaration_record constr.cd_attributes lbls in
+                let ty = transl_type_declaration_record lbls in
                 Type (Printf.sprintf "%s.%s" gid tag, ty) :: defs
             | _ ->
                 defs

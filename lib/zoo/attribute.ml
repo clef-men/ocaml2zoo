@@ -14,11 +14,6 @@ let ignore =
 let has_ignore =
   has ignore
 
-let force_record =
-  zoo ^ ".force_record"
-let has_force_record =
-  has force_record
-
 let generative_strong =
   zoo ^ ".generative_strong"
 let has_generative_strong =
