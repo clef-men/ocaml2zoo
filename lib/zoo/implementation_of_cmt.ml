@@ -863,11 +863,10 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_function (params, body) ->
       Context.protect_locals ctx @@ fun () ->
         let bdrs =
-          List.map (fun (param : Typedtree.function_param) ->
+          params |> List.map @@ fun (param : Typedtree.function_param) ->
             check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
             let[@warning "-8"] Typedtree.Tparam_pat pat = param.fp_kind in
             pattern_to_binder ~ctx ~err:Pattern_non_trivial pat
-          ) params
         in
         begin match body with
         | Tfunction_body expr ->
@@ -881,14 +880,13 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         end
   | Texp_apply (expr', exprs) ->
       let arguments () =
-        List.map (fun (lbl, expr') ->
+        exprs |> List.map @@ fun (lbl, expr') ->
           check_argument_label ~loc:expr.exp_loc lbl ;
           match expr' with
           | None ->
               unsupported ~loc:expr.exp_loc Argument_omitted
           | Some expr' ->
               transl_expression ~ctx expr'
-        ) exprs
       in
       let default exprs =
         let expr' = transl_expression ~ctx expr' in
@@ -1317,25 +1315,24 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
 
 let transl_value_bindings ~ctx mod_ rec_flag bdgs =
   let bdgs =
-    List.map (fun (bdg : Typedtree.value_binding) ->
+    bdgs |> List.map @@ fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
       | Tpat_var (id, { loc; _ }, _) ->
           let global = Context.add_global ctx id in
           bdg, global, id, loc
       | _ ->
           unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
-    ) bdgs
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
   if Attribute.has_ignore bdg.vb_attributes then
     []
   else if Attribute.has_opaque bdg.vb_attributes then
-    List.map (fun (_, global, _, _) -> Val_opaque global) bdgs
+    bdgs |> List.map @@ fun (_, global, _, _) ->
+      Val_opaque global
   else
     let vals =
-      List.map (fun (bdg, global, id, loc) ->
+      bdgs |> List.map @@ fun (bdg, global, id, loc) ->
         transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc
-      ) bdgs
     in
     match rec_flag with
     | Nonrecursive ->
