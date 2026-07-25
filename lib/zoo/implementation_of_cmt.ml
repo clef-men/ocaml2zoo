@@ -1275,27 +1275,26 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
       begin match attr.attr_payload with
       | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
           let env = Context.env ctx in
-          let add env id =
-            let val_descr : Types.value_description =
+          let add ~env ~loc id =
+            env |> Env.add_value id
               { val_type= Ctype.newvar ()
               ; val_attributes= []
               ; val_kind= Val_reg
               ; val_loc= loc
               ; val_uid= Types.Uid.of_compilation_unit_id (Ident.create_persistent mod_)
               }
-            in
-            Env.add_value id val_descr env
           in
           let env =
             match rec_flag, rec_flag' with
             | Recursive, _ ->
-                List.fold_left (fun env (_, _, id, _) -> add env id) env bdgs
+                List.fold_left (fun env (_, _, id, loc) -> add ~env ~loc id) env bdgs
             | Nonrecursive, Recursive ->
-                add env id
+                add ~env ~loc id
             | Nonrecursive, Nonrecursive ->
                 env
           in
-          transl_value_binding ~ctx rec_flag bdgs bdg global id rec_flag' (Typecore.type_expression env expr)
+          let expr = Typecore.type_expression env expr in
+          transl_value_binding ~ctx rec_flag bdgs bdg global id rec_flag' expr
       | _ ->
           error ~loc:attr.attr_loc (Attribute_overwrite_invalid_payload kind)
       end
