@@ -604,7 +604,7 @@ module Context = struct
 
   let env t =
     t.env
-  let update_env t env =
+  let set_env t env =
     t.env <- Envaux.env_of_only_summary env
 
   let find_type t path =
@@ -1413,7 +1413,7 @@ let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   | Tstr_include _ ->
       unsupported ~loc:str_item.str_loc Def_include
 let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
-  Context.update_env ctx str_item.str_env ;
+  Context.set_env ctx str_item.str_env ;
   transl_structure_item ~ctx mod_ str_item
 
 let transl_structure ~lib ~mod_ (str : Typedtree.structure) =
