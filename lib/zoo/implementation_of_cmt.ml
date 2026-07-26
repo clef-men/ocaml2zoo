@@ -1,16 +1,16 @@
 open Implementation
 
 module Dependency = struct
-  let structeq =
-    "zoo", "program_logic.structural_equality"
-  let identifier =
-    "zoo", "program_logic.identifier"
-  let diverge =
-    "zoo_std", "diverge"
   let assert_ =
-    "zoo_std", "assert"
+    "zoo_std.assert"
   let assume =
-    "zoo_std", "assume"
+    "zoo_std.assume"
+  let diverge =
+    "zoo_std.diverge"
+  let identifier =
+    "zoo.program_logic.identifier"
+  let structeq =
+    "zoo.program_logic.structural_equality"
 end
 
 module Builtin = struct
@@ -877,7 +877,7 @@ module Context = struct
     ; global_names: int Name.Hashtbl.t
     ; global_ids: Spath.t Ident.Tbl.t
     ; mutable locals: Ident.Set.t
-    ; dependencies: (string, string Hashset.t) Hashtbl.t
+    ; dependencies: string Hashset.t
     }
 
   let create mod_ final_env =
@@ -887,7 +887,7 @@ module Context = struct
     ; global_names= Name.Hashtbl.create ()
     ; global_ids= Ident.Tbl.create 17
     ; locals= Ident.Set.empty
-    ; dependencies= Hashtbl.create ()
+    ; dependencies= Hashset.create ()
     }
 
   let env t =
@@ -929,15 +929,11 @@ module Context = struct
 
   let dependencies t =
     t.dependencies
+  let add_dependency t =
+    Hashset.add t.dependencies
   let add_dependency' t lib mod_ =
-    match Hashtbl.find_opt t.dependencies lib with
-    | None ->
-        let mods = Hashset.singleton mod_ in
-        Hashtbl.add t.dependencies lib mods
-    | Some mods ->
-        Hashset.add mods mod_
-  let add_dependency t (lib, mod_) =
-    add_dependency' t lib mod_
+    let dep = Printf.sprintf "%s.%s" lib mod_ in
+    add_dependency t dep
   let rec add_dependency_from_path t ~loc (path : Path.t) =
     match path with
     | Pident _ ->

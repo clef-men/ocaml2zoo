@@ -833,18 +833,19 @@ let transl ~code t =
   in
   let rocq = List.interleave [Rocq.newline] rocq in
   List.concat (
-    [ [ Rocq.require RequireImport "zoo" ["prelude"]
-      ; Rocq.require RequireImport "zoo.language" ["typeclasses"; "notations"]
+    [ [ Rocq.require RequireImport "zoo.prelude"
+      ; Rocq.require RequireImport "zoo.language.typeclasses"
+      ; Rocq.require RequireImport "zoo.language.notations"
       ]
-    ; Hashtbl.map_list (fun lib mods ->
-        Rocq.require RequireImport lib (List.rev @@ Hashset.to_list mods)
-      ) t.dependencies
+    ; t.dependencies
+      |> Hashset.to_list_sort String.compare
+      |> List.map (Rocq.require RequireImport)
     ; if code then
-        [ Rocq.require RequireImport t.library [t.module_ ^ "__types"]
+        [ Rocq.require RequireImport (Printf.sprintf "%s.%s__types" t.library t.module_)
         ]
       else
         []
-    ; [ Rocq.require RequireImport "zoo" ["options"]
+    ; [ Rocq.require RequireImport "zoo.options"
       ; Rocq.newline
       ]
     ] @

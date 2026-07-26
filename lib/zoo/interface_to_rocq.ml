@@ -1,6 +1,6 @@
 let transl (t : Interface.t) =
   List.concat
-  [ [ Rocq.require RequireImport t.library [t.module_ ^ "__code"]
+  [ [ Rocq.require RequireImport (Printf.sprintf "%s.%s__code" t.library t.module_)
     ; Rocq.newline
     ]
   ; List.map (fun global ->

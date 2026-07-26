@@ -25,7 +25,7 @@ type custom =
 
 type item =
   | Newline
-  | Require of require_kind * path * path list
+  | Require of require_kind * path
   | Parameter of ident * term
   | Definition of locality * ident * term option * custom
   | Instance of locality * ident option * custom
@@ -35,7 +35,7 @@ type item =
 val newline :
   item
 val require :
-  require_kind -> path -> path list -> item
+  require_kind -> path -> item
 val parameter :
   ident -> term -> item
 val definition :

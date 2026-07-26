@@ -11,6 +11,11 @@ val add :
 
 val to_list :
   'a t -> 'a list
+val to_list_sort :
+  ('a -> 'a -> int) -> 'a t -> 'a list
+
+val map_list :
+  ('a -> 'b) -> 'a t -> 'b list
 
 val pp :
   ?sep:unit Fmt.t -> 'a Fmt.t -> 'a t Fmt.t

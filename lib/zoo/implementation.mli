@@ -107,7 +107,7 @@ type definition =
 type t =
   { library: string
   ; module_: string
-  ; dependencies: (string, string Hashset.t) Hashtbl.t
+  ; dependencies: string Hashset.t
   ; definitions: definition list
   }
 

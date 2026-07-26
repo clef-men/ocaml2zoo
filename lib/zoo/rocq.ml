@@ -25,7 +25,7 @@ type custom =
 
 type item =
   | Newline
-  | Require of require_kind * path * path list
+  | Require of require_kind * path
   | Parameter of ident * term
   | Definition of locality * ident * term option * custom
   | Instance of locality * ident option * custom
@@ -37,8 +37,8 @@ type t =
 
 let newline =
   Newline
-let[@inline] require kind base paths =
-  Require (kind, base, paths)
+let[@inline] require kind path =
+  Require (kind, path)
 let[@inline] parameter id tm =
   Parameter (id, tm)
 let[@inline] definition local id tm custom =
@@ -69,14 +69,10 @@ let pp_locality ppf = function
 let pp_item ppf = function
   | Newline ->
       ()
-  | Require (kind, base, paths) ->
-      if not @@ List.is_empty paths then
-        Fmt.list (fun ppf path ->
-          Fmt.pf ppf "Require%a %s.%s."
-            pp_require_kind kind
-            base
-            path
-        ) ppf paths
+  | Require (kind, path) ->
+      Fmt.pf ppf "Require%a %s."
+        pp_require_kind kind
+        path
   | Parameter (id, tm) ->
       Fmt.pf ppf "Parameter %s : %s."
         id
