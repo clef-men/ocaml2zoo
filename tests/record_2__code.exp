@@ -5,20 +5,20 @@ Require Import tests.record_2__types.
 Require Import zoo.options.
 
 Definition record_2٠test1 : val :=
-  fun: <> =>
-    let: "t2" := (0, 1) in
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "t2" = (0, 1) 𝗶𝗻
     "t2".<f1>.
 
 Definition record_2٠test2 : val :=
-  fun: "t" =>
-    let: "f1", "f2" := "t" in
+  𝗳𝘂𝗻 "t" ->
+    𝗹𝗲𝘁 "f1", "f2" = "t" 𝗶𝗻
     "f1" + "f2".
 
 Definition record_2٠test3 : val :=
-  fun: "t" =>
+  𝗳𝘂𝗻 "t" ->
     (0, "t".<f2>).
 
 Definition record_2٠test4 : val :=
-  fun: <> =>
-    let: "@tmp" := (0, 0) in
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "@tmp" = (0, 0) 𝗶𝗻
     (0, "@tmp".<f2>).

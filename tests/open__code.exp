@@ -5,5 +5,5 @@ Require Import tests.open__types.
 Require Import zoo.options.
 
 Definition open٠test : val :=
-  fun: <> =>
+  𝗳𝘂𝗻 ⎽ ->
     ().

@@ -5,9 +5,9 @@ Require Import tests.mutual__types.
 Require Import zoo.options.
 
 #[local] Definition __zoo_recs_0 :=
-  ( recs: "test3" "x" =>
+  ( 𝗿𝗲𝗰𝘀 "test3" "x" ->
       "x"
-    and: "test4" "x" =>
+    𝘄𝗶𝘁𝗵 "test4" "x" ->
       "x"
   )%zoo_recs.
 Definition mutual٠test3 :=
@@ -32,9 +32,9 @@ Proof.
 Qed.
 
 #[local] Definition __zoo_recs_1 :=
-  ( recs: "test5" "x" =>
+  ( 𝗿𝗲𝗰𝘀 "test5" "x" ->
       "test6" "x"
-    and: "test6" "x" =>
+    𝘄𝗶𝘁𝗵 "test6" "x" ->
       "test5" "x"
   )%zoo_recs.
 Definition mutual٠test5 :=

@@ -5,14 +5,14 @@ Require Import tests.obj__types.
 Require Import zoo.options.
 
 Definition obj٠test : val :=
-  fun: <> =>
-    let: "x" := () in
-    "x" ;;
-    "x" ;;
-    IsImmediate "x" ;;
-    GetTag "x" ;;
-    GetSize "x" ;;
-    Load "x" 0 ;;
-    Store "x" 0 "x" ;;
-    Alloc 0 0 ;;
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "x" = () 𝗶𝗻
+    "x" ⍮
+    "x" ⍮
+    𝗶𝗺𝗺𝗲𝗱𝗶𝗮𝘁𝗲 "x" ⍮
+    𝘁𝗮𝗴 "x" ⍮
+    𝘀𝗶𝘇𝗲 "x" ⍮
+    𝗹𝗼𝗮𝗱 "x" 0 ⍮
+    𝘀𝘁𝗼𝗿𝗲 "x" 0 "x" ⍮
+    𝗮𝗹𝗹𝗼𝗰 0 0 ⍮
     ().

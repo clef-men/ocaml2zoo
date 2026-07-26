@@ -5,17 +5,17 @@ Require Import tests.unboxed_record__types.
 Require Import zoo.options.
 
 Definition unboxed_record٠test1 : val :=
-  fun: "x" =>
+  𝗳𝘂𝗻 "x" ->
     "x".
 
 Definition unboxed_record٠test2 : val :=
-  fun: "t" =>
-    match: "t" with
-    |_ as "x" =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | ⎽ 𝗮𝘀 "x" ->
         "x"
-    end.
+    𝗲𝗻𝗱.
 
 Definition unboxed_record٠test3 : val :=
-  fun: "t" =>
-    let: "x" := "t" in
+  𝗳𝘂𝗻 "t" ->
+    𝗹𝗲𝘁 "x" = "t" 𝗶𝗻
     "x".

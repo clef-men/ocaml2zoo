@@ -5,31 +5,31 @@ Require Import tests.if__types.
 Require Import zoo.options.
 
 Definition if٠test1 : val :=
-  fun: "b" =>
-    if: "b" then (
+  𝗳𝘂𝗻 "b" ->
+    𝗶𝗳 "b" 𝘁𝗵𝗲𝗻 (
       0
-    ) else (
+    ) 𝗲𝗹𝘀𝗲 (
       1
     ).
 
 Definition if٠test2 : val :=
-  fun: "b0" "b1" =>
-    if: "b0" then (
+  𝗳𝘂𝗻 "b0" "b1" ->
+    𝗶𝗳 "b0" 𝘁𝗵𝗲𝗻 (
       0
-    ) else if: "b1" then (
+    ) 𝗲𝗹𝘀𝗲 𝗶𝗳 "b1" 𝘁𝗵𝗲𝗻 (
       1
-    ) else (
+    ) 𝗲𝗹𝘀𝗲 (
       2
     ).
 
 Definition if٠test3 : val :=
-  fun: "b0" "b1" "b2" =>
-    if: "b0" then (
+  𝗳𝘂𝗻 "b0" "b1" "b2" ->
+    𝗶𝗳 "b0" 𝘁𝗵𝗲𝗻 (
       0
-    ) else if: "b1" then (
+    ) 𝗲𝗹𝘀𝗲 𝗶𝗳 "b1" 𝘁𝗵𝗲𝗻 (
       1
-    ) else if: "b2" then (
+    ) 𝗲𝗹𝘀𝗲 𝗶𝗳 "b2" 𝘁𝗵𝗲𝗻 (
       2
-    ) else (
+    ) 𝗲𝗹𝘀𝗲 (
       3
     ).

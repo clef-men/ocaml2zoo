@@ -5,17 +5,17 @@ Require Import tests.variant_2__types.
 Require Import zoo.options.
 
 Definition variant_2٠test1 : val :=
-  fun: <> =>
-    §Leaf ;;
-    ‘Node( §Leaf, 0, §Leaf ) ;;
-    ‘Node( ‘Node( §Leaf, 0, §Leaf ), 1, §Leaf ) ;;
+  𝗳𝘂𝗻 ⎽ ->
+    §Leaf ⍮
+    ‘Node( §Leaf, 0, §Leaf ) ⍮
+    ‘Node( ‘Node( §Leaf, 0, §Leaf ), 1, §Leaf ) ⍮
     ().
 
 Definition variant_2٠test2 : val :=
-  rec: "test2" "t" =>
-    match: "t" with
-    | Leaf =>
+  𝗿𝗲𝗰 "test2" "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | Leaf ->
         0
-    | Node "t1" "x" "t2" =>
+    | Node "t1" "x" "t2" ->
         "test2" "t1" + "x" + "test2" "t2"
-    end.
+    𝗲𝗻𝗱.

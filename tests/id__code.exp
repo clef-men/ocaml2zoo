@@ -6,5 +6,5 @@ Require Import tests.id__types.
 Require Import zoo.options.
 
 Definition id٠test : val :=
-  fun: <> =>
-    Id.
+  𝗳𝘂𝗻 ⎽ ->
+    𝗶𝗱.

@@ -5,7 +5,7 @@ Require Import tests.ref__types.
 Require Import zoo.options.
 
 Definition ref٠test : val :=
-  fun: <> =>
-    let: "r" := ref 0 in
-    !"r" ;;
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "r" = 𝗿𝗲𝗳 0 𝗶𝗻
+    !"r" ⍮
     "r" <- 1.

@@ -5,19 +5,19 @@ Require Import tests.unboxed_variant__types.
 Require Import zoo.options.
 
 Definition unboxed_variant٠test1 : val :=
-  fun: "x" =>
+  𝗳𝘂𝗻 "x" ->
     "x".
 
 Definition unboxed_variant٠test2 : val :=
-  fun: "t" =>
-    match: "t" with
-    |_ as "x" =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | ⎽ 𝗮𝘀 "x" ->
         "x"
-    end.
+    𝗲𝗻𝗱.
 
 Definition unboxed_variant٠test3 : val :=
-  fun: "t" =>
-    match: "t" with
-    |_ as "x" =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | ⎽ 𝗮𝘀 "x" ->
         "x"
-    end.
+    𝗲𝗻𝗱.

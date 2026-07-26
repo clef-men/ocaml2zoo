@@ -5,9 +5,9 @@ Require Import tests.let_open__types.
 Require Import zoo.options.
 
 Definition let_open٠test1 : val :=
-  fun: <> =>
-    Load (Alloc 0 1) 0.
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗼𝗮𝗱 (𝗮𝗹𝗹𝗼𝗰 0 1) 0.
 
 Definition let_open٠test2 : val :=
-  fun: <> =>
-    Load (Alloc 0 1) 0.
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗼𝗮𝗱 (𝗮𝗹𝗹𝗼𝗰 0 1) 0.

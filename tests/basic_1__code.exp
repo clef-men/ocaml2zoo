@@ -26,10 +26,10 @@ Definition basic_1٠test7 : val :=
   ‘Some( 0 ).
 
 Definition basic_1٠test8 : val :=
-  ‘Some( fun: <> => () ).
+  ‘Some( 𝗳𝘂𝗻 ⎽ -> () ).
 
 Definition basic_1٠test9 : val :=
   ‘Some( §None ).
 
 Definition basic_1٠test10 : val :=
-  ‘Some( (‘Some( fun: <> => () ), ‘Some( () )) ).
+  ‘Some( (‘Some( 𝗳𝘂𝗻 ⎽ -> () ), ‘Some( () )) ).

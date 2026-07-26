@@ -5,16 +5,16 @@ Require Import tests.option__types.
 Require Import zoo.options.
 
 Definition option٠test1 : val :=
-  fun: <> =>
-    §None ;;
-    ‘Some( 0 ) ;;
+  𝗳𝘂𝗻 ⎽ ->
+    §None ⍮
+    ‘Some( 0 ) ⍮
     ().
 
 Definition option٠test2 : val :=
-  fun: "o" =>
-    match: "o" with
-    | None =>
+  𝗳𝘂𝗻 "o" ->
+    𝗺𝗮𝘁𝗰𝗵 "o" 𝘄𝗶𝘁𝗵
+    | None ->
         0
-    | Some "i" =>
+    | Some "i" ->
         "i"
-    end.
+    𝗲𝗻𝗱.

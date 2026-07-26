@@ -5,11 +5,11 @@ Require Import tests.let_pattern__types.
 Require Import zoo.options.
 
 Definition let_pattern٠test1 : val :=
-  fun: <> =>
-    let: "x", "y" := (0, 1) in
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "x", "y" = (0, 1) 𝗶𝗻
     "x" + "y".
 
 Definition let_pattern٠test2 : val :=
-  fun: <> =>
-    let: ‘Some "i" := ‘Some( 0 ) in
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 ‘Some "i" = ‘Some( 0 ) 𝗶𝗻
     "i".

@@ -5,13 +5,13 @@ Require Import tests.for__types.
 Require Import zoo.options.
 
 Definition for٠test1 : val :=
-  fun: <> =>
-    for: "i" := 0 to 10 + 1 begin
+  𝗳𝘂𝗻 ⎽ ->
+    𝗳𝗼𝗿 "i" = 0 𝘁𝗼 10 + 1 𝗱𝗼
       ()
-    end.
+    𝗱𝗼𝗻𝗲.
 
 Definition for٠test2 : val :=
-  fun: <> =>
-    for: "i" := 0 to 10 begin
+  𝗳𝘂𝗻 ⎽ ->
+    𝗳𝗼𝗿 "i" = 0 𝘁𝗼 10 𝗱𝗼
       ()
-    end.
+    𝗱𝗼𝗻𝗲.

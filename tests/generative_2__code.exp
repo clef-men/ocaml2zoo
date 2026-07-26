@@ -5,7 +5,7 @@ Require Import tests.generative_2__types.
 Require Import zoo.options.
 
 Definition generative_2٠test : val :=
-  fun: <> =>
-    ‘A@[ () ] ;;
-    ‘B( () ) ;;
+  𝗳𝘂𝗻 ⎽ ->
+    ‘A@[ () ] ⍮
+    ‘B( () ) ⍮
     ().

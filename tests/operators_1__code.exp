@@ -5,36 +5,36 @@ Require Import tests.operators_1__types.
 Require Import zoo.options.
 
 Definition operators_1٠test1 : val :=
-  fun: "i" =>
-    ~ true ;;
-    - "i" ;;
-    "i" + "i" ;;
-    "i" - "i" ;;
-    "i" * "i" ;;
-    "i" `quot` "i" ;;
-    "i" `rem` "i" ;;
-    "i" `land` "i" ;;
-    "i" `lor` "i" ;;
-    "i" `lsl` "i" ;;
-    "i" `lsr` "i" ;;
-    "i" == "i" ;;
-    "i" != "i" ;;
-    "i" ≤ "i" ;;
-    "i" < "i" ;;
-    "i" ≥ "i" ;;
-    "i" > "i" ;;
-    2 * "i" + ("i" + 1) < "i" ;;
-    true and true ;;
-    true or true ;;
-    true and true or true ;;
-    true and (true or true) ;;
-    true or true and true ;;
-    (true or true) and true ;;
+  𝗳𝘂𝗻 "i" ->
+    ~ true ⍮
+    - "i" ⍮
+    "i" + "i" ⍮
+    "i" - "i" ⍮
+    "i" * "i" ⍮
+    "i" 𝗾𝘂𝗼𝘁 "i" ⍮
+    "i" 𝗿𝗲𝗺 "i" ⍮
+    "i" 𝗹𝗮𝗻𝗱 "i" ⍮
+    "i" 𝗹𝗼𝗿 "i" ⍮
+    "i" 𝗹𝘀𝗹 "i" ⍮
+    "i" 𝗹𝘀𝗿 "i" ⍮
+    "i" == "i" ⍮
+    "i" != "i" ⍮
+    "i" ≤ "i" ⍮
+    "i" < "i" ⍮
+    "i" ≥ "i" ⍮
+    "i" > "i" ⍮
+    2 * "i" + ("i" + 1) < "i" ⍮
+    true 𝗮𝗻𝗱 true ⍮
+    true 𝗼𝗿 true ⍮
+    true 𝗮𝗻𝗱 true 𝗼𝗿 true ⍮
+    true 𝗮𝗻𝗱 (true 𝗼𝗿 true) ⍮
+    true 𝗼𝗿 true 𝗮𝗻𝗱 true ⍮
+    (true 𝗼𝗿 true) 𝗮𝗻𝗱 true ⍮
     ().
 
 Definition operators_1٠test2 : val :=
-  fun: "i" =>
-    (fun: "1" "2" => "1" + "2") ;;
-    (fun: "1" "2" => "1" + "2") "i" ;;
-    "i" + "i" ;;
+  𝗳𝘂𝗻 "i" ->
+    (𝗳𝘂𝗻 "1" "2" -> "1" + "2") ⍮
+    (𝗳𝘂𝗻 "1" "2" -> "1" + "2") "i" ⍮
+    "i" + "i" ⍮
     ().

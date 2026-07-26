@@ -5,8 +5,8 @@ Require Import tests.literal__types.
 Require Import zoo.options.
 
 Definition literal٠test : val :=
-  fun: <> =>
-    0 ;;
-    true ;;
-    false ;;
+  𝗳𝘂𝗻 ⎽ ->
+    0 ⍮
+    true ⍮
+    false ⍮
     ().

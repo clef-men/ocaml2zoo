@@ -5,19 +5,19 @@ Require Import tests.list__types.
 Require Import zoo.options.
 
 Definition list٠test1 : val :=
-  fun: <> =>
-    [] ;;
-    0 :: [] ;;
-    1 :: [] ;;
+  𝗳𝘂𝗻 ⎽ ->
+    [] ⍮
+    0 :: [] ⍮
+    1 :: [] ⍮
     ().
 
 Definition list٠test2 : val :=
-  fun: "xs" =>
-    match: "xs" with
-    | [] =>
+  𝗳𝘂𝗻 "xs" ->
+    𝗺𝗮𝘁𝗰𝗵 "xs" 𝘄𝗶𝘁𝗵
+    | [] ->
         ()
-    | "x" :: "xs" =>
-        "x" ;;
-        "xs" ;;
+    | "x" :: "xs" ->
+        "x" ⍮
+        "xs" ⍮
         ()
-    end.
+    𝗲𝗻𝗱.

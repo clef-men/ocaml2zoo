@@ -6,13 +6,13 @@ Require Import tests.assert__types.
 Require Import zoo.options.
 
 Definition assert٠test1 : val :=
-  fun: <> =>
-    assert (1 + 1 == 2).
+  𝗳𝘂𝗻 ⎽ ->
+    𝗮𝘀𝘀𝗲𝗿𝘁 (1 + 1 == 2).
 
 Definition assert٠test2 : val :=
-  fun: "b" =>
-    if: "b" then (
-      Fail
-    ) else (
+  𝗳𝘂𝗻 "b" ->
+    𝗶𝗳 "b" 𝘁𝗵𝗲𝗻 (
+      𝗳𝗮𝗶𝗹
+    ) 𝗲𝗹𝘀𝗲 (
       ()
     ).

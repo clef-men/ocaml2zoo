@@ -6,13 +6,13 @@ Require Import tests.raise_2__types.
 Require Import zoo.options.
 
 Definition raise_2٠test1 : val :=
-  fun: "b" =>
-    assume "b".
+  𝗳𝘂𝗻 "b" ->
+    𝗮𝘀𝘀𝘂𝗺𝗲 "b".
 
 Definition raise_2٠test2 : val :=
-  fun: "b" =>
-    assume "b".
+  𝗳𝘂𝗻 "b" ->
+    𝗮𝘀𝘀𝘂𝗺𝗲 "b".
 
 Definition raise_2٠test3 : val :=
-  fun: "b" =>
-    assume "b".
+  𝗳𝘂𝗻 "b" ->
+    𝗮𝘀𝘀𝘂𝗺𝗲 "b".

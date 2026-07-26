@@ -5,41 +5,41 @@ Require Import tests.variant_4__types.
 Require Import zoo.options.
 
 Definition variant_4٠test1 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B <> <> as "r" =>
+    | B ⎽ ⎽ 𝗮𝘀 "r" ->
         "r".{f1}
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_4٠test2 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B <> <> as "t" =>
-        let: "r" := "t" in
-        "t" ;;
+    | B ⎽ ⎽ 𝗮𝘀 "t" ->
+        𝗹𝗲𝘁 "r" = "t" 𝗶𝗻
+        "t" ⍮
         "r".{f1}
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_4٠test3 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         §A
-    | B <> <> as "r" =>
+    | B ⎽ ⎽ 𝗮𝘀 "r" ->
         "r"
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_4٠test4 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         §A
-    | B <> <> as "t" =>
-        let: "r" := "t" in
-        "t" ;;
+    | B ⎽ ⎽ 𝗮𝘀 "t" ->
+        𝗹𝗲𝘁 "r" = "t" 𝗶𝗻
+        "t" ⍮
         "r"
-    end.
+    𝗲𝗻𝗱.

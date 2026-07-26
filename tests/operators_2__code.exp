@@ -6,7 +6,7 @@ Require Import tests.operators_2__types.
 Require Import zoo.options.
 
 Definition operators_2٠test : val :=
-  fun: "x" "y" =>
-    "x" = "y" ;;
-    "x" ≠ "y" ;;
+  𝗳𝘂𝗻 "x" "y" ->
+    "x" = "y" ⍮
+    "x" ≠ "y" ⍮
     ().

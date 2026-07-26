@@ -5,18 +5,18 @@ Require Import tests.proph__types.
 Require Import zoo.options.
 
 Definition proph٠test1 : val :=
-  fun: <> =>
-    let: "proph" := Proph in
-    Resolve (1 + 1) "proph" ().
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "proph" = 𝗽𝗿𝗼𝗽𝗵 𝗶𝗻
+    𝗿𝗲𝘀𝗼𝗹𝘃𝗲 (1 + 1) "proph" ().
 
 Definition proph٠test2 : val :=
-  fun: <> =>
-    let: "proph" := Proph in
-    Resolve Skip "proph" ().
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "proph" = 𝗽𝗿𝗼𝗽𝗵 𝗶𝗻
+    𝗿𝗲𝘀𝗼𝗹𝘃𝗲 𝘀𝗸𝗶𝗽 "proph" ().
 
 Definition proph٠test3 : val :=
-  fun: <> =>
-    let: "proph" := Proph in
-    let: "@tmp" := () in
-    Resolve Skip "proph" "@tmp" ;;
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "proph" = 𝗽𝗿𝗼𝗽𝗵 𝗶𝗻
+    𝗹𝗲𝘁 "@tmp" = () 𝗶𝗻
+    𝗿𝗲𝘀𝗼𝗹𝘃𝗲 𝘀𝗸𝗶𝗽 "proph" "@tmp" ⍮
     "@tmp".

@@ -5,15 +5,15 @@ Require Import tests.ignore__types.
 Require Import zoo.options.
 
 Definition ignore٠test1 : val :=
-  fun: <> =>
-    () ;;
+  𝗳𝘂𝗻 ⎽ ->
+    () ⍮
     ().
 
 Definition ignore٠test2 : val :=
-  fun: "x" =>
-    "x" ;;
+  𝗳𝘂𝗻 "x" ->
+    "x" ⍮
     ().
 
 Definition ignore٠test3 : val :=
-  fun: <> =>
-    fun: <> => ().
+  𝗳𝘂𝗻 ⎽ ->
+    𝗳𝘂𝗻 ⎽ -> ().

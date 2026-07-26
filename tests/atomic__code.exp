@@ -5,33 +5,33 @@ Require Import tests.atomic__types.
 Require Import zoo.options.
 
 Definition atomic٠test1 : val :=
-  fun: <> =>
-    let: "a" := ref 0 in
-    Xchg "a".[contents] 0 ;;
-    CAS "a".[contents] 0 0 ;;
-    FAA "a".[contents] 0 ;;
-    FAA "a".[contents] (-1) ;;
-    FAA "a".[contents] 1 ;;
+  𝗳𝘂𝗻 ⎽ ->
+    𝗹𝗲𝘁 "a" = 𝗿𝗲𝗳 0 𝗶𝗻
+    𝘅𝗰𝗵𝗴 "a".[contents] 0 ⍮
+    𝗰𝗮𝘀 "a".[contents] 0 0 ⍮
+    𝗳𝗮𝗮 "a".[contents] 0 ⍮
+    𝗳𝗮𝗮 "a".[contents] (-1) ⍮
+    𝗳𝗮𝗮 "a".[contents] 1 ⍮
     ().
 
 Definition atomic٠test2 : val :=
-  fun: "loc" =>
-    Load "loc".<0> "loc".<1> ;;
-    Store "loc".<0> "loc".<1> 0 ;;
-    Xchg "loc" 0 ;;
-    CAS "loc" 0 0 ;;
-    FAA "loc" 0 ;;
-    FAA "loc" (-1) ;;
-    FAA "loc" 1 ;;
+  𝗳𝘂𝗻 "loc" ->
+    𝗹𝗼𝗮𝗱 "loc".<0> "loc".<1> ⍮
+    𝘀𝘁𝗼𝗿𝗲 "loc".<0> "loc".<1> 0 ⍮
+    𝘅𝗰𝗵𝗴 "loc" 0 ⍮
+    𝗰𝗮𝘀 "loc" 0 0 ⍮
+    𝗳𝗮𝗮 "loc" 0 ⍮
+    𝗳𝗮𝗮 "loc" (-1) ⍮
+    𝗳𝗮𝗮 "loc" 1 ⍮
     ().
 
 Definition atomic٠test3 : val :=
-  fun: "t" =>
-    Load ("t".[f]).<0> ("t".[f]).<1> ;;
-    Store ("t".[f]).<0> ("t".[f]).<1> 0 ;;
-    Xchg "t".[f] 0 ;;
-    CAS "t".[f] 0 0 ;;
-    FAA "t".[f] 0 ;;
-    FAA "t".[f] (-1) ;;
-    FAA "t".[f] 1 ;;
+  𝗳𝘂𝗻 "t" ->
+    𝗹𝗼𝗮𝗱 ("t".[f]).<0> ("t".[f]).<1> ⍮
+    𝘀𝘁𝗼𝗿𝗲 ("t".[f]).<0> ("t".[f]).<1> 0 ⍮
+    𝘅𝗰𝗵𝗴 "t".[f] 0 ⍮
+    𝗰𝗮𝘀 "t".[f] 0 0 ⍮
+    𝗳𝗮𝗮 "t".[f] 0 ⍮
+    𝗳𝗮𝗮 "t".[f] (-1) ⍮
+    𝗳𝗮𝗮 "t".[f] 1 ⍮
     ().

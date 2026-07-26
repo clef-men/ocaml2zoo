@@ -5,63 +5,63 @@ Require Import tests.variant_3__types.
 Require Import zoo.options.
 
 Definition variant_3٠test1 : val :=
-  fun: <> =>
+  𝗳𝘂𝗻 ⎽ ->
     ‘B( 0, 0 ).
 
 Definition variant_3٠test2 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B "f1" "f2" =>
+    | B "f1" "f2" ->
         "f1" + "f2"
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_3٠test3 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B "f1" "f2" as "t" =>
-        "t" ;;
+    | B "f1" "f2" 𝗮𝘀 "t" ->
+        "t" ⍮
         "f1" + "f2"
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_3٠test4 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B "x1" "x2" =>
+    | B "x1" "x2" ->
         "x1" + "x2"
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_3٠test5 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B "x1" "x2" as "t" =>
-        "t" ;;
+    | B "x1" "x2" 𝗮𝘀 "t" ->
+        "t" ⍮
         "x1" + "x2"
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_3٠test6 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B <> <> as "r" =>
+    | B ⎽ ⎽ 𝗮𝘀 "r" ->
         "r".<f1> + "r".<f2>
-    end.
+    𝗲𝗻𝗱.
 
 Definition variant_3٠test7 : val :=
-  fun: "t" =>
-    match: "t" with
-    | A =>
+  𝗳𝘂𝗻 "t" ->
+    𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
+    | A ->
         0
-    | B <> <> as "t" =>
-        let: "r" := "t" in
-        "t" ;;
+    | B ⎽ ⎽ 𝗮𝘀 "t" ->
+        𝗹𝗲𝘁 "r" = "t" 𝗶𝗻
+        "t" ⍮
         "r".<f1> + "r".<f2>
-    end.
+    𝗲𝗻𝗱.

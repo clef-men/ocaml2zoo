@@ -36,9 +36,9 @@ let pp ppf t =
 
 module Builtin = struct
   let diverge =
-    Ident "diverge"
+    Ident "𝗱𝗶𝘃𝗲𝗿𝗴𝗲"
   let assert_ =
-    Ident "assert"
+    Ident "𝗮𝘀𝘀𝗲𝗿𝘁"
   let assume =
-    Ident "assume"
+    Ident "𝗮𝘀𝘀𝘂𝗺𝗲"
 end
