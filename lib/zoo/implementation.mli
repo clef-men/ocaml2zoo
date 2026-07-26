@@ -38,6 +38,26 @@ type binop =
   | Binop_and | Binop_or
   | Binop_structeq | Binop_structne
 
+type primitive =
+  | Alloc
+  | Assert
+  | Assume
+  | Cas
+  | Diverge
+  | Faa
+  | Fail
+  | Tag
+  | Size
+  | Id
+  | Immediate
+  | Load
+  | Proph
+  | Ref
+  | Resolve
+  | Skip
+  | Store
+  | Xchg
+
 type expression =
   | Global of Spath.t
   | Local of Name.t
@@ -47,14 +67,9 @@ type expression =
   | Letrec of rec_flag * Name.t * binder list * expression * expression
   | Seq of expression * expression
   | Fun of binder list * expression
-  | Apply of expression * expression list
-  | Unop of unop * expression
-  | Binop of binop * expression * expression
   | If of expression * expression * expression option
   | For of binder * expression * expression * expression
-  | Alloc of expression * expression
   | Tuple of expression list
-  | Ref of expression
   | Record of expression list
   | Constr of mutability * tag * expression list
   | Proj of expression * field
@@ -63,20 +78,11 @@ type expression =
   | Ref_set of expression * expression
   | Record_get of expression * field
   | Record_set of expression * field * expression
-  | Is_immediate of expression
-  | Get_tag of expression
-  | Get_size of expression
   | Atomic_loc of expression * field
-  | Load of expression * expression
-  | Store of expression * expression * expression
-  | Xchg of expression * expression
-  | Cas of expression * expression * expression
-  | Faa of expression * expression
-  | Fail
-  | Skip
-  | Proph
-  | Resolve of expression * expression * expression
-  | Id
+  | Unop of unop * expression
+  | Binop of binop * expression * expression
+  | Primitive of primitive
+  | Apply of expression * expression list
 and branch =
   { branch_tag: tag
   ; branch_fields: binder list

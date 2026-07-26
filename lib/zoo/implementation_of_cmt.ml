@@ -25,161 +25,289 @@ module Builtin = struct
     ) Path.Set.empty raising
 
   let paths =
+    let helper1 expr =
+      Fun ([Some "1"], expr)
+    in
+    let helper2 expr =
+      Fun ([Some "1"; Some "2"], expr)
+    in
+    let helper3 expr =
+      Fun ([Some "1"; Some "2"; Some "3"], expr)
+    in
     [|[|"Stdlib";"ignore"|],
-      Fun ([None], Tuple []),
+      Fun ([None],
+        Tuple []
+      ),
       None
     ; [|"Stdlib";"not"|],
-      Fun ([Some "1"], Unop (Unop_neg, Local "1")),
+      helper1 (
+        Unop (Unop_neg, Local "1")
+      ),
       None
     ; [|"Stdlib";"~-"|],
-      Fun ([Some "1"], Unop (Unop_minus, Local "1")),
+      helper1 (
+        Unop (Unop_minus, Local "1")
+      ),
       None
     ; [|"Stdlib";"+"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_plus, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_plus, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"-"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_minus, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_minus, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"*"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_mult, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_mult, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"/"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_quot, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_quot, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"mod"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_rem, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_rem, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"land"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_land, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_land, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"lor"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_lor, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_lor, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"lsl"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_lsl, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_lsl, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"lsr"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_lsr, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_lsr, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"=="|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_eq, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_eq, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"!="|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_ne, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_ne, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"<="|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_le, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_le, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"<"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_lt, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_lt, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";">="|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_ge, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_ge, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";">"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_gt, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_gt, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"&&"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_and, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_and, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"||"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_or, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_or, Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"="|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_structeq, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_structeq, Local "1", Local "2")
+      ),
       Some Dependency.structeq
     ; [|"Stdlib";"<>"|],
-      Fun ([Some "1"; Some "2"], Binop (Binop_structne, Local "1", Local "2")),
+      helper2 (
+        Binop (Binop_structne, Local "1", Local "2")
+      ),
       Some Dependency.structeq
     ; [|"Stdlib";"ref"|],
-      Fun ([Some "1"], Ref (Local "1")),
+      helper1 (
+        Apply (Primitive Ref, [Local "1"])
+      ),
       None
     ; [|"Stdlib";"!"|],
-      Fun ([Some "1"], Ref_get (Local "1")),
+      helper1 (
+        Ref_get (Local "1")
+      ),
       None
     ; [|"Stdlib";":="|],
-      Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")),
+      helper2 (
+        Ref_set (Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"Obj";"repr"|],
-      Fun ([Some "1"], Local "1"),
+      helper1 (
+        Local "1"
+      ),
       None
     ; [|"Stdlib";"Obj";"obj"|],
-      Fun ([Some "1"], Local "1"),
+      helper1 (
+        Local "1"
+      ),
       None
     ; [|"Stdlib";"Obj";"magic"|],
-      Fun ([Some "1"], Local "1"),
+      helper1 (
+        Local "1"
+      ),
       None
     ; [|"Stdlib";"Obj";"is_int"|],
-      Fun ([Some "1"], Is_immediate (Local "1")),
+      helper1 (
+        Apply (Primitive Immediate, [Local "1"])
+      ),
       None
     ; [|"Stdlib";"Obj";"tag"|],
-      Fun ([Some "1"], Get_tag (Local "1")),
+      helper1 (
+        Apply (Primitive Tag, [Local "1"])
+      ),
       None
     ; [|"Stdlib";"Obj";"size"|],
-      Fun ([Some "1"], Get_size (Local "1")),
+      helper1 (
+        Apply (Primitive Size, [Local "1"])
+      ),
       None
     ; [|"Stdlib";"Obj";"field"|],
-      Fun ([Some "1"; Some "2"], Load (Local "1", Local "2")),
+      helper2 (
+        Apply (Primitive Load, [Local "1"; Local "2"])
+      ),
       None
     ; [|"Stdlib";"Obj";"set_field"|],
-      Fun ([Some "1"; Some "2"; Some "3"], Store (Local "1", Local "2", Local "3")),
+      helper3 (
+        Apply (Primitive Store, [Local "1"; Local "2"; Local "3"])
+      ),
       None
     ; [|"Stdlib";"Obj";"new_block"|],
-      Fun ([Some "1"; Some "2"], Alloc (Local "1", Local "2")),
+      helper2 (
+        Apply (Primitive Alloc, [Local "1"; Local "2"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
-      Fun ([Some "1"], Load (Proj (Local "1", "0"), Proj (Local "1", "1"))),
+      helper1 (
+        Apply (Primitive Load, [Proj (Local "1", "0"); Proj (Local "1", "1")])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
-      Fun ([Some "1"; Some "2"], Store (Proj (Local "1", "0"), Proj (Local "1", "1"), Local "2")),
+      helper2 (
+        Apply (Primitive Store, [Proj (Local "1", "0"); Proj (Local "1", "1"); Local "2"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
-      Fun ([Some "1"; Some "2"], Xchg (Local "1", Local "2")),
+      helper2 (
+        Apply (Primitive Xchg, [Local "1"; Local "2"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
-      Fun ([Some "1"; Some "2"; Some "3"], Cas (Local "1", Local "2", Local "3")),
+      helper3 (
+        Apply (Primitive Cas, [Local "1"; Local "2"; Local "3"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
-      Fun ([Some "1"; Some "2"], Faa (Local "1", Local "2")),
+      helper2 (
+        Apply (Primitive Faa, [Local "1"; Local "2"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"decr"|],
-      Fun ([Some "1"], Seq (Faa (Local "1", Int (-1)), Tuple [])),
+      helper1 (
+        Seq
+        ( Apply (Primitive Faa, [Local "1"; Int (-1)])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"incr"|],
-      Fun ([Some "1"], Seq (Faa (Local "1", Int 1), Tuple [])),
+      helper1 (
+        Seq
+        ( Apply (Primitive Faa, [Local "1"; Int 1])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Stdlib";"Atomic";"make"|],
-      Fun ([Some "1"], Ref (Local "1")),
+      helper1 (
+        Apply (Primitive Ref, [Local "1"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"get"|],
-      Fun ([Some "1"], Ref_get (Local "1")),
+      helper1 (
+        Ref_get (Local "1")
+      ),
       None
     ; [|"Stdlib";"Atomic";"set"|],
-      Fun ([Some "1"; Some "2"], Ref_set (Local "1", Local "2")),
+      helper2 (
+        Ref_set (Local "1", Local "2")
+      ),
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
-      Fun ([Some "1"; Some "2"], Xchg (Atomic_loc (Local "1", "contents"), Local "2")),
+      helper2 (
+        Apply (Primitive Xchg, [Atomic_loc (Local "1", "contents"); Local "2"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
-      Fun ([Some "1"; Some "2"; Some "3"], Cas (Atomic_loc (Local "1", "contents"), Local "2", Local "3")),
+      helper3 (
+        Apply (Primitive Cas, [Atomic_loc (Local "1", "contents"); Local "2"; Local "3"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
-      Fun ([Some "1"; Some "2"], Faa (Atomic_loc (Local "1", "contents"), Local "2")),
+      helper2 (
+        Apply (Primitive Faa, [Atomic_loc (Local "1", "contents"); Local "2"])
+      ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
-      Fun ([Some "1"], Seq (Faa (Atomic_loc (Local "1", "contents"), Int (-1)), Tuple [])),
+      helper1 (
+        Seq
+        ( Apply (Primitive Faa, [Atomic_loc (Local "1", "contents"); Int (-1)])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Stdlib";"Atomic";"incr"|],
-      Fun ([Some "1"], Seq (Faa (Atomic_loc (Local "1", "contents"), Int 1), Tuple [])),
+      helper1 (
+        Seq
+        ( Apply (Primitive Faa, [Atomic_loc (Local "1", "contents"); Int 1])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Zoo";"resolve_with"|],
-      Fun ([Some "1"; Some "2"; Some "3"], Resolve (Local "1", Local "2", Local "3")),
+      helper3 (
+        Apply (Primitive Resolve, [Local "1"; Local "2"; Local "3"])
+      ),
       None
     ; [|"Zoo";"resolve_silent"|],
-      Fun ([Some "1"; Some "2"], Resolve (Skip, Local "1", Local "2")),
+      helper2 (
+        Apply (Primitive Resolve, [Apply (Primitive Skip, []); Local "1"; Local "2"])
+      ),
       None
     ; [|"Zoo";"resolve"|],
-      Fun ([Some "1"; Some "2"], Seq (Resolve (Skip, Local "1", Local "2"), Local "2")),
+      helper2 (
+        Seq
+        ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); Local "1"; Local "2"])
+        , Local "2"
+        )
+      ),
       None
     |]
   let paths =
@@ -188,7 +316,7 @@ module Builtin = struct
     ) Path.Map.empty paths
   let paths =
     Path.Set.fold (fun path acc ->
-      let expr = Fun ([None], Apply (Global Spath.Builtin.diverge, [Tuple []])) in
+      let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
       let dep = Some Dependency.diverge in
       Path.Map.add path (expr, dep) acc
     ) raising paths
@@ -197,167 +325,312 @@ module Builtin = struct
     | Opaque of expression
     | Transparent of (expression list -> expression option)
   let apps =
+    let helper1 mk_expr = function
+      | [expr] ->
+          Some (mk_expr expr)
+      | _ ->
+          None
+    in
+    let helper2 mk_expr = function
+      | [expr1; expr2] ->
+          Some (mk_expr expr1 expr2)
+      | _ ->
+          None
+    in
+    let helper3 mk_expr = function
+      | [expr1; expr2; expr3] ->
+          Some (mk_expr expr1 expr2 expr3)
+      | _ ->
+          None
+    in
     [|[|"Stdlib";"ignore"|],
-      (function [expr] -> Some (Seq (expr, Tuple [])) | _ -> None),
+      helper1 (fun expr ->
+        Seq (expr, Tuple [])
+      ),
       None
     ; [|"Stdlib";"not"|],
-      (function [expr] -> Some (Unop (Unop_neg, expr)) | _ -> None),
+      helper1 (fun expr ->
+        Unop (Unop_neg, expr)
+      ),
       None
     ; [|"Stdlib";"~-"|],
-      (function [expr] -> Some (Unop (Unop_minus, expr)) | _ -> None),
+      helper1 (fun expr ->
+        Unop (Unop_minus, expr)
+      ),
       None
     ; [|"Stdlib";"+"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_plus, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_plus, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"-"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_minus, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_minus, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"*"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_mult, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_mult, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"/"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_quot, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_quot, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"mod"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_rem, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_rem, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"land"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_land, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_land, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"lor"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_lor, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_lor, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"lsl"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_lsl, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_lsl, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"lsr"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_lsr, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_lsr, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"=="|],
-      (function [expr1; expr2] -> Some (Binop (Binop_eq, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_eq, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"!="|],
-      (function [expr1; expr2] -> Some (Binop (Binop_ne, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_ne, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"<="|],
-      (function [expr1; expr2] -> Some (Binop (Binop_le, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_le, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"<"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_lt, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_lt, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";">="|],
-      (function [expr1; expr2] -> Some (Binop (Binop_ge, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_ge, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";">"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_gt, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_gt, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"&&"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_and, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_and, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"||"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_or, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_or, expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"="|],
-      (function [expr1; expr2] -> Some (Binop (Binop_structeq, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_structeq, expr1, expr2)
+      ),
       Some Dependency.structeq
     ; [|"Stdlib";"<>"|],
-      (function [expr1; expr2] -> Some (Binop (Binop_structne, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Binop (Binop_structne, expr1, expr2)
+      ),
       Some Dependency.structeq
     ; [|"Stdlib";"ref"|],
-      (function [expr] -> Some (Ref expr) | _ -> None),
+      helper1 (fun expr ->
+        Apply (Primitive Ref, [expr])
+      ),
       None
     ; [|"Stdlib";"!"|],
-      (function [expr] -> Some (Ref_get expr) | _ -> None),
+      helper1 (fun expr ->
+        Ref_get expr
+      ),
       None
     ; [|"Stdlib";":="|],
-      (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Ref_set (expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"Obj";"repr"|],
-      (function [expr] -> Some expr | _ -> None),
+      helper1 (fun expr ->
+        expr
+      ),
       None
     ; [|"Stdlib";"Obj";"obj"|],
-      (function [expr] -> Some expr | _ -> None),
+      helper1 (fun expr ->
+        expr
+      ),
       None
     ; [|"Stdlib";"Obj";"magic"|],
-      (function [expr] -> Some expr | _ -> None),
+      helper1 (fun expr ->
+        expr
+      ),
       None
     ; [|"Stdlib";"Obj";"is_int"|],
-      (function [expr] -> Some (Is_immediate expr) | _ -> None),
+      helper1 (fun expr ->
+        Apply (Primitive Immediate, [expr])
+      ),
       None
     ; [|"Stdlib";"Obj";"tag"|],
-      (function [expr] -> Some (Get_tag expr) | _ -> None),
+      helper1 (fun expr ->
+        Apply (Primitive Tag, [expr])
+      ),
       None
     ; [|"Stdlib";"Obj";"size"|],
-      (function [expr] -> Some (Get_size expr) | _ -> None),
+      helper1 (fun expr ->
+        Apply (Primitive Size, [expr])
+      ),
       None
     ; [|"Stdlib";"Obj";"field"|],
-      (function [expr1; expr2] -> Some (Load (expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Load, [expr1; expr2])
+      ),
       None
     ; [|"Stdlib";"Obj";"set_field"|],
-      (function [expr1; expr2; expr3] -> Some (Store (expr1, expr2, expr3)) | _ -> None),
+      helper3 (fun expr1 expr2 expr3 ->
+        Apply (Primitive Store, [expr1; expr2; expr3])
+      ),
       None
     ; [|"Stdlib";"Obj";"new_block"|],
-      (function [expr1; expr2] -> Some (Alloc (expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Alloc, [expr1; expr2])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
-      (function [expr] -> Some (Load (Proj (expr, "0"), Proj (expr, "1"))) | _ -> None),
+      helper1 (fun expr ->
+        Apply (Primitive Load, [Proj (expr, "0"); Proj (expr, "1")])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
-      (function [expr1; expr2] -> Some (Store (Proj (expr1, "0"), Proj (expr1, "1"), expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Store, [Proj (expr1, "0"); Proj (expr1, "1"); expr2])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
-      (function [expr1; expr2] -> Some (Xchg (expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Xchg, [expr1; expr2])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
-      (function [expr1; expr2; expr3] -> Some (Cas (expr1, expr2, expr3)) | _ -> None),
+      helper3 (fun expr1 expr2 expr3 ->
+        Apply (Primitive Cas, [expr1; expr2; expr3])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
-      (function [expr1; expr2] -> Some (Faa (expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Faa, [expr1; expr2])
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"decr"|],
-      (function [expr] -> Some (Seq (Faa (expr, Int (-1)), Tuple [])) | _ -> None),
+      helper1 (fun expr ->
+        Seq
+        ( Apply (Primitive Faa, [expr; Int (-1)])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"incr"|],
-      (function [expr] -> Some (Seq (Faa (expr, Int 1), Tuple [])) | _ -> None),
+      helper1 (fun expr ->
+        Seq
+        ( Apply (Primitive Faa, [expr; Int 1])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Stdlib";"Atomic";"make"|],
-      (function [expr] -> Some (Ref expr) | _ -> None),
+      helper1 (fun expr ->
+        Apply (Primitive Ref, [expr])
+      ),
       None
     ; [|"Stdlib";"Atomic";"get"|],
-      (function [expr] -> Some (Ref_get expr) | _ -> None),
+      helper1 (fun expr ->
+        Ref_get expr
+      ),
       None
     ; [|"Stdlib";"Atomic";"set"|],
-      (function [expr1; expr2] -> Some (Ref_set (expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Ref_set (expr1, expr2)
+      ),
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
-      (function [expr1; expr2] -> Some (Xchg (Atomic_loc (expr1, "contents"), expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Xchg, [Atomic_loc (expr1, "contents"); expr2])
+      ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
-      (function [expr1; expr2; expr3] -> Some (Cas (Atomic_loc (expr1, "contents"), expr2, expr3)) | _ -> None),
+      helper3 (fun expr1 expr2 expr3 ->
+        Apply (Primitive Cas, [Atomic_loc (expr1, "contents"); expr2; expr3])
+      ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
-      (function [expr1; expr2] -> Some (Faa (Atomic_loc (expr1, "contents"), expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Faa, [Atomic_loc (expr1, "contents"); expr2])
+      ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
-      (function [expr] -> Some (Seq (Faa (Atomic_loc (expr, "contents"), Int (-1)), Tuple [])) | _ -> None),
+      helper1 (fun expr ->
+        Seq
+        ( Apply (Primitive Faa, [Atomic_loc (expr, "contents"); Int (-1)])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Stdlib";"Atomic";"incr"|],
-      (function [expr] -> Some (Seq (Faa (Atomic_loc (expr, "contents"), Int 1), Tuple [])) | _ -> None),
+      helper1 (fun expr ->
+        Seq
+        ( Apply (Primitive Faa, [Atomic_loc (expr, "contents"); Int 1])
+        , Tuple []
+        )
+      ),
       None
     ; [|"Zoo";"proph"|],
-      (function [_expr] -> Some Proph | _ -> None),
+      helper1 (fun _expr ->
+        Apply (Primitive Proph, [])
+      ),
       None
     ; [|"Zoo";"resolve_with"|],
-      (function [expr1; expr2; expr3] -> Some (Resolve (expr1, expr2, expr3)) | _ -> None),
+      helper3 (fun expr1 expr2 expr3 ->
+        Apply (Primitive Resolve, [expr1; expr2; expr3])
+      ),
       None
     ; [|"Zoo";"resolve_silent"|],
-      (function [expr1; expr2] -> Some (Resolve (Skip, expr1, expr2)) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; expr2])
+      ),
       None
     ; [|"Zoo";"resolve"|],
-      (function [expr1; expr2] -> Some (Let (Pat_var Name.temporary, expr2, Seq (Resolve (Skip, expr1, Local Name.temporary), Local Name.temporary))) | _ -> None),
+      helper2 (fun expr1 expr2 ->
+        Let
+        ( Pat_var Name.temporary
+        , expr2
+        , Seq
+          ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; Local Name.temporary])
+          , Local Name.temporary
+          )
+        )
+      ),
       None
     ; [|"Zoo";"id"|],
-      (function [_expr] -> Some Id | _ -> None),
+      helper1 (fun _expr ->
+        Apply (Primitive Id, [])
+      ),
       Some Dependency.identifier
     |]
   let apps =
@@ -366,7 +639,7 @@ module Builtin = struct
     ) Path.Map.empty apps
   let apps =
     Path.Set.fold (fun path acc ->
-      let expr = Apply (Global Spath.Builtin.diverge, [Tuple []]) in
+      let expr = Apply (Primitive Diverge, [Tuple []]) in
       let dep = Some Dependency.diverge in
       Path.Map.add path (Opaque expr, dep) acc
     ) raising apps
@@ -934,7 +1207,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       | Unop (Unop_neg, expr1), Texp_apply ({ exp_desc= Texp_ident (path, _, _); _ }, _), None
         when Path.Set.mem path Builtin.raising ->
           Context.add_dependency ctx Dependency.assume ;
-          Apply (Global Spath.Builtin.assume, [expr1])
+          Apply (Primitive Assume, [expr1])
       | _ ->
           let expr2 = transl_expression ~ctx expr2 in
           let expr3 = Option.map (transl_expression ~ctx) expr3 in
@@ -1054,11 +1327,11 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let expr2 = transl_expression ~ctx expr2 in
       Record_set (expr1, fld, expr2)
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
-      Fail
+      Apply (Primitive Fail, [])
   | Texp_assert (expr, _) ->
       Context.add_dependency ctx Dependency.assert_ ;
       let expr = transl_expression ~ctx expr in
-      Apply (Global Spath.Builtin.assert_, [expr])
+      Apply (Primitive Assert, [expr])
   | Texp_open (open_, expr) ->
       transl_open_declaration ~loc:expr.exp_loc open_ ;
       transl_expression ~ctx expr

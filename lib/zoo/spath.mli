@@ -13,12 +13,3 @@ val to_string :
 
 val pp :
   t Fmt.t
-
-module Builtin : sig
-  val diverge :
-    t
-  val assert_ :
-    t
-  val assume :
-    t
-end

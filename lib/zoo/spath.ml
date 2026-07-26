@@ -33,12 +33,3 @@ let pp ppf t =
   t
   |> to_string
   |> Fmt.string ppf
-
-module Builtin = struct
-  let diverge =
-    Ident "𝗱𝗶𝘃𝗲𝗿𝗴𝗲"
-  let assert_ =
-    Ident "𝗮𝘀𝘀𝗲𝗿𝘁"
-  let assume =
-    Ident "𝗮𝘀𝘀𝘂𝗺𝗲"
-end
