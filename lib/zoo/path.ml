@@ -30,25 +30,25 @@ let rec to_list acc = function
 let to_list =
   to_list []
 
-let rec to_string' sep acc = function
+let rec to_string' ~sep acc = function
   | Pident id ->
       Some (Ident.name id ^ acc)
   | Pdot (t, s) ->
-      to_string' sep (sep ^ s ^ acc) t
+      to_string' ~sep (sep ^ s ^ acc) t
   | Papply _ ->
       None
   | Pextra_ty (t, Pcstr_ty s) ->
-      to_string' sep (sep ^ s ^ acc) t
+      to_string' ~sep (sep ^ s ^ acc) t
   | Pextra_ty (t, Pext_ty) ->
-      to_string' sep acc t
-let rec to_string sep = function
+      to_string' ~sep acc t
+let rec to_string ~sep = function
   | Pident id ->
       Some (Ident.name id)
   | Pdot (t, s) ->
-      to_string' sep (sep ^ s) t
+      to_string' ~sep (sep ^ s) t
   | Papply _ ->
       None
   | Pextra_ty (t, Pcstr_ty s) ->
-      to_string' sep s t
+      to_string' ~sep s t
   | Pextra_ty (t, Pext_ty) ->
-      to_string sep t
+      to_string ~sep t

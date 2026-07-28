@@ -12,4 +12,4 @@ val to_list :
   t -> (Ident.t * string list) option
 
 val to_string :
-  string -> t -> string option
+  sep:string -> t -> string option
