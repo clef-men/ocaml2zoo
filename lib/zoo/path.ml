@@ -20,9 +20,9 @@ let of_array arr =
 let rec to_list acc = function
   | Pident id ->
       Some (id, acc)
-  | Pdot (t, s)
-  | Pextra_ty (t, Pcstr_ty s) ->
-      to_list (s :: acc) t
+  | Pdot (t, name)
+  | Pextra_ty (t, Pcstr_ty name) ->
+      to_list (name :: acc) t
   | Pextra_ty (t, Pext_ty) ->
       to_list acc t
   | Papply _ ->
@@ -33,22 +33,22 @@ let to_list =
 let rec to_string' ~sep acc = function
   | Pident id ->
       Some (Ident.name id ^ acc)
-  | Pdot (t, s) ->
-      to_string' ~sep (sep ^ s ^ acc) t
+  | Pdot (t, name) ->
+      to_string' ~sep (sep ^ name ^ acc) t
   | Papply _ ->
       None
-  | Pextra_ty (t, Pcstr_ty s) ->
-      to_string' ~sep (sep ^ s ^ acc) t
+  | Pextra_ty (t, Pcstr_ty name) ->
+      to_string' ~sep (sep ^ name ^ acc) t
   | Pextra_ty (t, Pext_ty) ->
       to_string' ~sep acc t
 let rec to_string ~sep = function
   | Pident id ->
       Some (Ident.name id)
-  | Pdot (t, s) ->
-      to_string' ~sep (sep ^ s) t
+  | Pdot (t, name) ->
+      to_string' ~sep (sep ^ name) t
   | Papply _ ->
       None
-  | Pextra_ty (t, Pcstr_ty s) ->
-      to_string' ~sep s t
+  | Pextra_ty (t, Pcstr_ty name) ->
+      to_string' ~sep name t
   | Pextra_ty (t, Pext_ty) ->
       to_string ~sep t

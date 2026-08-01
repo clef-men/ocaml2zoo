@@ -1,11 +1,5 @@
 type binder =
-  Name.t option
-
-type field =
-  string
-
-type tag =
-  string
+  Var.t option
 
 type rec_flag = Asttypes.rec_flag =
   | Nonrecursive
@@ -18,14 +12,14 @@ type mutability =
   | Immutable_generative_strong
 
 type typ =
-  | Type_product of field list
-  | Type_record of field list
-  | Type_variant of tag list
+  | Type_product of string list
+  | Type_record of string list
+  | Type_variant of string list
 
 type pattern =
-  | Pat_var of Name.t
+  | Pat_var of Var.t
   | Pat_tuple of binder list
-  | Pat_constr of tag * binder list
+  | Pat_constr of Spath.t * binder list
 
 type unop =
   | Unop_neg
@@ -60,31 +54,32 @@ type primitive =
 
 type expression =
   | Global of Spath.t
-  | Local of Name.t
+  | Local of Spath.t
+  | Var of Var.t
   | Bool of bool
   | Int of int
   | Let of pattern * expression * expression
-  | Letrec of rec_flag * Name.t * binder list * expression * expression
+  | Letrec of rec_flag * Var.t * binder list * expression * expression
   | Seq of expression * expression
   | Fun of binder list * expression
   | If of expression * expression * expression option
   | For of binder * expression * expression * expression
   | Tuple of expression list
   | Record of expression list
-  | Constr of mutability * tag * expression list
-  | Proj of expression * field
+  | Constr of mutability * Spath.t * expression list
+  | Proj of expression * Spath.t
   | Match of expression * branch list * fallback option
   | Ref_get of expression
   | Ref_set of expression * expression
-  | Record_get of expression * field
-  | Record_set of expression * field * expression
-  | Atomic_loc of expression * field
+  | Record_get of expression * Spath.t
+  | Record_set of expression * Spath.t * expression
+  | Atomic_loc of expression * Spath.t
   | Unop of unop * expression
   | Binop of binop * expression * expression
   | Primitive of primitive
   | Apply of expression * expression list
 and branch =
-  { branch_tag: tag
+  { branch_tag: Spath.t
   ; branch_fields: binder list
   ; branch_as: binder
   ; branch_expr: expression
@@ -95,13 +90,13 @@ and fallback =
   }
 
 type value =
-  | Val_expr of Name.t * expression
-  | Val_fun of Name.t * binder list * expression
-  | Val_recs of (Name.t * Name.t * binder list * expression) list
-  | Val_opaque of Name.t
+  | Val_expr of Spath.t * expression
+  | Val_fun of Spath.t * binder list * expression
+  | Val_recs of (Spath.t * Var.t * binder list * expression) list
+  | Val_opaque of Spath.t
 
 type definition =
-  | Type of Name.t * typ
+  | Type of Spath.t * typ
   | Val of value
 
 type t =
@@ -115,6 +110,6 @@ val expression_is_value :
   expression -> bool
 
 val types :
-  t -> (Name.t * typ) list
+  t -> (Spath.t * typ) list
 val values :
   t -> value list

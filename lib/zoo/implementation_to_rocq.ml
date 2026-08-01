@@ -1,5 +1,8 @@
 open Implementation
 
+let separator =
+  "٠"
+
 module Punctuation = struct
   let alt =
     "|"
@@ -187,6 +190,11 @@ module Keyword = struct
     "𝘅𝗰𝗵𝗴"
 end
 
+module Type = struct
+  let value =
+    "val"
+end
+
 let pp_boolean ppf =
   Fmt.pf ppf "%B"
 
@@ -200,24 +208,24 @@ let pp_integer ppf int =
     Fmt.pf ppf "%i"
       int
 
-let pp_local ppf local =
-  Fmt.pf ppf {|"%s"|} local
+let pp_variable ppf =
+  Fmt.pf ppf {|"%s"|}
 
 let pp_binder ppf = function
   | None ->
       Fmt.string ppf Punctuation.wildcard
-  | Some local ->
-      pp_local ppf local
+  | Some var ->
+      pp_variable ppf var
 
 let pp_pattern ppf = function
-  | Pat_var local ->
-      pp_local ppf local
+  | Pat_var var ->
+      pp_variable ppf var
   | Pat_tuple bdrs ->
       Fmt.(list ~sep:(const string @@ Punctuation.comma ^ " ") pp_binder) ppf bdrs
   | Pat_constr (tag, bdrs) ->
-      Fmt.pf ppf "%s%s %a"
+      Fmt.pf ppf "%s%a %a"
         Punctuation.backtick
-        tag
+        (Spath.pp ~sep:separator) tag
         Fmt.(list ~sep:(const string @@ Punctuation.comma ^ " ") pp_binder) bdrs
 
 let pp_unop ppf op =
@@ -347,10 +355,11 @@ let max_level =
 let next_level lvl =
   lvl - 1
 let rec level = function
-  | Constr (_, "::", _) ->
+  | Constr (_, Ident "::", _) ->
       60
   | Global _
   | Local _
+  | Var _
   | Bool _
   | Int _
   | If _
@@ -412,11 +421,13 @@ let rec level = function
   | Fun _ ->
       max_level
 
-let rec pp_expression' lvl ppf = function
-  | Global spath ->
-      Spath.pp ppf spath
-  | Local local ->
-      pp_local ppf local
+let rec pp_expression' ~mod_ lvl ppf = function
+  | Global path ->
+      Spath.pp ~sep:separator ppf path
+  | Local path ->
+      Spath.pp ~sep:separator ppf (Spath.cons mod_ path)
+  | Var var ->
+      pp_variable ppf var
   | Bool bool ->
       pp_boolean ppf bool
   | Int int ->
@@ -426,57 +437,57 @@ let rec pp_expression' lvl ppf = function
         Keyword.let_
         pp_pattern pat
         Punctuation.equal
-        (pp_expression max_level) expr1
+        (pp_expression ~mod_ max_level) expr1
         Keyword.in_
-        (pp_expression max_level) expr2
-  | Letrec (rec_flag, local, bdrs, expr1, expr2) ->
+        (pp_expression ~mod_ max_level) expr2
+  | Letrec (rec_flag, var, bdrs, expr1, expr2) ->
       Fmt.pf ppf "@[<v>@[<hv>%s %a %a %s@;<1 2>@[%a@]@;%s@]@,%a@]"
         Keyword.(match rec_flag with Nonrecursive -> let_ | Recursive -> letrec)
-        pp_local local
+        pp_variable var
         Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
         Punctuation.equal
-        (pp_expression max_level) expr1
+        (pp_expression ~mod_ max_level) expr1
         Keyword.in_
-        (pp_expression max_level) expr2
+        (pp_expression ~mod_ max_level) expr2
   | Seq (expr1, expr2) ->
       Fmt.pf ppf "@[<v>@[" ;
       begin match expr1 with
       | If (expr1, expr2, expr3) ->
-          pp_expression_if ~force_else:true ppf expr1 expr2 expr3
+          pp_expression_if ~mod_ ~force_else:true ppf expr1 expr2 expr3
       | _ ->
-          pp_expression (next_level lvl) ppf expr1
+          pp_expression ~mod_ (next_level lvl) ppf expr1
       end ;
       Fmt.pf ppf "@] %s@,%a@]"
         Punctuation.semicolon
-        (pp_expression max_level) expr2
+        (pp_expression ~mod_ max_level) expr2
   | Fun (bdrs, expr) ->
       Fmt.pf ppf "@[<hv>%s %a %s@;<1 2>@[%a@]@]"
         Keyword.fun_
         Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
         Punctuation.arrow
-        (pp_expression max_level) expr
+        (pp_expression ~mod_ max_level) expr
   | Unop (op, expr) ->
       Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@]"
         pp_unop op
-        (pp_expression lvl) expr
+        (pp_expression ~mod_ lvl) expr
   | Binop (op, expr1, expr2) ->
       let assoc = associativity op in
       Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@;@[%a@]@]"
-        (pp_expression @@ if assoc = Left then lvl else next_level lvl) expr1
+        (pp_expression ~mod_ @@ if assoc = Left then lvl else next_level lvl) expr1
         pp_binop op
-        (pp_expression @@ if assoc = Left then next_level lvl else lvl) expr2
+        (pp_expression ~mod_ @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
-      pp_expression_if ppf expr1 expr2 expr3
-  | For (local, expr1, expr2, expr3) ->
+      pp_expression_if ~mod_ ppf expr1 expr2 expr3
+  | For (bdr, expr1, expr2, expr3) ->
       Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@;%s@;<1 2>@[%a@]@;%s@;<1 2>@[%a@]@;%s@]@,  @[%a@]@,%s@]"
         Keyword.for_
-        pp_binder local
+        pp_binder bdr
         Punctuation.equal
-        (pp_expression max_level) expr1
+        (pp_expression ~mod_ max_level) expr1
         Keyword.to_
-        (pp_expression max_level) expr2
+        (pp_expression ~mod_ max_level) expr2
         Keyword.do_
-        (pp_expression max_level) expr3
+        (pp_expression ~mod_ max_level) expr3
         Keyword.done_
   | Tuple exprs ->
       Fmt.pf ppf "@[<hv>%s%a@,%s@]"
@@ -488,7 +499,7 @@ let rec pp_expression' lvl ppf = function
                 Fmt.pf ppf "%s@;<1 1>"
                   Punctuation.comma
             )
-            pp_expression_box
+            (pp_expression_box ~mod_)
         ) exprs
         Punctuation.paren_right
   | Record exprs ->
@@ -501,25 +512,25 @@ let rec pp_expression' lvl ppf = function
                 Fmt.pf ppf "%s@;<1 2>"
                   Punctuation.comma
             )
-            pp_expression_box
+            (pp_expression_box ~mod_)
         ) exprs
         Punctuation.brace_right
-  | Constr (_, "[]", _) ->
+  | Constr (_, Ident "[]", _) ->
       Fmt.string ppf Punctuation.nil
-  | Constr (_, "::", exprs) ->
+  | Constr (_, Ident "::", exprs) ->
       let[@warning "-8"] [expr1; expr2] = exprs in
       Fmt.pf ppf "@[<hv>%a %s@;<1 2>@[%a@]@]"
-        (pp_expression @@ next_level lvl) expr1
+        (pp_expression ~mod_ @@ next_level lvl) expr1
         Punctuation.cons
-        (pp_expression lvl) expr2
+        (pp_expression ~mod_ lvl) expr2
   | Constr (_, tag, []) ->
-      Fmt.pf ppf "%s%s"
+      Fmt.pf ppf "%s%a"
         Punctuation.tag
-        tag
+        (Spath.pp ~sep:separator) tag
   | Constr (flag, tag, exprs) ->
-      Fmt.pf ppf "@[<hv>%s%s%s %a@;%s@]"
+      Fmt.pf ppf "@[<hv>%s%a%s %a@;%s@]"
         Punctuation.backtick
-        tag
+        (Spath.pp ~sep:separator) tag
         ( match flag with
           | Mutable ->
               Punctuation.brace_left
@@ -537,7 +548,7 @@ let rec pp_expression' lvl ppf = function
                 Fmt.pf ppf "%s@;<1 2>"
                   Punctuation.comma
             )
-            pp_expression_box
+            (pp_expression_box ~mod_)
         ) exprs
         ( match flag with
           | Mutable ->
@@ -549,77 +560,77 @@ let rec pp_expression' lvl ppf = function
               Punctuation.bracket_right
         )
   | Proj (expr, fld) ->
-      Fmt.pf ppf "@[%a@]%s%s%s"
-        (pp_expression lvl) expr
+      Fmt.pf ppf "@[%a@]%s%a%s"
+        (pp_expression ~mod_ lvl) expr
         Punctuation.proj_left
-        fld
+        (Spath.pp ~sep:separator) fld
         Punctuation.proj_right
   | Match (expr, brs, fb) ->
       Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@;%s@]@,%a%a%s@]"
         Keyword.match_
-        (pp_expression max_level) expr
+        (pp_expression ~mod_ max_level) expr
         Keyword.with_
-        Fmt.(list ~sep:nop pp_branch) brs
-        Fmt.(option pp_fallback) fb
+        Fmt.(list ~sep:nop @@ pp_branch ~mod_) brs
+        Fmt.(option @@ pp_fallback ~mod_) fb
         Keyword.end_
   | Ref_get expr ->
       Fmt.pf ppf "%s@[%a@]"
         Punctuation.ref_get
-        (pp_expression lvl) expr
+        (pp_expression ~mod_ lvl) expr
   | Ref_set (expr1, expr2) ->
       Fmt.pf ppf "@[<hv>@[<hv>@[%a@]@;<1 2>%s@]@;<1 2>@[%a@]@]"
-        (pp_expression @@ next_level lvl) expr1
+        (pp_expression ~mod_ @@ next_level lvl) expr1
         Punctuation.ref_set
-        (pp_expression lvl) expr2
+        (pp_expression ~mod_ lvl) expr2
   | Record_get (expr, fld) ->
-      Fmt.pf ppf "@[%a@]%s%s%s"
-        (pp_expression lvl) expr
+      Fmt.pf ppf "@[%a@]%s%a%s"
+        (pp_expression ~mod_ lvl) expr
         Punctuation.record_get_left
-        fld
+        (Spath.pp ~sep:separator) fld
         Punctuation.record_get_right
   | Record_set (expr1, fld, expr2) ->
-      Fmt.pf ppf "@[<hv>@[<hv>@[%a@]@;<1 2>%s%s%s@]@;<1 2>@[%a@]@]"
-        (pp_expression @@ next_level lvl) expr1
+      Fmt.pf ppf "@[<hv>@[<hv>@[%a@]@;<1 2>%s%a%s@]@;<1 2>@[%a@]@]"
+        (pp_expression ~mod_ @@ next_level lvl) expr1
         Punctuation.record_set_left
-        fld
+        (Spath.pp ~sep:separator) fld
         Punctuation.record_set_right
-        (pp_expression lvl) expr2
+        (pp_expression ~mod_ lvl) expr2
   | Atomic_loc (expr, fld) ->
-      Fmt.pf ppf "@[%a@]%s%s%s"
-        (pp_expression lvl) expr
+      Fmt.pf ppf "@[%a@]%s%a%s"
+        (pp_expression ~mod_ lvl) expr
         Punctuation.atomic_loc_left
-        fld
+        (Spath.pp ~sep:separator) fld
         Punctuation.atomic_loc_right
   | Primitive prim ->
       pp_primitive ppf prim
   | Apply (expr, exprs) ->
       Fmt.pf ppf "@[<hv>@[%a@]%a@]"
-        (pp_expression lvl) expr
+        (pp_expression ~mod_ lvl) expr
         Fmt.(
           list ~sep:nop @@ fun ppf ->
             pf ppf "@;<1 2>@[%a@]"
-              (pp_expression @@ next_level lvl)
+              (pp_expression ~mod_ @@ next_level lvl)
         ) exprs
-and pp_expression lvl ppf expr =
+and pp_expression ~mod_ lvl ppf expr =
   let lvl_expr = level expr in
   if lvl < lvl_expr then
     Fmt.pf ppf "%s%a%s"
       Punctuation.paren_left
-      (pp_expression' lvl_expr) expr
+      (pp_expression' ~mod_ lvl_expr) expr
       Punctuation.paren_right
   else
     Fmt.pf ppf "%a"
-      (pp_expression' lvl_expr) expr
-and pp_expression_box ppf expr =
-  Fmt.box (pp_expression max_level) ppf expr
-and pp_expression_if_aux ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
+      (pp_expression' ~mod_ lvl_expr) expr
+and pp_expression_box ~mod_ ppf expr =
+  Fmt.box (pp_expression ~mod_ max_level) ppf expr
+and pp_expression_if_aux ~mod_ ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
   Fmt.pf ppf "@[<hv>%s%s@;<1 2>@[%a@]@;%s %s@]@,  @[%a@]@,%s"
     (if nested then " 𝗲𝗹𝘀𝗲 " else "")
     Keyword.if_
-    (pp_expression max_level) expr1
+    (pp_expression ~mod_ max_level) expr1
     Keyword.then_
     Punctuation.paren_left
-    (pp_expression max_level) expr2
+    (pp_expression ~mod_ max_level) expr2
     Punctuation.paren_right ;
   match expr3 with
   | None ->
@@ -632,32 +643,32 @@ and pp_expression_if_aux ?(nested = false) ?(force_else = false) ppf expr1 expr2
   | Some expr3 ->
       match expr3 with
       | If (expr1, expr2, expr3) ->
-          pp_expression_if_aux ~nested:true ppf expr1 expr2 expr3
+          pp_expression_if_aux ~mod_ ~nested:true ppf expr1 expr2 expr3
       | expr ->
           Fmt.pf ppf " %s %s@,  @[%a@]@,%s"
             Keyword.else_
             Punctuation.paren_left
-            (pp_expression max_level) expr
+            (pp_expression ~mod_ max_level) expr
             Punctuation.paren_right
-and pp_expression_if ?force_else ppf expr1 expr2 expr3 =
+and pp_expression_if ~mod_ ?force_else ppf expr1 expr2 expr3 =
   Fmt.pf ppf "@[<v>" ;
-  pp_expression_if_aux ?force_else ppf expr1 expr2 expr3 ;
+  pp_expression_if_aux ~mod_ ?force_else ppf expr1 expr2 expr3 ;
   Fmt.pf ppf "@]"
-and pp_branch ppf br =
+and pp_branch ~mod_ ppf br =
   Fmt.pf ppf "%s "
     Punctuation.alt ;
   begin match br.branch_tag with
-  | "[]" ->
+  | Ident "[]" ->
       Fmt.string ppf Punctuation.nil
-  | "::" ->
+  | Ident "::" ->
       let[@warning "-8"] [bdr1; bdr2] = br.branch_fields in
       Fmt.pf ppf "%a %s %a"
         pp_binder bdr1
         Punctuation.cons
         pp_binder bdr2
   | _ ->
-      Fmt.pf ppf "%s%s%a"
-        br.branch_tag
+      Fmt.pf ppf "%a%s%a"
+        (Spath.pp ~sep:separator) br.branch_tag
         (match br.branch_fields with [] -> "" | _ -> " ")
         Fmt.(list ~sep:(const char ' ') pp_binder) br.branch_fields
   end ;
@@ -665,26 +676,26 @@ and pp_branch ppf br =
     Fmt.(option @@ fun ppf ->
       pf ppf " %s %a"
         Keyword.as_
-        pp_local
+        pp_variable
     ) br.branch_as
     Punctuation.arrow
-    (pp_expression max_level) br.branch_expr
-and pp_fallback ppf fb =
+    (pp_expression ~mod_ max_level) br.branch_expr
+and pp_fallback ~mod_ ppf fb =
   Fmt.pf ppf "%s %s%a %s@,    @[%a@]@,"
     Punctuation.alt
     Punctuation.wildcard
     Fmt.(option @@ fun ppf ->
       pf ppf " %s %a"
         Keyword.as_
-        pp_local
+        pp_variable
     ) fb.fallback_as
     Punctuation.arrow
-    (pp_expression max_level) fb.fallback_expr
-let pp_expression =
-  pp_expression max_level
+    (pp_expression ~mod_ max_level) fb.fallback_expr
+let pp_expression ~mod_ =
+  pp_expression ~mod_ max_level
 
-let transl_typ ~lib ~mod_ (global, ty) =
-  let spath = String.concat "." [lib; mod_; global] in
+let transl_typ ~lib ~mod_ (path, ty) =
+  let path = Spath.(append (of_list [lib; mod_]) path) in
   match ty with
   | Type_product flds ->
       flds |> List.mapi @@ fun i fld ->
@@ -692,8 +703,8 @@ let transl_typ ~lib ~mod_ (global, ty) =
           LocalityNormal
           fld
           ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%s" %i|}
-                spath
+              Fmt.pf ppf {|in_type "%a" %i|}
+                (Spath.pp ~sep:".") path
                 i
           )
           "zoo_proj"
@@ -703,8 +714,8 @@ let transl_typ ~lib ~mod_ (global, ty) =
           LocalityNormal
           fld
           ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%s" %i|}
-                spath
+              Fmt.pf ppf {|in_type "%a" %i|}
+                (Spath.pp ~sep:".") path
                 i
           )
           "zoo_field"
@@ -714,47 +725,47 @@ let transl_typ ~lib ~mod_ (global, ty) =
           LocalityNormal
           tag
           ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%s" %i|}
-                spath
+              Fmt.pf ppf {|in_type "%a" %i|}
+                (Spath.pp ~sep:".") path
                 i
           )
           "zoo_tag"
 
 let transl_value ~mod_ fresh = function
-  | Val_expr (global, expr) ->
+  | Val_expr (path, expr) ->
       [ Rocq.definition
           LocalityNormal
-          Spath.([mod_; global] |> of_list |> to_string)
-          (Some "val")
+          Spath.(path |> cons mod_ |> to_string ~sep:separator)
+          (Some Type.value)
           ( fun ppf () ->
-              pp_expression_box ppf expr
+              pp_expression_box ~mod_ ppf expr
           )
       ]
-  | Val_fun (global, params, expr) ->
+  | Val_fun (path, params, expr) ->
       [ Rocq.definition
           LocalityNormal
-          Spath.([mod_; global] |> of_list |> to_string)
-          (Some "val")
+          Spath.(path |> cons mod_ |> to_string ~sep:separator)
+          (Some Type.value)
           ( fun ppf () ->
               Fmt.pf ppf "@[<v>%s %a %s@,  @[%a@]@]"
                 Keyword.fun_
                 Fmt.(list ~sep:(const char ' ') pp_binder) params
                 Punctuation.arrow
-                pp_expression expr
+                (pp_expression ~mod_) expr
           )
       ]
-  | Val_recs [global, local, params, body] ->
+  | Val_recs [path, var, params, body] ->
       [ Rocq.definition
           LocalityNormal
-          Spath.([mod_; global] |> of_list |> to_string)
-          (Some "val")
+          Spath.(path |> cons mod_ |> to_string ~sep:separator)
+          (Some Type.value)
           ( fun ppf () ->
               Fmt.pf ppf "@[<v>%s %a %a %s@,  @[%a@]@]"
                 Keyword.rec_
-                pp_local local
+                pp_variable var
                 Fmt.(list ~sep:(const char ' ') pp_binder) params
                 Punctuation.arrow
-                pp_expression body
+                (pp_expression ~mod_) body
           )
       ]
   | Val_recs recs ->
@@ -774,20 +785,20 @@ let transl_value ~mod_ fresh = function
                           Fmt.pf ppf "@,%s "
                             Keyword.with_
                       )
-                      ( fun ppf (_, local, params, body) ->
+                      ( fun ppf (_, var, params, body) ->
                         pf ppf "%a %a %s@,  @[%a@]"
-                          pp_local local
+                          pp_variable var
                           (list ~sep:(const char ' ') pp_binder) params
                           Punctuation.arrow
-                          pp_expression body
+                          (pp_expression ~mod_) body
                       )
                   ) recs
             )
         ]
-      ; List.mapi (fun i (global, _, _, _) ->
+      ; List.mapi (fun i (path, _, _, _) ->
           Rocq.definition
             LocalityNormal
-            Spath.([mod_; global] |> of_list |> to_string)
+            Spath.(path |> cons mod_ |> to_string ~sep:separator)
             None
             ( fun ppf () ->
                 Fmt.pf ppf "ValRecs %i __zoo_recs_%i"
@@ -795,34 +806,33 @@ let transl_value ~mod_ fresh = function
                   id
             )
         ) recs
-      ; List.mapi (fun i (global, _, _, _) ->
+      ; List.mapi (fun i (path, _, _, _) ->
           Rocq.instance
             LocalityGlobal
             None
             ( fun ppf () ->
                 Fmt.pf ppf "@[<v>AsValRecs' %a %i __zoo_recs_%i [@,  @[<v>%a@]@,]@]"
-                  Spath.pp Spath.([mod_; global] |> of_list)
+                  (Spath.pp ~sep:separator) (Spath.cons mod_ path)
                   i
                   id
                   Fmt.(
-                    list ~sep:(any " ;@,") @@ fun ppf (global, _, _, _) ->
-                      Spath.([mod_; global] |> of_list |> pp ppf)
+                    list ~sep:(any " ;@,") @@ fun ppf (path, _, _, _) ->
+                      Spath.pp ~sep:separator ppf (Spath.cons mod_ path)
                   ) recs
             )
         ) recs
       ]
-  | Val_opaque global ->
+  | Val_opaque path ->
       [ Rocq.parameter
-          Spath.([mod_; global] |> of_list |> to_string)
-          "val"
+          Spath.(path |> cons mod_ |> to_string ~sep:separator)
+          Type.value
       ]
 let transl_value ~mod_ =
   let gen = ref 0 in
-  transl_value ~mod_ (fun () ->
+  transl_value ~mod_ @@ fun () ->
     let i = !gen in
     gen := i + 1 ;
     i
-  )
 
 let transl ~code t =
   let rocq =

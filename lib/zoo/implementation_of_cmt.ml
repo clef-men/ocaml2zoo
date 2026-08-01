@@ -24,7 +24,7 @@ module Builtin = struct
       Path.Set.add (Path.of_array path) acc
     ) Path.Set.empty raising
 
-  let paths =
+  let values =
     let helper1 expr =
       Fun ([Some "1"], expr)
     in
@@ -41,198 +41,198 @@ module Builtin = struct
       None
     ; [|"Stdlib";"not"|],
       helper1 (
-        Unop (Unop_neg, Local "1")
+        Unop (Unop_neg, Var "1")
       ),
       None
     ; [|"Stdlib";"~-"|],
       helper1 (
-        Unop (Unop_minus, Local "1")
+        Unop (Unop_minus, Var "1")
       ),
       None
     ; [|"Stdlib";"+"|],
       helper2 (
-        Binop (Binop_plus, Local "1", Local "2")
+        Binop (Binop_plus, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"-"|],
       helper2 (
-        Binop (Binop_minus, Local "1", Local "2")
+        Binop (Binop_minus, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"*"|],
       helper2 (
-        Binop (Binop_mult, Local "1", Local "2")
+        Binop (Binop_mult, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"/"|],
       helper2 (
-        Binop (Binop_quot, Local "1", Local "2")
+        Binop (Binop_quot, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"mod"|],
       helper2 (
-        Binop (Binop_rem, Local "1", Local "2")
+        Binop (Binop_rem, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"land"|],
       helper2 (
-        Binop (Binop_land, Local "1", Local "2")
+        Binop (Binop_land, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"lor"|],
       helper2 (
-        Binop (Binop_lor, Local "1", Local "2")
+        Binop (Binop_lor, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"lsl"|],
       helper2 (
-        Binop (Binop_lsl, Local "1", Local "2")
+        Binop (Binop_lsl, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"lsr"|],
       helper2 (
-        Binop (Binop_lsr, Local "1", Local "2")
+        Binop (Binop_lsr, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"=="|],
       helper2 (
-        Binop (Binop_eq, Local "1", Local "2")
+        Binop (Binop_eq, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"!="|],
       helper2 (
-        Binop (Binop_ne, Local "1", Local "2")
+        Binop (Binop_ne, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"<="|],
       helper2 (
-        Binop (Binop_le, Local "1", Local "2")
+        Binop (Binop_le, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"<"|],
       helper2 (
-        Binop (Binop_lt, Local "1", Local "2")
+        Binop (Binop_lt, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";">="|],
       helper2 (
-        Binop (Binop_ge, Local "1", Local "2")
+        Binop (Binop_ge, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";">"|],
       helper2 (
-        Binop (Binop_gt, Local "1", Local "2")
+        Binop (Binop_gt, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"&&"|],
       helper2 (
-        Binop (Binop_and, Local "1", Local "2")
+        Binop (Binop_and, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"||"|],
       helper2 (
-        Binop (Binop_or, Local "1", Local "2")
+        Binop (Binop_or, Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"="|],
       helper2 (
-        Binop (Binop_structeq, Local "1", Local "2")
+        Binop (Binop_structeq, Var "1", Var "2")
       ),
       Some Dependency.structeq
     ; [|"Stdlib";"<>"|],
       helper2 (
-        Binop (Binop_structne, Local "1", Local "2")
+        Binop (Binop_structne, Var "1", Var "2")
       ),
       Some Dependency.structeq
     ; [|"Stdlib";"ref"|],
       helper1 (
-        Apply (Primitive Ref, [Local "1"])
+        Apply (Primitive Ref, [Var "1"])
       ),
       None
     ; [|"Stdlib";"!"|],
       helper1 (
-        Ref_get (Local "1")
+        Ref_get (Var "1")
       ),
       None
     ; [|"Stdlib";":="|],
       helper2 (
-        Ref_set (Local "1", Local "2")
+        Ref_set (Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"Obj";"repr"|],
       helper1 (
-        Local "1"
+        Var "1"
       ),
       None
     ; [|"Stdlib";"Obj";"obj"|],
       helper1 (
-        Local "1"
+        Var "1"
       ),
       None
     ; [|"Stdlib";"Obj";"magic"|],
       helper1 (
-        Local "1"
+        Var "1"
       ),
       None
     ; [|"Stdlib";"Obj";"is_int"|],
       helper1 (
-        Apply (Primitive Immediate, [Local "1"])
+        Apply (Primitive Immediate, [Var "1"])
       ),
       None
     ; [|"Stdlib";"Obj";"tag"|],
       helper1 (
-        Apply (Primitive Tag, [Local "1"])
+        Apply (Primitive Tag, [Var "1"])
       ),
       None
     ; [|"Stdlib";"Obj";"size"|],
       helper1 (
-        Apply (Primitive Size, [Local "1"])
+        Apply (Primitive Size, [Var "1"])
       ),
       None
     ; [|"Stdlib";"Obj";"field"|],
       helper2 (
-        Apply (Primitive Load, [Local "1"; Local "2"])
+        Apply (Primitive Load, [Var "1"; Var "2"])
       ),
       None
     ; [|"Stdlib";"Obj";"set_field"|],
       helper3 (
-        Apply (Primitive Store, [Local "1"; Local "2"; Local "3"])
+        Apply (Primitive Store, [Var "1"; Var "2"; Var "3"])
       ),
       None
     ; [|"Stdlib";"Obj";"new_block"|],
       helper2 (
-        Apply (Primitive Alloc, [Local "1"; Local "2"])
+        Apply (Primitive Alloc, [Var "1"; Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (
-        Apply (Primitive Load, [Proj (Local "1", "0"); Proj (Local "1", "1")])
+        Apply (Primitive Load, [Proj (Var "1", Ident "0"); Proj (Var "1", Ident "1")])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (
-        Apply (Primitive Store, [Proj (Local "1", "0"); Proj (Local "1", "1"); Local "2"])
+        Apply (Primitive Store, [Proj (Var "1", Ident "0"); Proj (Var "1", Ident "1"); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
       helper2 (
-        Apply (Primitive Xchg, [Local "1"; Local "2"])
+        Apply (Primitive Xchg, [Var "1"; Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
       helper3 (
-        Apply (Primitive Cas, [Local "1"; Local "2"; Local "3"])
+        Apply (Primitive Cas, [Var "1"; Var "2"; Var "3"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
       helper2 (
-        Apply (Primitive Faa, [Local "1"; Local "2"])
+        Apply (Primitive Faa, [Var "1"; Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"decr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Local "1"; Int (-1)])
+        ( Apply (Primitive Faa, [Var "1"; Int (-1)])
         , Tuple []
         )
       ),
@@ -240,45 +240,45 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"Loc";"incr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Local "1"; Int 1])
+        ( Apply (Primitive Faa, [Var "1"; Int 1])
         , Tuple []
         )
       ),
       None
     ; [|"Stdlib";"Atomic";"make"|],
       helper1 (
-        Apply (Primitive Ref, [Local "1"])
+        Apply (Primitive Ref, [Var "1"])
       ),
       None
     ; [|"Stdlib";"Atomic";"get"|],
       helper1 (
-        Ref_get (Local "1")
+        Ref_get (Var "1")
       ),
       None
     ; [|"Stdlib";"Atomic";"set"|],
       helper2 (
-        Ref_set (Local "1", Local "2")
+        Ref_set (Var "1", Var "2")
       ),
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (
-        Apply (Primitive Xchg, [Atomic_loc (Local "1", "contents"); Local "2"])
+        Apply (Primitive Xchg, [Atomic_loc (Var "1", Ident "contents"); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (
-        Apply (Primitive Cas, [Atomic_loc (Local "1", "contents"); Local "2"; Local "3"])
+        Apply (Primitive Cas, [Atomic_loc (Var "1", Ident "contents"); Var "2"; Var "3"])
       ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (
-        Apply (Primitive Faa, [Atomic_loc (Local "1", "contents"); Local "2"])
+        Apply (Primitive Faa, [Atomic_loc (Var "1", Ident "contents"); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Local "1", "contents"); Int (-1)])
+        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Ident "contents"); Int (-1)])
         , Tuple []
         )
       ),
@@ -286,40 +286,40 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Local "1", "contents"); Int 1])
+        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Ident "contents"); Int 1])
         , Tuple []
         )
       ),
       None
     ; [|"Zoo";"resolve_with"|],
       helper3 (
-        Apply (Primitive Resolve, [Local "1"; Local "2"; Local "3"])
+        Apply (Primitive Resolve, [Var "1"; Var "2"; Var "3"])
       ),
       None
     ; [|"Zoo";"resolve_silent"|],
       helper2 (
-        Apply (Primitive Resolve, [Apply (Primitive Skip, []); Local "1"; Local "2"])
+        Apply (Primitive Resolve, [Apply (Primitive Skip, []); Var "1"; Var "2"])
       ),
       None
     ; [|"Zoo";"resolve"|],
       helper2 (
         Seq
-        ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); Local "1"; Local "2"])
-        , Local "2"
+        ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); Var "1"; Var "2"])
+        , Var "2"
         )
       ),
       None
     |]
-  let paths =
+  let values =
     Array.fold_left (fun acc (path, expr, dep) ->
       Path.Map.add (Path.of_array path) (expr, dep) acc
-    ) Path.Map.empty paths
-  let paths =
+    ) Path.Map.empty values
+  let values =
     Path.Set.fold (fun path acc ->
       let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
       let dep = Some Dependency.diverge in
       Path.Map.add path (expr, dep) acc
-    ) raising paths
+    ) raising values
 
   type app =
     | Opaque of expression
@@ -515,12 +515,12 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (fun expr ->
-        Apply (Primitive Load, [Proj (expr, "0"); Proj (expr, "1")])
+        Apply (Primitive Load, [Proj (expr, Ident "0"); Proj (expr, Ident "1")])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Store, [Proj (expr1, "0"); Proj (expr1, "1"); expr2])
+        Apply (Primitive Store, [Proj (expr1, Ident "0"); Proj (expr1, Ident "1"); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
@@ -571,23 +571,23 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Xchg, [Atomic_loc (expr1, "contents"); expr2])
+        Apply (Primitive Xchg, [Atomic_loc (expr1, Ident "contents"); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Cas, [Atomic_loc (expr1, "contents"); expr2; expr3])
+        Apply (Primitive Cas, [Atomic_loc (expr1, Ident "contents"); expr2; expr3])
       ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Faa, [Atomic_loc (expr1, "contents"); expr2])
+        Apply (Primitive Faa, [Atomic_loc (expr1, Ident "contents"); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (fun expr ->
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, "contents"); Int (-1)])
+        ( Apply (Primitive Faa, [Atomic_loc (expr, Ident "contents"); Int (-1)])
         , Tuple []
         )
       ),
@@ -595,7 +595,7 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (fun expr ->
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, "contents"); Int 1])
+        ( Apply (Primitive Faa, [Atomic_loc (expr, Ident "contents"); Int 1])
         , Tuple []
         )
       ),
@@ -618,11 +618,11 @@ module Builtin = struct
     ; [|"Zoo";"resolve"|],
       helper2 (fun expr1 expr2 ->
         Let
-        ( Pat_var Name.temporary
+        ( Pat_var Var.temporary
         , expr2
         , Seq
-          ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; Local Name.temporary])
-          , Local Name.temporary
+          ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; Var Var.temporary])
+          , Var Var.temporary
           )
         )
       ),
@@ -874,9 +874,7 @@ module Context = struct
     { mutable module_: string
     ; mutable env: Env.t
     ; final_env: Env.t
-    ; global_names: int Name.Hashtbl.t
-    ; global_ids: Spath.t Ident.Tbl.t
-    ; mutable locals: Ident.Set.t
+    ; mutable vars: Ident.Set.t
     ; dependencies: string Hashset.t
     }
 
@@ -884,9 +882,7 @@ module Context = struct
     { module_= mod_
     ; env= Env.empty
     ; final_env
-    ; global_names= Name.Hashtbl.create ()
-    ; global_ids= Ident.Tbl.create 17
-    ; locals= Ident.Set.empty
+    ; vars= Ident.Set.empty
     ; dependencies= Hashset.create ()
     }
 
@@ -898,33 +894,18 @@ module Context = struct
   let find_type t path =
     Env.find_type path t.env
 
-  let find_global t id =
-    Ident.Tbl.find t.global_ids id
-  let add_global t id =
-    let global = Ident.name id in
-    let idx = Name.Hashtbl.add_update t.global_names global 0 ((+) 1) in
-    let global =
-      let[@warning "-8"] Some cnt = Env.find_value_index id t.final_env in
-      if cnt = 0 then
-        global
-      else
-        global ^ Int.to_string_subscript idx
-    in
-    Ident.Tbl.add t.global_ids id (Spath.of_list [t.module_; global]) ;
-    global
-
-  let mem_local t id =
-    Ident.Set.mem id t.locals
-  let add_local t id =
-    t.locals <- Ident.Set.add id t.locals
-  let save_locals t =
-    let locals = t.locals in
+  let mem_var t id =
+    Ident.Set.mem id t.vars
+  let add_var t id =
+    t.vars <- Ident.Set.add id t.vars
+  let save_vars t =
+    let vars = t.vars in
     fun () ->
-      t.locals <- locals
-  let protect_locals t fn =
-    let locals = t.locals in
+      t.vars <- vars
+  let protect_vars t fn =
+    let vars = t.vars in
     let res = fn () in
-    t.locals <- locals ;
+    t.vars <- vars ;
     res
 
   let dependencies t =
@@ -969,39 +950,57 @@ module Context = struct
   let add_dependency_from_label t ~loc (lbl : Data_types.label_description) =
     add_dependency_from_type t ~loc lbl.lbl_res
 
-  let rec resolve_path t ~loc (path : Path.t) =
-    match path with
-    | Pident id ->
-        if mem_local t id then
-          Local (Ident.name id)
-        else
-          Global (find_global t id)
-    | Pdot (path', global) ->
-        begin match Path.Map.find_opt path Builtin.paths with
-        | Some (expr, dep) ->
-            Option.iter (add_dependency t) dep ;
-            expr
-        | None ->
-            match Path.to_list path' with
-            | None ->
-                unsupported ~loc Functor
-            | Some (id, path') ->
-                let lib = id |> Ident.name |> String.uncapitalize_ascii in
-                let mod_, path' =
-                  match path' with
-                  | [] ->
-                      lib, [lib]
-                  | mod_ :: _ ->
-                      String.uncapitalize_ascii mod_, path'
-                in
-                add_dependency' t lib mod_ ;
-                let path' = List.map String.uncapitalize_ascii path' in
-                Global (Spath.of_list (path' @ [global]))
-        end
-    | Papply _ ->
+  let normalize name =
+    if String.starts_with_uppercase name then
+      name |> String.uncapitalize_ascii
+    else
+      name
+  let resolve_local_value t id =
+    let name = id |> Ident.name |> normalize in
+    let name =
+      let[@warning "-8"] Some idx = Env.find_value_index id t.final_env in
+      if idx = 0 then
+        name
+      else
+        name ^ Int.to_string_subscript idx
+    in
+    Spath.Ident name
+  let resolve_path_value t ~loc path =
+    match Path.to_list path with
+    | None ->
         unsupported ~loc Functor
-    | Pextra_ty (path, _) ->
-        resolve_path t ~loc path
+    | Some (id, names) ->
+        let names_normalized = names |> List.map normalize in
+        if mem_var t id then (
+          assert (names = []) ;
+          Var (Ident.name id)
+        ) else if Ident.global id then (
+          let lib = id |> Ident.name |> normalize in
+          let base, mod_ =
+            match names with
+            | [] ->
+                [lib], lib
+            | name :: _ ->
+                if String.starts_with_uppercase name then
+                  [], name |> normalize
+                else
+                  [lib], lib
+          in
+          let path = Spath.of_list (base @ names_normalized) in
+          add_dependency' t lib mod_ ;
+          Global path
+        ) else (
+          let path = resolve_local_value t id in
+          let path = Spath.append_list path names_normalized in
+          Local path
+        )
+  let resolve_path_value t ~loc path =
+    match Path.Map.find_opt path Builtin.values with
+    | Some (expr, dep) ->
+        Option.iter (add_dependency t) dep ;
+        expr
+    | None ->
+        resolve_path_value t ~loc path
 end
 
 let transl_open_declaration ~loc (open_ : Typedtree.open_declaration) =
@@ -1029,11 +1028,11 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
   | Tpat_any ->
       None
   | Tpat_var (id, _, _) ->
-      Context.add_local ctx id ;
+      Context.add_var ctx id ;
       Some (Ident.name id)
   | Tpat_alias (pat, id, _, _) ->
       if pattern_is_neutral pat then (
-        Context.add_local ctx id ;
+        Context.add_var ctx id ;
         Some (Ident.name id)
       ) else (
         unsupported ~loc:pat.pat_loc err
@@ -1063,7 +1062,7 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_any ->
       None
   | Tpat_var (id, _, _) ->
-      Context.add_local ctx id ;
+      Context.add_var ctx id ;
       Some (Pat_var (Ident.name id))
   | Tpat_tuple pats ->
       let bdrs = List.map (pattern_to_binder ~ctx ~err:Pattern_nested) pats in
@@ -1087,7 +1086,7 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
         unsupported ~loc:lid.loc Pattern_constr ;
       let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
       let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
-      Some (Pat_constr (tag, bdrs))
+      Some (Pat_constr (Ident tag, bdrs))
   | Tpat_alias _ ->
       unsupported ~loc:pat.pat_loc Pattern_alias
   | Tpat_constant _ ->
@@ -1112,9 +1111,9 @@ let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description) 
   let fld = lbl.lbl_name in
   let rcd = Context.add_dependency_from_label ctx ~loc lbl in
   if record_type_is_mutable @@ Context.find_type ctx rcd then
-    Record_get (expr, fld)
+    Record_get (expr, Ident fld)
   else
-    Proj (expr, fld)
+    Proj (expr, Ident fld)
 let rec transl_expression ~ctx (expr : Typedtree.expression) =
   match expr.exp_desc with
   | Texp_ident (path, _, _) ->
@@ -1125,7 +1124,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       unsupported ~loc:expr.exp_loc Literal_non_integer
   | Texp_let (rec_flag, [bdg], expr2) ->
       let expr1 = transl_expression ~ctx bdg.vb_expr in
-      Context.protect_locals ctx @@ fun () ->
+      Context.protect_vars ctx @@ fun () ->
         begin match transl_pattern ~ctx bdg.vb_pat with
         | None ->
             let expr2 = transl_expression ~ctx expr2 in
@@ -1133,9 +1132,9 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         | Some pat ->
             match expr1 with
             | Fun (bdrs, expr1) ->
-                let[@warning "-8"] Pat_var local = pat in
+                let[@warning "-8"] Pat_var var = pat in
                 let expr2 = transl_expression ~ctx expr2 in
-                Letrec (rec_flag, local, bdrs, expr1, expr2)
+                Letrec (rec_flag, var, bdrs, expr1, expr2)
             | _ ->
                 if rec_flag = Recursive then
                   unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
@@ -1145,7 +1144,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_let (_, _, _) ->
       unsupported ~loc:expr.exp_loc Expr_let_mutual
   | Texp_function (params, body) ->
-      Context.protect_locals ctx @@ fun () ->
+      Context.protect_vars ctx @@ fun () ->
         let bdrs =
           params |> List.map @@ fun (param : Typedtree.function_param) ->
             check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
@@ -1157,10 +1156,10 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             let expr = transl_expression ~ctx expr in
             Fun (bdrs, expr)
         | Tfunction_cases { cases= brs; param= id; _ } ->
-            Context.add_local ctx id ;
+            Context.add_var ctx id ;
             let brs, fb = transl_branches ~ctx brs in
-            let local = Ident.name id in
-            Fun (bdrs @ [Some local], Match (Local local, brs, fb))
+            let var = Ident.name id in
+            Fun (bdrs @ [Some var], Match (Var var, brs, fb))
         end
   | Texp_apply (expr', exprs) ->
       let arguments () =
@@ -1225,8 +1224,8 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         match pat.ppat_desc with
         | Ppat_any ->
             None
-        | Ppat_var { txt= local; _ } ->
-            Some local
+        | Ppat_var { txt= var; _ } ->
+            Some var
         | _ ->
             assert false
       in
@@ -1239,8 +1238,8 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         | _ ->
             Binop (Binop_plus, expr2, Int 1)
       in
-      Context.protect_locals ctx @@ fun () ->
-        Context.add_local ctx id ;
+      Context.protect_vars ctx @@ fun () ->
+        Context.add_var ctx id ;
         let expr3 = transl_expression ~ctx expr3 in
         For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
@@ -1283,7 +1282,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
                   else
                     Immutable_generative_weak
             in
-            Constr (flag, tag, exprs)
+            Constr (flag, Ident tag, exprs)
           in
           match constr.cstr_inlined with
           | None ->
@@ -1297,7 +1296,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
               | Texp_record rcd ->
                   transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
                     if record_type_is_mutable ty then
-                      Constr (Mutable, tag, exprs)
+                      Constr (Mutable, Ident tag, exprs)
                     else
                       mk_immutable exprs
                   )
@@ -1312,7 +1311,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let expr = transl_expression ~ctx expr in
       let fld = lbl.lbl_name in
       let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
-      Atomic_loc (expr, fld)
+      Atomic_loc (expr, Ident fld)
   | Texp_field (expr, lid, lbl) ->
       let expr = transl_expression ~ctx expr in
       transl_expression_field ~ctx ~loc:lid.loc expr lbl
@@ -1321,7 +1320,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let fld = lbl.lbl_name in
       let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
       let expr2 = transl_expression ~ctx expr2 in
-      Record_set (expr1, fld, expr2)
+      Record_set (expr1, Ident fld, expr2)
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
       Apply (Primitive Fail, [])
   | Texp_assert (expr, _) ->
@@ -1366,16 +1365,16 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_extension_constructor _ ->
       unsupported ~loc:expr.exp_loc Expr_extension
 and transl_expression_ident ~ctx ~loc path =
-  Context.resolve_path ctx ~loc path
+  Context.resolve_path_value ctx ~loc path
 and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
     | None ->
-        Either.Left Name.temporary
+        Either.Left Var.temporary
     | Some ext_expr ->
         match transl_expression ~ctx ext_expr with
-        | Local local ->
-            Left local
+        | Var var ->
+            Left var
         | ext_expr ->
             Right ext_expr
   in
@@ -1384,7 +1383,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
       let expr =
         match def with
         | Typedtree.Kept _ ->
-            transl_expression_field ~ctx ~loc (Local (Either.get_left ~right:Name.temporary ext_expr)) lbl
+            transl_expression_field ~ctx ~loc (Var (Either.get_left ~right:Var.temporary ext_expr)) lbl
         | Overridden (_, expr) ->
             transl_expression ~ctx expr
       in
@@ -1396,14 +1395,14 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   | Left _ ->
       expr
   | Right ext_expr ->
-      Let (Pat_var Name.temporary, ext_expr, expr)
+      Let (Pat_var Var.temporary, ext_expr, expr)
 and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * fallback option = fun ~ctx brs ->
   let rec aux1 acc = function
     | [] ->
         acc, None
     | br :: brs ->
         Option.iter (fun expr -> unsupported ~loc:expr.Typedtree.exp_loc Pattern_guard) br.Typedtree.c_guard ;
-        let restore_locals = Context.save_locals ctx in
+        let restore_vars = Context.save_vars ctx in
         let pat = br.c_lhs in
         let pat =
           match (pat.pat_desc : a Typedtree.pattern_desc) with
@@ -1436,9 +1435,9 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
         in
         let pat, bdr =
           match pat.pat_desc with
-          | Tpat_alias (pat, local, _, _) ->
-              Context.add_local ctx local ;
-              pat, Some (Ident.name local)
+          | Tpat_alias (pat, var, _, _) ->
+              Context.add_var ctx var ;
+              pat, Some (Ident.name var)
           | _ ->
               pat, None
         in
@@ -1446,18 +1445,18 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
           match pat.pat_desc with
           | Tpat_any ->
               let expr = transl_expression ~ctx br.c_rhs in
-              restore_locals () ;
+              restore_vars () ;
               acc, Some { fallback_as= bdr; fallback_expr= expr }
           | Tpat_var (id, _, _) ->
-              Context.add_local ctx id ;
+              Context.add_var ctx id ;
               let expr = transl_expression ~ctx br.c_rhs in
-              restore_locals () ;
-              let local = Ident.name id in
+              restore_vars () ;
+              let var = Ident.name id in
               begin match bdr with
               | None ->
-                  acc, Some { fallback_as= Some local; fallback_expr= expr }
-              | Some local' ->
-                  acc, Some { fallback_as= bdr; fallback_expr= Let (Pat_var local, Local local', expr) }
+                  acc, Some { fallback_as= Some var; fallback_expr= expr }
+              | Some var' ->
+                  acc, Some { fallback_as= bdr; fallback_expr= Let (Pat_var var, Var var', expr) }
               end
           | Tpat_record ((_, { lbl_repres= Record_unboxed _; _ }, pat) :: _, _) ->
               aux2 pat bdr
@@ -1491,15 +1490,15 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                         let bdrs = List.make (List.length lbls) None in
                         bdrs, bdr, expr
                     | Tpat_var (id, _, _) ->
-                        Context.add_local ctx id ;
+                        Context.add_var ctx id ;
                         let expr = transl_expression ~ctx br.c_rhs in
                         let bdr, expr =
-                          let local = Ident.name id in
+                          let var = Ident.name id in
                           match bdr with
                           | None ->
-                              Some local, expr
-                          | Some local' ->
-                              bdr, Let (Pat_var local, Local local', expr)
+                              Some var, expr
+                          | Some var' ->
+                              bdr, Let (Pat_var var, Var var', expr)
                         in
                         let[@warning "-8"] Types.Type_record (lbls, _) = ty.type_kind in
                         let bdrs = List.make (List.length lbls) None in
@@ -1513,8 +1512,15 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                     | _ ->
                         unsupported ~loc:pat.pat_loc Pattern_invalid
               in
-              restore_locals () ;
-              aux1 ({ branch_tag= tag; branch_fields= bdrs; branch_as= bdr; branch_expr= expr } :: acc) brs
+              restore_vars () ;
+              let br =
+                { branch_tag= Ident tag
+                ; branch_fields= bdrs
+                ; branch_as= bdr
+                ; branch_expr= expr
+                }
+              in
+              aux1 (br :: acc) brs
           | _ ->
               unsupported ~loc:pat.pat_loc Pattern_invalid
         in
@@ -1523,14 +1529,14 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
   let brs, fb = aux1 [] brs in
   List.rev brs, fb
 
-let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) global id rec_flag' expr =
+let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path id rec_flag' expr =
   let rec_flag, rec_flag', expr =
-    Context.protect_locals ctx @@ fun () ->
+    Context.protect_vars ctx @@ fun () ->
       begin match rec_flag, rec_flag' with
       | Recursive, _ ->
-          List.iter (fun (_, _, id, _) -> Context.add_local ctx id) bdgs
+          List.iter (fun (_, _, id, _) -> Context.add_var ctx id) bdgs
       | Nonrecursive, Recursive ->
-          Context.add_local ctx id
+          Context.add_var ctx id
       | Nonrecursive, Nonrecursive ->
           ()
       end ;
@@ -1541,20 +1547,20 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) glob
   match expr with
   | Fun (bdrs, expr) ->
       if rec_ then
-        Val_recs [global, Ident.name id, bdrs, expr]
+        Val_recs [path, Ident.name id, bdrs, expr]
       else
-        Val_fun (global, bdrs, expr)
+        Val_fun (path, bdrs, expr)
   | _ ->
       if rec_ then
         unsupported ~loc:bdg.vb_loc Def_recursive ;
       if expression_is_value expr then
-        Val_expr (global, expr)
+        Val_expr (path, expr)
       else
         unsupported ~loc:bdg.vb_loc Def_invalid
-let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
+let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
-      transl_value_binding ~ctx rec_flag bdgs bdg global id Nonrecursive bdg.vb_expr
+      transl_value_binding ~ctx rec_flag bdgs bdg path id Nonrecursive bdg.vb_expr
   | Some (Overwrite rec_flag' as kind, attr) ->
       begin match attr.attr_payload with
       | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
@@ -1583,7 +1589,7 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
             with Typecore.Error _ ->
               error_overwrite ~loc:attr.attr_loc kind Ill_typed
           in
-          transl_value_binding ~ctx rec_flag bdgs bdg global id rec_flag' expr
+          transl_value_binding ~ctx rec_flag bdgs bdg path id rec_flag' expr
       | _ ->
           error_overwrite ~loc:attr.attr_loc kind Invalid
       end
@@ -1591,9 +1597,9 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc =
       begin match attr.attr_payload with
       | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
           begin match String.split_on_char '.' raw with
-          | [lib; mod_; global'] ->
+          | [lib; mod_; name] ->
               Context.add_dependency' ctx lib mod_ ;
-              Val_expr (global, Global (Spath.of_list [mod_; global']))
+              Val_expr (path, Global (Spath.of_list [mod_; name]))
           | _ ->
               error_overwrite ~loc:attr.attr_loc Raw Invalid
           end
@@ -1606,8 +1612,8 @@ let transl_value_bindings ~ctx mod_ rec_flag bdgs =
     bdgs |> List.map @@ fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
       | Tpat_var (id, { loc; _ }, _) ->
-          let global = Context.add_global ctx id in
-          bdg, global, id, loc
+          let path = Context.resolve_local_value ctx id in
+          bdg, path, id, loc
       | _ ->
           unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
   in
@@ -1615,12 +1621,12 @@ let transl_value_bindings ~ctx mod_ rec_flag bdgs =
   if Attribute.has_ignore bdg.vb_attributes then
     []
   else if Attribute.has_opaque bdg.vb_attributes then
-    bdgs |> List.map @@ fun (_, global, _, _) ->
-      Val_opaque global
+    bdgs |> List.map @@ fun (_, path, _, _) ->
+      Val_opaque path
   else
     let vals =
-      bdgs |> List.map @@ fun (bdg, global, id, loc) ->
-        transl_value_binding ~ctx mod_ rec_flag bdgs bdg global id loc
+      bdgs |> List.map @@ fun (bdg, path, id, loc) ->
+        transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc
     in
     match rec_flag with
     | Nonrecursive ->
@@ -1637,7 +1643,7 @@ let transl_type_declaration_record lbls =
   else
     Type_product lbls
 let transl_type_declaration (ty : Typedtree.type_declaration) =
-  let gid = ty.typ_name.txt in
+  let name = ty.typ_name.txt in
   match ty.typ_type.type_kind with
   | Type_abstract _ ->
       []
@@ -1645,7 +1651,7 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
       []
   | Type_record (lbls, _) ->
       let ty = transl_type_declaration_record lbls in
-      [Type (gid, ty)]
+      [Type (Ident name, ty)]
   | Type_variant (_, Variant_unboxed) ->
       []
   | Type_variant (constrs, _) ->
@@ -1656,14 +1662,15 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
             match constr.cd_args with
             | Cstr_record lbls ->
                 let ty = transl_type_declaration_record lbls in
-                Type (Printf.sprintf "%s.%s" gid tag, ty) :: defs
+                let name = Printf.sprintf "%s.%s" name tag in
+                Type (Ident name, ty) :: defs
             | _ ->
                 defs
           in
           tag :: tags, defs
         ) constrs ([], [])
       in
-      Type (gid, Type_variant tags) :: defs
+      Type (Ident name, Type_variant tags) :: defs
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 

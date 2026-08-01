@@ -4,46 +4,46 @@ Require Import zoo.language.notations.
 Require Import tests.shadowing__types.
 Require Import zoo.options.
 
-Definition shadowing٠test₀ : val :=
+Definition shadowing٠test₁₄ : val :=
   ().
 
-Definition shadowing٠test₁ : val :=
-  ().
-
-Definition shadowing٠test₂ : val :=
-  ().
-
-Definition shadowing٠test₃ : val :=
-  ().
-
-Definition shadowing٠test₄ : val :=
-  ().
-
-Definition shadowing٠test₅ : val :=
-  ().
-
-Definition shadowing٠test₆ : val :=
-  ().
-
-Definition shadowing٠test₇ : val :=
-  ().
-
-Definition shadowing٠test₈ : val :=
-  ().
-
-Definition shadowing٠test₉ : val :=
-  ().
-
-Definition shadowing٠test₁₀ : val :=
-  ().
-
-Definition shadowing٠test₁₁ : val :=
+Definition shadowing٠test₁₃ : val :=
   ().
 
 Definition shadowing٠test₁₂ : val :=
   ().
 
-Definition shadowing٠test₁₃ : val :=
+Definition shadowing٠test₁₁ : val :=
+  ().
+
+Definition shadowing٠test₁₀ : val :=
+  ().
+
+Definition shadowing٠test₉ : val :=
+  ().
+
+Definition shadowing٠test₈ : val :=
+  ().
+
+Definition shadowing٠test₇ : val :=
+  ().
+
+Definition shadowing٠test₆ : val :=
+  ().
+
+Definition shadowing٠test₅ : val :=
+  ().
+
+Definition shadowing٠test₄ : val :=
+  ().
+
+Definition shadowing٠test₃ : val :=
+  ().
+
+Definition shadowing٠test₂ : val :=
+  ().
+
+Definition shadowing٠test₁ : val :=
   ().
 
 Definition shadowing٠test : val :=

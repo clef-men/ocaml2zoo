@@ -5,7 +5,8 @@ exception Ignore
 let transl_signature_item (sig_item : Typedtree.signature_item) =
   match sig_item.sig_desc with
   | Tsig_value val_descr ->
-      Some (Ident.name val_descr.val_id)
+      let path = Spath.Ident (Ident.name val_descr.val_id) in
+      Some path
   | Tsig_attribute attr ->
       if Attribute.has_ignore [attr] then
         raise Ignore ;
