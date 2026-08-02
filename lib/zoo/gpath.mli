@@ -10,6 +10,11 @@ val make :
 val ident :
   ?lib:string -> ?mod_:string -> string -> t
 
+val to_string :
+  sep:string -> t -> string
+val to_string_full :
+  sep:string -> t -> string
+
 val pp :
   sep:string -> t Fmt.t
 val pp_full :

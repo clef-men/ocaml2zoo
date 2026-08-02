@@ -1,7 +1,6 @@
 Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
-Require Import tests.basic_3__types.
 Require Import zoo.options.
 
 Definition basic_3٠test1 : val :=

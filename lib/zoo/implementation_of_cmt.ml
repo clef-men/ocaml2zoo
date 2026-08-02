@@ -321,10 +321,10 @@ module Builtin = struct
       Path.Map.add path (expr, dep) acc
     ) raising values
 
-  type app =
+  type applications =
     | Opaque of expression
     | Transparent of (expression list -> expression option)
-  let apps =
+  let applications =
     let helper1 mk_expr = function
       | [expr] ->
           Some (mk_expr expr)
@@ -633,26 +633,35 @@ module Builtin = struct
       ),
       Some Dependency.identifier
     |]
-  let apps =
+  let applications =
     Array.fold_left (fun acc (path, mk_expr, dep) ->
       Path.Map.add (Path.of_array path) (Transparent mk_expr, dep) acc
-    ) Path.Map.empty apps
-  let apps =
+    ) Path.Map.empty applications
+  let applications =
     Path.Set.fold (fun path acc ->
       let expr = Apply (Primitive Diverge, [Tuple []]) in
       let dep = Some Dependency.diverge in
       Path.Map.add path (Opaque expr, dep) acc
-    ) raising apps
+    ) raising applications
 
-  let constrs =
-    [|[|"()"|], Tuple [] ;
-      [|"true"|], Bool true ;
-      [|"false"|], Bool false ;
+  let constant_constructors =
+    [|[|"()"|],
+      Tuple []
+    ; [|"true"|],
+      Bool true
+    ; [|"false"|],
+      Bool false
+    ;
     |]
-  let constrs =
+  let constant_constructors =
     Array.fold_left (fun acc (lid, expr) ->
       Longident.Map.add (Longident.of_array lid) expr acc
-    ) Longident.Map.empty constrs
+    ) Longident.Map.empty constant_constructors
+
+  let types =
+    [|"list"
+    ; "option"
+    |]
 end
 
 module Unsupported = struct
@@ -871,15 +880,17 @@ let record_type_is_mutable ty =
 
 module Context = struct
   type t =
-    { mutable module_: string
+    { library: string
+    ; module_: string
     ; mutable env: Env.t
     ; final_env: Env.t
     ; mutable vars: Ident.Set.t
     ; dependencies: string Hashset.t
     }
 
-  let create mod_ final_env =
-    { module_= mod_
+  let create ~lib ~mod_ ~final_env =
+    { library= lib
+    ; module_= mod_
     ; env= Env.empty
     ; final_env
     ; vars= Ident.Set.empty
@@ -915,57 +926,23 @@ module Context = struct
   let add_dependency' t lib mod_ =
     let dep = Printf.sprintf "%s.%s" lib mod_ in
     add_dependency t dep
-  let rec add_dependency_from_path t ~loc (path : Path.t) =
-    match path with
-    | Pident _ ->
-        ()
-    | Pdot (path', _) ->
-        begin match Path.to_list path' with
-        | None ->
-            unsupported ~loc Functor
-        | Some (id, path') ->
-            let lib = id |> Ident.name |> String.uncapitalize_ascii in
-            let mod_ =
-              match path' with
-              | [] ->
-                  lib
-              | mod_ :: _ ->
-                  String.uncapitalize_ascii mod_
-            in
-            add_dependency' t lib mod_
-        end
-    | Papply _ ->
-        unsupported ~loc Functor
-    | Pextra_ty (path, _) ->
-        add_dependency_from_path t ~loc path
-  let add_dependency_from_type t ~loc typ =
-    match Types.get_desc typ with
-    | Tconstr (path, _, _) ->
-        add_dependency_from_path t ~loc path ;
-        path
-    | _ ->
-        assert false
-  let add_dependency_from_constructor t ~loc (constr : Data_types.constructor_description) =
-    add_dependency_from_type t ~loc constr.cstr_res
-  let add_dependency_from_label t ~loc (lbl : Data_types.label_description) =
-    add_dependency_from_type t ~loc lbl.lbl_res
 
   let normalize name =
     if String.starts_with_uppercase name then
       name |> String.uncapitalize_ascii
     else
       name
-  let resolve_local_value t id =
+  let resolve_ident t kind id =
     let name = id |> Ident.name |> normalize in
     let name =
-      let[@warning "-8"] Some idx = Env.find_value_index id t.final_env in
+      let[@warning "-8"] Some idx = Env.find_index kind id t.final_env in
       if idx = 0 then
         name
       else
         name ^ Int.to_string_subscript idx
     in
     Lpath.Ident name
-  let resolve_path_value t ~loc path =
+  let resolve_path t ~loc kind path =
     match Path.to_list path with
     | None ->
         unsupported ~loc Functor
@@ -974,32 +951,61 @@ module Context = struct
           assert (names = []) ;
           Var (Ident.name id)
         ) else if Ident.global id then (
-          let lib = id |> Ident.name |> normalize in
-          let mod_, names =
-            match names with
-            | [] ->
-                lib, [lib]
-            | name :: names' ->
-                if String.starts_with_uppercase name then
-                  name |> normalize, names' |> List.map normalize
-                else
-                  lib, names |> List.map normalize
-          in
-          let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
-          add_dependency' t lib mod_ ;
-          Global path
+          let id = Ident.name id in
+          if Array.mem id Builtin.types then
+            Global (Gpath.ident id)
+          else
+            let lib = id |> normalize in
+            let mod_, names =
+              match names with
+              | [] ->
+                  lib, [lib]
+              | name :: names' ->
+                  if String.starts_with_uppercase name then
+                    name |> normalize, names' |> List.map normalize
+                  else
+                    lib, names |> List.map normalize
+            in
+            let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
+            add_dependency' t lib mod_ ;
+            Global path
         ) else (
-          let path = resolve_local_value t id in
+          let path = resolve_ident t kind id in
           let path = names |> List.map normalize |> Lpath.append_list path in
           Local path
         )
-  let resolve_path_value t ~loc path =
+  let resolve_path t ~loc kind path =
     match Path.Map.find_opt path Builtin.values with
     | Some (expr, dep) ->
         Option.iter (add_dependency t) dep ;
         expr
     | None ->
-        resolve_path_value t ~loc path
+        resolve_path t ~loc kind path
+
+  let resolve_type t ~loc ty =
+    match Types.get_desc ty with
+    | Tconstr (ty, _, _) ->
+        ty, resolve_path t ~loc IdentType ty
+    | _ ->
+        assert false
+  let resolve_constructor_or_label t ~loc ty name =
+    let ty, typ_path = resolve_type t ~loc ty in
+    let path =
+      match typ_path with
+      | Global typ_path ->
+          let path = Lpath.set_last typ_path.path name in
+          { typ_path with path }
+      | Local typ_path ->
+          let path = Lpath.set_last typ_path name in
+          Gpath.make ~lib:t.library ~mod_:t.module_ path
+      | _ ->
+          assert false
+    in
+    ty, path
+  let resolve_constructor t ~loc (constr : Data_types.constructor_description) =
+    resolve_constructor_or_label t ~loc constr.cstr_res constr.cstr_name
+  let resolve_label t ~loc (lbl : Data_types.label_description) =
+    resolve_constructor_or_label t ~loc lbl.lbl_res lbl.lbl_name
 end
 
 let transl_open_declaration ~loc (open_ : Typedtree.open_declaration) =
@@ -1081,11 +1087,10 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
       transl_pattern ~ctx pat
   | Tpat_construct (lid, constr, pats, _) ->
       let bdrs = List.map (pattern_to_binder ~ctx ~err:Pattern_nested) pats in
-      if Longident.Map.mem lid.txt Builtin.constrs then
+      if Longident.Map.mem lid.txt Builtin.constant_constructors then
         unsupported ~loc:lid.loc Pattern_constr ;
-      let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
-      let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
-      Some (Pat_constr (Gpath.ident tag, bdrs))
+      let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
+      Some (Pat_constr (tag, bdrs))
   | Tpat_alias _ ->
       unsupported ~loc:pat.pat_loc Pattern_alias
   | Tpat_constant _ ->
@@ -1107,12 +1112,11 @@ let check_argument_label ~loc (lbl : Asttypes.arg_label) =
   | Optional _ ->
       unsupported ~loc Argument_optional
 let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
-  let fld = lbl.lbl_name in
-  let rcd = Context.add_dependency_from_label ctx ~loc lbl in
+  let rcd, fld = Context.resolve_label ctx ~loc lbl in
   if record_type_is_mutable @@ Context.find_type ctx rcd then
-    Record_get (expr, Gpath.ident fld)
+    Record_get (expr, fld)
   else
-    Proj (expr, Gpath.ident fld)
+    Proj (expr, fld)
 let rec transl_expression ~ctx (expr : Typedtree.expression) =
   match expr.exp_desc with
   | Texp_ident (path, _, _) ->
@@ -1176,7 +1180,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       in
       begin match expr'.exp_desc with
       | Texp_ident (path', _, _) ->
-          begin match Path.Map.find_opt path' Builtin.apps with
+          begin match Path.Map.find_opt path' Builtin.applications with
           | None ->
               default (arguments ())
           | Some (mk_expr, dep) ->
@@ -1263,13 +1267,11 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let[@warning "-8"] [expr] = exprs in
       transl_expression ~ctx expr
   | Texp_construct (lid, constr, exprs) ->
-      begin match Longident.Map.find_opt lid.txt Builtin.constrs with
+      begin match Longident.Map.find_opt lid.txt Builtin.constant_constructors with
       | Some expr ->
-          assert (exprs = []) ;
           expr
       | None ->
-          let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
-          let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
+          let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
           let mk_immutable exprs =
             let flag =
               match constr.cstr_generative with
@@ -1281,7 +1283,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
                   else
                     Immutable_generative_weak
             in
-            Constr (flag, Gpath.ident tag, exprs)
+            Constr (flag, tag, exprs)
           in
           match constr.cstr_inlined with
           | None ->
@@ -1295,7 +1297,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
               | Texp_record rcd ->
                   transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
                     if record_type_is_mutable ty then
-                      Constr (Mutable, Gpath.ident tag, exprs)
+                      Constr (Mutable, tag, exprs)
                     else
                       mk_immutable exprs
                   )
@@ -1308,18 +1310,16 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       Match (expr, brs, fb)
   | Texp_atomic_loc (expr, lid, lbl) ->
       let expr = transl_expression ~ctx expr in
-      let fld = lbl.lbl_name in
-      let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
-      Atomic_loc (expr, Gpath.ident fld)
+      let _rcd, fld = Context.resolve_label ctx ~loc:lid.loc lbl in
+      Atomic_loc (expr, fld)
   | Texp_field (expr, lid, lbl) ->
       let expr = transl_expression ~ctx expr in
       transl_expression_field ~ctx ~loc:lid.loc expr lbl
   | Texp_setfield (expr1, lid, lbl, expr2) ->
       let expr1 = transl_expression ~ctx expr1 in
-      let fld = lbl.lbl_name in
-      let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
+      let _rcd, fld = Context.resolve_label ctx ~loc:lid.loc lbl in
       let expr2 = transl_expression ~ctx expr2 in
-      Record_set (expr1, Gpath.ident fld, expr2)
+      Record_set (expr1, fld, expr2)
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
       Apply (Primitive Fail, [])
   | Texp_assert (expr, _) ->
@@ -1364,7 +1364,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_extension_constructor _ ->
       unsupported ~loc:expr.exp_loc Expr_extension
 and transl_expression_ident ~ctx ~loc path =
-  Context.resolve_path_value ctx ~loc path
+  Context.resolve_path ctx ~loc IdentValue path
 and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
@@ -1463,10 +1463,9 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               let[@warning "-8"] [pat] = pats in
               aux2 pat bdr
           | Tpat_construct (lid, constr, pats, _) ->
-              if Longident.Map.mem lid.txt Builtin.constrs then
+              if Longident.Map.mem lid.txt Builtin.constant_constructors then
                 unsupported ~loc:lid.loc Pattern_constr ;
-              let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
-              let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
+              let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
               let bdrs, bdr, expr =
                 match constr.cstr_inlined with
                 | None ->
@@ -1513,7 +1512,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               in
               restore_vars () ;
               let br =
-                { branch_tag= Gpath.ident tag
+                { branch_tag= tag
                 ; branch_fields= bdrs
                 ; branch_as= bdr
                 ; branch_expr= expr
@@ -1611,7 +1610,7 @@ let transl_value_bindings ~ctx mod_ rec_flag bdgs =
     bdgs |> List.map @@ fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
       | Tpat_var (id, { loc; _ }, _) ->
-          let path = Context.resolve_local_value ctx id in
+          let path = Context.resolve_ident ctx IdentValue id in
           bdg, path, id, loc
       | _ ->
           unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
@@ -1717,7 +1716,7 @@ let transl_structure ~lib ~mod_ (str : Typedtree.structure) =
     with Envaux.Error err ->
       error ~loc:Location.none (Envaux err)
   in
-  let ctx = Context.create mod_ final_env in
+  let ctx = Context.create ~lib ~mod_ ~final_env in
   let definitions = List.concat_map (transl_structure_item ~ctx mod_) str.str_items in
   let dependencies = Context.dependencies ctx in
   { library= lib

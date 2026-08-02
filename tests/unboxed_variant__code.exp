@@ -1,7 +1,6 @@
 Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
-Require Import tests.unboxed_variant__types.
 Require Import zoo.options.
 
 Definition unboxed_variant٠test1 : val :=

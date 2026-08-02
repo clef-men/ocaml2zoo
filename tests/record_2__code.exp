@@ -1,13 +1,21 @@
 Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
-Require Import tests.record_2__types.
 Require Import zoo.options.
+
+Notation "'record_2٠f1'" := (
+  in_type "tests.record_2.t" 0
+)(in custom zoo_proj
+).
+Notation "'record_2٠f2'" := (
+  in_type "tests.record_2.t" 1
+)(in custom zoo_proj
+).
 
 Definition record_2٠test1 : val :=
   𝗳𝘂𝗻 ⎽ ->
     𝗹𝗲𝘁 "t2" = (0, 1) 𝗶𝗻
-    "t2".<f1>.
+    "t2".<record_2٠f1>.
 
 Definition record_2٠test2 : val :=
   𝗳𝘂𝗻 "t" ->
@@ -16,9 +24,9 @@ Definition record_2٠test2 : val :=
 
 Definition record_2٠test3 : val :=
   𝗳𝘂𝗻 "t" ->
-    (0, "t".<f2>).
+    (0, "t".<record_2٠f2>).
 
 Definition record_2٠test4 : val :=
   𝗳𝘂𝗻 ⎽ ->
     𝗹𝗲𝘁 "@tmp" = (0, 0) 𝗶𝗻
-    (0, "@tmp".<f2>).
+    (0, "@tmp".<record_2٠f2>).

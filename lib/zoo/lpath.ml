@@ -28,6 +28,13 @@ let rec append t1 = function
 let append_list =
   List.fold_left (fun t name -> Dot (t, name))
 
+let set_last t name =
+  match t with
+  | Ident _ ->
+      Ident name
+  | Dot (t, _) ->
+      Dot (t, name)
+
 let rec to_list acc = function
   | Ident name ->
       name :: acc

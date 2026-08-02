@@ -6,10 +6,11 @@ let rec make n x =
   else
     x :: make (n - 1) x
 
-let[@tail_mod_cons] rec interleave x xs =
+let rec interleave ~sep xs =
   match xs with
   | []
   | [_] ->
       xs
-  | x0 :: xs ->
-      x0 :: x :: interleave x xs
+  | x :: xs ->
+      x :: sep :: interleave ~sep xs
+[@@tail_mod_cons]

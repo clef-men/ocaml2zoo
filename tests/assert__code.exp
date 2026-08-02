@@ -2,7 +2,6 @@ Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
 Require Import zoo_std.assert.
-Require Import tests.assert__types.
 Require Import zoo.options.
 
 Definition assert٠test1 : val :=

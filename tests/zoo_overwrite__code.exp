@@ -2,7 +2,6 @@ Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
 Require Import foo.bar.
-Require Import tests.zoo_overwrite__types.
 Require Import zoo.options.
 
 Definition zoo_overwrite٠test1 : val :=

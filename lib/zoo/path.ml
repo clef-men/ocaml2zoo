@@ -20,10 +20,9 @@ let of_array arr =
 let rec to_list acc = function
   | Pident id ->
       Some (id, acc)
-  | Pdot (t, name)
-  | Pextra_ty (t, Pcstr_ty name) ->
+  | Pdot (t, name) ->
       to_list (name :: acc) t
-  | Pextra_ty (t, Pext_ty) ->
+  | Pextra_ty (t, _) ->
       to_list acc t
   | Papply _ ->
       None

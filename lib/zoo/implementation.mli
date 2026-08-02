@@ -108,8 +108,3 @@ type t =
 
 val expression_is_value :
   expression -> bool
-
-val types :
-  t -> (Lpath.t * typ) list
-val values :
-  t -> value list

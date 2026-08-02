@@ -136,16 +136,3 @@ let rec expression_is_value = function
   | Primitive _
   | Apply _ ->
       false
-
-let types str =
-  str.definitions |> List.filter_map @@ function
-    | Type (path, ty) ->
-        Some (path, ty)
-    | _ ->
-        None
-let values str =
-  str.definitions |> List.filter_map @@ function
-    | Val val_ ->
-        Some val_
-    | _ ->
-        None

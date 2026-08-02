@@ -1,7 +1,6 @@
 Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
-Require Import tests.atomic__types.
 Require Import zoo.options.
 
 Definition atomic٠test1 : val :=
@@ -25,13 +24,18 @@ Definition atomic٠test2 : val :=
     𝗳𝗮𝗮 "loc" 1 ⍮
     ().
 
+Notation "'atomic٠f'" := (
+  in_type "tests.atomic.t" 0
+)(in custom zoo_field
+).
+
 Definition atomic٠test3 : val :=
   𝗳𝘂𝗻 "t" ->
-    𝗹𝗼𝗮𝗱 ("t".[f]).<0> ("t".[f]).<1> ⍮
-    𝘀𝘁𝗼𝗿𝗲 ("t".[f]).<0> ("t".[f]).<1> 0 ⍮
-    𝘅𝗰𝗵𝗴 "t".[f] 0 ⍮
-    𝗰𝗮𝘀 "t".[f] 0 0 ⍮
-    𝗳𝗮𝗮 "t".[f] 0 ⍮
-    𝗳𝗮𝗮 "t".[f] (-1) ⍮
-    𝗳𝗮𝗮 "t".[f] 1 ⍮
+    𝗹𝗼𝗮𝗱 ("t".[atomic٠f]).<0> ("t".[atomic٠f]).<1> ⍮
+    𝘀𝘁𝗼𝗿𝗲 ("t".[atomic٠f]).<0> ("t".[atomic٠f]).<1> 0 ⍮
+    𝘅𝗰𝗵𝗴 "t".[atomic٠f] 0 ⍮
+    𝗰𝗮𝘀 "t".[atomic٠f] 0 0 ⍮
+    𝗳𝗮𝗮 "t".[atomic٠f] 0 ⍮
+    𝗳𝗮𝗮 "t".[atomic٠f] (-1) ⍮
+    𝗳𝗮𝗮 "t".[atomic٠f] 1 ⍮
     ().

@@ -13,6 +13,9 @@ val append :
 val append_list :
   t -> string list -> t
 
+val set_last :
+  t -> string -> t
+
 val to_list :
   t -> string list
 

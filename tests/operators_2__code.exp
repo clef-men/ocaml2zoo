@@ -2,7 +2,6 @@ Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
 Require Import zoo.program_logic.structural_equality.
-Require Import tests.operators_2__types.
 Require Import zoo.options.
 
 Definition operators_2٠test : val :=

@@ -1,28 +1,45 @@
 Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
-Require Import tests.variant_3__types.
 Require Import zoo.options.
+
+Notation "'variant_3٠A'" := (
+  in_type "tests.variant_3.t" 0
+)(in custom zoo_tag
+).
+Notation "'variant_3٠B'" := (
+  in_type "tests.variant_3.t" 1
+)(in custom zoo_tag
+).
+
+Notation "'variant_3٠f1'" := (
+  in_type "tests.variant_3.t.B" 0
+)(in custom zoo_proj
+).
+Notation "'variant_3٠f2'" := (
+  in_type "tests.variant_3.t.B" 1
+)(in custom zoo_proj
+).
 
 Definition variant_3٠test1 : val :=
   𝗳𝘂𝗻 ⎽ ->
-    ‘B( 0, 0 ).
+    ‘variant_3٠B( 0, 0 ).
 
 Definition variant_3٠test2 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | A ->
+    | variant_3٠A ->
         0
-    | B "f1" "f2" ->
+    | variant_3٠B "f1" "f2" ->
         "f1" + "f2"
     𝗲𝗻𝗱.
 
 Definition variant_3٠test3 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | A ->
+    | variant_3٠A ->
         0
-    | B "f1" "f2" 𝗮𝘀 "t" ->
+    | variant_3٠B "f1" "f2" 𝗮𝘀 "t" ->
         "t" ⍮
         "f1" + "f2"
     𝗲𝗻𝗱.
@@ -30,18 +47,18 @@ Definition variant_3٠test3 : val :=
 Definition variant_3٠test4 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | A ->
+    | variant_3٠A ->
         0
-    | B "x1" "x2" ->
+    | variant_3٠B "x1" "x2" ->
         "x1" + "x2"
     𝗲𝗻𝗱.
 
 Definition variant_3٠test5 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | A ->
+    | variant_3٠A ->
         0
-    | B "x1" "x2" 𝗮𝘀 "t" ->
+    | variant_3٠B "x1" "x2" 𝗮𝘀 "t" ->
         "t" ⍮
         "x1" + "x2"
     𝗲𝗻𝗱.
@@ -49,19 +66,19 @@ Definition variant_3٠test5 : val :=
 Definition variant_3٠test6 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | A ->
+    | variant_3٠A ->
         0
-    | B ⎽ ⎽ 𝗮𝘀 "r" ->
-        "r".<f1> + "r".<f2>
+    | variant_3٠B ⎽ ⎽ 𝗮𝘀 "r" ->
+        "r".<variant_3٠f1> + "r".<variant_3٠f2>
     𝗲𝗻𝗱.
 
 Definition variant_3٠test7 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | A ->
+    | variant_3٠A ->
         0
-    | B ⎽ ⎽ 𝗮𝘀 "t" ->
+    | variant_3٠B ⎽ ⎽ 𝗮𝘀 "t" ->
         𝗹𝗲𝘁 "r" = "t" 𝗶𝗻
         "t" ⍮
-        "r".<f1> + "r".<f2>
+        "r".<variant_3٠f1> + "r".<variant_3٠f2>
     𝗲𝗻𝗱.

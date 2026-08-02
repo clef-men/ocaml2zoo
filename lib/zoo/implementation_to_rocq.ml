@@ -694,44 +694,58 @@ and pp_fallback ~mod_ ppf fb =
 let pp_expression ~mod_ =
   pp_expression ~mod_ max_level
 
-let transl_typ ~lib ~mod_ (path, ty) =
-  let path = Gpath.make ~lib ~mod_ path in
+type mode =
+  | Types
+  | Code
+
+let transl_typ ~lib ~mod_ ~mode lpath ty =
+  let gpath = Gpath.make ~lib ~mod_ lpath in
+  let mod_ =
+    match mode with
+    | Types ->
+        ""
+    | Code ->
+        mod_
+  in
   match ty with
   | Type_product flds ->
       flds |> List.mapi @@ fun i fld ->
+        let fld = Lpath.set_last lpath fld in
         Rocq.notation
           LocalityNormal
-          fld
+          (Lpath.to_string ~sep:separator ~mod_ fld)
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%a" %i|}
-                (Gpath.pp_full ~sep:".") path
+                (Gpath.pp_full ~sep:".") gpath
                 i
           )
           "zoo_proj"
   | Type_record flds ->
       flds |> List.mapi @@ fun i fld ->
+        let fld = Lpath.set_last lpath fld in
         Rocq.notation
           LocalityNormal
-          fld
+          (Lpath.to_string ~sep:separator ~mod_ fld)
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%a" %i|}
-                (Gpath.pp_full ~sep:".") path
+                (Gpath.pp_full ~sep:".") gpath
                 i
           )
           "zoo_field"
   | Type_variant tags ->
       tags |> List.mapi @@ fun i tag ->
+        let tag = Lpath.set_last lpath tag in
         Rocq.notation
           LocalityNormal
-          tag
+          (Lpath.to_string ~sep:separator ~mod_ tag)
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%a" %i|}
-                (Gpath.pp_full ~sep:".") path
+                (Gpath.pp_full ~sep:".") gpath
                 i
           )
           "zoo_tag"
 
-let transl_value ~mod_ fresh = function
+let transl_value ~mod_ ~gen = function
   | Val_expr (path, expr) ->
       [ Rocq.definition
           LocalityNormal
@@ -769,7 +783,7 @@ let transl_value ~mod_ fresh = function
           )
       ]
   | Val_recs recs ->
-      let id = fresh () in
+      let id = Generator.next gen in
       List.concat
       [ [ Rocq.definition
             LocalityLocal
@@ -827,41 +841,55 @@ let transl_value ~mod_ fresh = function
           Lpath.(path |> to_string ~sep:separator ~mod_)
           Type.value
       ]
-let transl_value ~mod_ =
-  let gen = ref 0 in
-  transl_value ~mod_ @@ fun () ->
-    let i = !gen in
-    gen := i + 1 ;
-    i
+let transl_value ~mod_ ~mode ~gen val_ =
+  match mode with
+  | Types ->
+      []
+  | Code ->
+      transl_value ~mod_ ~gen val_
 
-let transl ~code t =
-  let rocq =
-    if code then
-      List.map (transl_value ~mod_:t.module_) (values t)
-    else
-      List.map (transl_typ ~lib:t.library ~mod_:t.module_) (types t)
+let transl_definition ~lib ~mod_ ~mode ~gen = function
+  | Type (path, ty) ->
+      transl_typ ~lib ~mod_ ~mode path ty
+  | Val val_ ->
+      transl_value ~mod_ ~mode ~gen val_
+
+let prelude =
+  [ Rocq.require RequireImport "zoo.prelude"
+  ; Rocq.require RequireImport "zoo.language.typeclasses"
+  ; Rocq.require RequireImport "zoo.language.notations"
+  ]
+let postlude =
+  [ Rocq.require RequireImport "zoo.options"
+  ]
+let transl ~mode t =
+  let body =
+    let gen = Generator.create () in
+    t.definitions |> List.map @@
+      transl_definition ~lib:t.library ~mod_:t.module_ ~mode ~gen
   in
-  let rocq = List.interleave [Rocq.newline] rocq in
-  List.concat (
-    [ [ Rocq.require RequireImport "zoo.prelude"
-      ; Rocq.require RequireImport "zoo.language.typeclasses"
-      ; Rocq.require RequireImport "zoo.language.notations"
-      ]
-    ; t.dependencies
-      |> Hashset.to_list_sort String.compare
-      |> List.map (Rocq.require RequireImport)
-    ; if code then
-        [ Rocq.require RequireImport (Printf.sprintf "%s.%s__types" t.library t.module_)
-        ]
-      else
-        []
-    ; [ Rocq.require RequireImport "zoo.options"
-      ; Rocq.newline
-      ]
+  let body = List.filter ((<>) []) body in
+  let body = List.interleave ~sep:[Rocq.newline] body in
+  let dependencies =
+    let require_kind : Rocq.require_kind =
+      match mode with
+      | Types ->
+          RequireExport
+      | Code ->
+          RequireImport
+    in
+    t.dependencies
+    |> Hashset.to_list_sort String.compare
+    |> List.map (Rocq.require require_kind)
+  in
+  List.concat @@
+    [ prelude
+    ; dependencies
+    ; postlude
+    ; [Rocq.newline]
     ] @
-    rocq
-  )
+    body
 let transl_types =
-  transl ~code:false
+  transl ~mode:Types
 let transl_code =
-  transl ~code:true
+  transl ~mode:Code

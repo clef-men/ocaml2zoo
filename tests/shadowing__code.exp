@@ -1,7 +1,6 @@
 Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
-Require Import tests.shadowing__types.
 Require Import zoo.options.
 
 Definition shadowing٠test₁₄ : val :=

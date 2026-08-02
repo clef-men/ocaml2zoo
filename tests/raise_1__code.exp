@@ -2,7 +2,6 @@ Require Import zoo.prelude.
 Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
 Require Import zoo_std.diverge.
-Require Import tests.raise_1__types.
 Require Import zoo.options.
 
 Definition raise_1٠test1 : val :=
