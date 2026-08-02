@@ -206,12 +206,12 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (
-        Apply (Primitive Load, [Proj (Var "1", Gpath.ident "0"); Proj (Var "1", Gpath.ident "1")])
+        Apply (Primitive Load, [Proj (Var "1", Gpath.Builtin._0); Proj (Var "1", Gpath.Builtin._1)])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (
-        Apply (Primitive Store, [Proj (Var "1", Gpath.ident "0"); Proj (Var "1", Gpath.ident "1"); Var "2"])
+        Apply (Primitive Store, [Proj (Var "1", Gpath.Builtin._0); Proj (Var "1", Gpath.Builtin._1); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
@@ -262,23 +262,23 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (
-        Apply (Primitive Xchg, [Atomic_loc (Var "1", Gpath.ident "contents"); Var "2"])
+        Apply (Primitive Xchg, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (
-        Apply (Primitive Cas, [Atomic_loc (Var "1", Gpath.ident "contents"); Var "2"; Var "3"])
+        Apply (Primitive Cas, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"; Var "3"])
       ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (
-        Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.ident "contents"); Var "2"])
+        Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.ident "contents"); Int (-1)])
+        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Int (-1)])
         , Tuple []
         )
       ),
@@ -286,7 +286,7 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.ident "contents"); Int 1])
+        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Int 1])
         , Tuple []
         )
       ),
@@ -515,12 +515,12 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (fun expr ->
-        Apply (Primitive Load, [Proj (expr, Gpath.ident "0"); Proj (expr, Gpath.ident "1")])
+        Apply (Primitive Load, [Proj (expr, Gpath.Builtin._0); Proj (expr, Gpath.Builtin._1)])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Store, [Proj (expr1, Gpath.ident "0"); Proj (expr1, Gpath.ident "1"); expr2])
+        Apply (Primitive Store, [Proj (expr1, Gpath.Builtin._0); Proj (expr1, Gpath.Builtin._1); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
@@ -571,23 +571,23 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Xchg, [Atomic_loc (expr1, Gpath.ident "contents"); expr2])
+        Apply (Primitive Xchg, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Cas, [Atomic_loc (expr1, Gpath.ident "contents"); expr2; expr3])
+        Apply (Primitive Cas, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2; expr3])
       ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Faa, [Atomic_loc (expr1, Gpath.ident "contents"); expr2])
+        Apply (Primitive Faa, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (fun expr ->
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.ident "contents"); Int (-1)])
+        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.Builtin.contents); Int (-1)])
         , Tuple []
         )
       ),
@@ -595,7 +595,7 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (fun expr ->
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.ident "contents"); Int 1])
+        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.Builtin.contents); Int 1])
         , Tuple []
         )
       ),

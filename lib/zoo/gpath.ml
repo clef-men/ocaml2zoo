@@ -21,3 +21,13 @@ let pp_full ~sep ppf t =
     t.library
     sep
     (pp ~sep) t
+
+module Builtin = struct
+  let _0 =
+    ident "0"
+  let _1 =
+    ident "1"
+
+  let contents =
+    ident "contents"
+end

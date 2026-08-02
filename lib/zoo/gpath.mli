@@ -14,3 +14,13 @@ val pp :
   sep:string -> t Fmt.t
 val pp_full :
   sep:string -> t Fmt.t
+
+module Builtin : sig
+  val _0 :
+    t
+  val _1 :
+    t
+
+  val contents :
+    t
+end
