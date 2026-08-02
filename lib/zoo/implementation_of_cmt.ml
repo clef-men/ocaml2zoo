@@ -206,12 +206,12 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (
-        Apply (Primitive Load, [Proj (Var "1", Ident "0"); Proj (Var "1", Ident "1")])
+        Apply (Primitive Load, [Proj (Var "1", Gpath.ident "0"); Proj (Var "1", Gpath.ident "1")])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (
-        Apply (Primitive Store, [Proj (Var "1", Ident "0"); Proj (Var "1", Ident "1"); Var "2"])
+        Apply (Primitive Store, [Proj (Var "1", Gpath.ident "0"); Proj (Var "1", Gpath.ident "1"); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
@@ -262,23 +262,23 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (
-        Apply (Primitive Xchg, [Atomic_loc (Var "1", Ident "contents"); Var "2"])
+        Apply (Primitive Xchg, [Atomic_loc (Var "1", Gpath.ident "contents"); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (
-        Apply (Primitive Cas, [Atomic_loc (Var "1", Ident "contents"); Var "2"; Var "3"])
+        Apply (Primitive Cas, [Atomic_loc (Var "1", Gpath.ident "contents"); Var "2"; Var "3"])
       ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (
-        Apply (Primitive Faa, [Atomic_loc (Var "1", Ident "contents"); Var "2"])
+        Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.ident "contents"); Var "2"])
       ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Ident "contents"); Int (-1)])
+        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.ident "contents"); Int (-1)])
         , Tuple []
         )
       ),
@@ -286,7 +286,7 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Ident "contents"); Int 1])
+        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.ident "contents"); Int 1])
         , Tuple []
         )
       ),
@@ -515,12 +515,12 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (fun expr ->
-        Apply (Primitive Load, [Proj (expr, Ident "0"); Proj (expr, Ident "1")])
+        Apply (Primitive Load, [Proj (expr, Gpath.ident "0"); Proj (expr, Gpath.ident "1")])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Store, [Proj (expr1, Ident "0"); Proj (expr1, Ident "1"); expr2])
+        Apply (Primitive Store, [Proj (expr1, Gpath.ident "0"); Proj (expr1, Gpath.ident "1"); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
@@ -571,23 +571,23 @@ module Builtin = struct
       None
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Xchg, [Atomic_loc (expr1, Ident "contents"); expr2])
+        Apply (Primitive Xchg, [Atomic_loc (expr1, Gpath.ident "contents"); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Cas, [Atomic_loc (expr1, Ident "contents"); expr2; expr3])
+        Apply (Primitive Cas, [Atomic_loc (expr1, Gpath.ident "contents"); expr2; expr3])
       ),
       None
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (fun expr1 expr2 ->
-        Apply (Primitive Faa, [Atomic_loc (expr1, Ident "contents"); expr2])
+        Apply (Primitive Faa, [Atomic_loc (expr1, Gpath.ident "contents"); expr2])
       ),
       None
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (fun expr ->
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, Ident "contents"); Int (-1)])
+        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.ident "contents"); Int (-1)])
         , Tuple []
         )
       ),
@@ -595,7 +595,7 @@ module Builtin = struct
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (fun expr ->
         Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, Ident "contents"); Int 1])
+        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.ident "contents"); Int 1])
         , Tuple []
         )
       ),
@@ -964,34 +964,33 @@ module Context = struct
       else
         name ^ Int.to_string_subscript idx
     in
-    Spath.Ident name
+    Lpath.Ident name
   let resolve_path_value t ~loc path =
     match Path.to_list path with
     | None ->
         unsupported ~loc Functor
     | Some (id, names) ->
-        let names_normalized = names |> List.map normalize in
         if mem_var t id then (
           assert (names = []) ;
           Var (Ident.name id)
         ) else if Ident.global id then (
           let lib = id |> Ident.name |> normalize in
-          let base, mod_ =
+          let mod_, names =
             match names with
             | [] ->
-                [lib], lib
-            | name :: _ ->
+                lib, [lib]
+            | name :: names' ->
                 if String.starts_with_uppercase name then
-                  [], name |> normalize
+                  name |> normalize, names' |> List.map normalize
                 else
-                  [lib], lib
+                  lib, names |> List.map normalize
           in
-          let path = Spath.of_list (base @ names_normalized) in
+          let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
           add_dependency' t lib mod_ ;
           Global path
         ) else (
           let path = resolve_local_value t id in
-          let path = Spath.append_list path names_normalized in
+          let path = names |> List.map normalize |> Lpath.append_list path in
           Local path
         )
   let resolve_path_value t ~loc path =
@@ -1086,7 +1085,7 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
         unsupported ~loc:lid.loc Pattern_constr ;
       let tag = Option.get_lazy (fun () -> unsupported ~loc:lid.loc Functor) (Longident.last lid.txt) in
       let _variant = Context.add_dependency_from_constructor ctx ~loc:lid.loc constr in
-      Some (Pat_constr (Ident tag, bdrs))
+      Some (Pat_constr (Gpath.ident tag, bdrs))
   | Tpat_alias _ ->
       unsupported ~loc:pat.pat_loc Pattern_alias
   | Tpat_constant _ ->
@@ -1111,9 +1110,9 @@ let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description) 
   let fld = lbl.lbl_name in
   let rcd = Context.add_dependency_from_label ctx ~loc lbl in
   if record_type_is_mutable @@ Context.find_type ctx rcd then
-    Record_get (expr, Ident fld)
+    Record_get (expr, Gpath.ident fld)
   else
-    Proj (expr, Ident fld)
+    Proj (expr, Gpath.ident fld)
 let rec transl_expression ~ctx (expr : Typedtree.expression) =
   match expr.exp_desc with
   | Texp_ident (path, _, _) ->
@@ -1282,7 +1281,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
                   else
                     Immutable_generative_weak
             in
-            Constr (flag, Ident tag, exprs)
+            Constr (flag, Gpath.ident tag, exprs)
           in
           match constr.cstr_inlined with
           | None ->
@@ -1296,7 +1295,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
               | Texp_record rcd ->
                   transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
                     if record_type_is_mutable ty then
-                      Constr (Mutable, Ident tag, exprs)
+                      Constr (Mutable, Gpath.ident tag, exprs)
                     else
                       mk_immutable exprs
                   )
@@ -1311,7 +1310,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let expr = transl_expression ~ctx expr in
       let fld = lbl.lbl_name in
       let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
-      Atomic_loc (expr, Ident fld)
+      Atomic_loc (expr, Gpath.ident fld)
   | Texp_field (expr, lid, lbl) ->
       let expr = transl_expression ~ctx expr in
       transl_expression_field ~ctx ~loc:lid.loc expr lbl
@@ -1320,7 +1319,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       let fld = lbl.lbl_name in
       let _rcd = Context.add_dependency_from_label ctx ~loc:lid.loc lbl in
       let expr2 = transl_expression ~ctx expr2 in
-      Record_set (expr1, Ident fld, expr2)
+      Record_set (expr1, Gpath.ident fld, expr2)
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
       Apply (Primitive Fail, [])
   | Texp_assert (expr, _) ->
@@ -1514,7 +1513,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               in
               restore_vars () ;
               let br =
-                { branch_tag= Ident tag
+                { branch_tag= Gpath.ident tag
                 ; branch_fields= bdrs
                 ; branch_as= bdr
                 ; branch_expr= expr
@@ -1599,7 +1598,7 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
           begin match String.split_on_char '.' raw with
           | [lib; mod_; name] ->
               Context.add_dependency' ctx lib mod_ ;
-              Val_expr (path, Global (Spath.of_list [mod_; name]))
+              Val_expr (path, Global (Gpath.ident ~lib ~mod_ name))
           | _ ->
               error_overwrite ~loc:attr.attr_loc Raw Invalid
           end

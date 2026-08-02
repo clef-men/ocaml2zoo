@@ -19,7 +19,7 @@ type typ =
 type pattern =
   | Pat_var of Var.t
   | Pat_tuple of binder list
-  | Pat_constr of Spath.t * binder list
+  | Pat_constr of Gpath.t * binder list
 
 type unop =
   | Unop_neg
@@ -53,8 +53,8 @@ type primitive =
   | Xchg
 
 type expression =
-  | Global of Spath.t
-  | Local of Spath.t
+  | Global of Gpath.t
+  | Local of Lpath.t
   | Var of Var.t
   | Bool of bool
   | Int of int
@@ -66,20 +66,20 @@ type expression =
   | For of binder * expression * expression * expression
   | Tuple of expression list
   | Record of expression list
-  | Constr of mutability * Spath.t * expression list
-  | Proj of expression * Spath.t
+  | Constr of mutability * Gpath.t * expression list
+  | Proj of expression * Gpath.t
   | Match of expression * branch list * fallback option
   | Ref_get of expression
   | Ref_set of expression * expression
-  | Record_get of expression * Spath.t
-  | Record_set of expression * Spath.t * expression
-  | Atomic_loc of expression * Spath.t
+  | Record_get of expression * Gpath.t
+  | Record_set of expression * Gpath.t * expression
+  | Atomic_loc of expression * Gpath.t
   | Unop of unop * expression
   | Binop of binop * expression * expression
   | Primitive of primitive
   | Apply of expression * expression list
 and branch =
-  { branch_tag: Spath.t
+  { branch_tag: Gpath.t
   ; branch_fields: binder list
   ; branch_as: binder
   ; branch_expr: expression
@@ -90,13 +90,13 @@ and fallback =
   }
 
 type value =
-  | Val_expr of Spath.t * expression
-  | Val_fun of Spath.t * binder list * expression
-  | Val_recs of (Spath.t * Var.t * binder list * expression) list
-  | Val_opaque of Spath.t
+  | Val_expr of Lpath.t * expression
+  | Val_fun of Lpath.t * binder list * expression
+  | Val_recs of (Lpath.t * Var.t * binder list * expression) list
+  | Val_opaque of Lpath.t
 
 type definition =
-  | Type of Spath.t * typ
+  | Type of Lpath.t * typ
   | Val of value
 
 type t =

@@ -7,6 +7,6 @@ let transl (t : Interface.t) =
     ; Rocq.newline
     ]
   ; List.map (fun path ->
-      Rocq.opaque LocalityGlobal Spath.(path |> cons t.module_ |> to_string ~sep:separator)
+      Rocq.opaque LocalityGlobal Lpath.(path |> cons t.module_ |> to_string ~sep:separator)
     ) t.values
   ]
