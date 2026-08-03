@@ -102,7 +102,6 @@ type definition =
 type t =
   { library: string
   ; module_: string
-  ; dependencies: string Hashset.t
   ; definitions: definition list
   }
 

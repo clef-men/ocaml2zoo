@@ -878,7 +878,8 @@ let transl ~mode t =
       | Code ->
           RequireImport
     in
-    t.dependencies
+    t
+    |> Dependencies.of_implementation
     |> Hashset.to_list_sort String.compare
     |> List.map (Rocq.require require_kind)
   in

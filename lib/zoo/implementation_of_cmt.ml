@@ -1,18 +1,5 @@
 open Implementation
 
-module Dependency = struct
-  let assert_ =
-    "zoo_std.assert"
-  let assume =
-    "zoo_std.assume"
-  let diverge =
-    "zoo_std.diverge"
-  let identifier =
-    "zoo.program_logic.identifier"
-  let structeq =
-    "zoo.program_logic.structural_equality"
-end
-
 module Builtin = struct
   let raising =
     [|[|"Stdlib";"raise"|] ;
@@ -37,288 +24,235 @@ module Builtin = struct
     [|[|"Stdlib";"ignore"|],
       Fun ([None],
         Tuple []
-      ),
-      None
+      )
     ; [|"Stdlib";"not"|],
       helper1 (
         Unop (Unop_neg, Var "1")
-      ),
-      None
+      )
     ; [|"Stdlib";"~-"|],
       helper1 (
         Unop (Unop_minus, Var "1")
-      ),
-      None
+      )
     ; [|"Stdlib";"+"|],
       helper2 (
         Binop (Binop_plus, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"-"|],
       helper2 (
         Binop (Binop_minus, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"*"|],
       helper2 (
         Binop (Binop_mult, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"/"|],
       helper2 (
         Binop (Binop_quot, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"mod"|],
       helper2 (
         Binop (Binop_rem, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"land"|],
       helper2 (
         Binop (Binop_land, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"lor"|],
       helper2 (
         Binop (Binop_lor, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"lsl"|],
       helper2 (
         Binop (Binop_lsl, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"lsr"|],
       helper2 (
         Binop (Binop_lsr, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"=="|],
       helper2 (
         Binop (Binop_eq, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"!="|],
       helper2 (
         Binop (Binop_ne, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"<="|],
       helper2 (
         Binop (Binop_le, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"<"|],
       helper2 (
         Binop (Binop_lt, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";">="|],
       helper2 (
         Binop (Binop_ge, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";">"|],
       helper2 (
         Binop (Binop_gt, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"&&"|],
       helper2 (
         Binop (Binop_and, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"||"|],
       helper2 (
         Binop (Binop_or, Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"="|],
       helper2 (
         Binop (Binop_structeq, Var "1", Var "2")
-      ),
-      Some Dependency.structeq
+      )
     ; [|"Stdlib";"<>"|],
       helper2 (
         Binop (Binop_structne, Var "1", Var "2")
-      ),
-      Some Dependency.structeq
+      )
     ; [|"Stdlib";"ref"|],
       helper1 (
         Apply (Primitive Ref, [Var "1"])
-      ),
-      None
+      )
     ; [|"Stdlib";"!"|],
       helper1 (
         Ref_get (Var "1")
-      ),
-      None
+      )
     ; [|"Stdlib";":="|],
       helper2 (
         Ref_set (Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"repr"|],
       helper1 (
         Var "1"
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"obj"|],
       helper1 (
         Var "1"
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"magic"|],
       helper1 (
         Var "1"
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"is_int"|],
       helper1 (
         Apply (Primitive Immediate, [Var "1"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"tag"|],
       helper1 (
         Apply (Primitive Tag, [Var "1"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"size"|],
       helper1 (
         Apply (Primitive Size, [Var "1"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"field"|],
       helper2 (
         Apply (Primitive Load, [Var "1"; Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"set_field"|],
       helper3 (
         Apply (Primitive Store, [Var "1"; Var "2"; Var "3"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"new_block"|],
       helper2 (
         Apply (Primitive Alloc, [Var "1"; Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (
         Apply (Primitive Load, [Proj (Var "1", Gpath.Builtin._0); Proj (Var "1", Gpath.Builtin._1)])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (
         Apply (Primitive Store, [Proj (Var "1", Gpath.Builtin._0); Proj (Var "1", Gpath.Builtin._1); Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
       helper2 (
         Apply (Primitive Xchg, [Var "1"; Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
       helper3 (
         Apply (Primitive Cas, [Var "1"; Var "2"; Var "3"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
       helper2 (
         Apply (Primitive Faa, [Var "1"; Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"decr"|],
       helper1 (
         Seq
         ( Apply (Primitive Faa, [Var "1"; Int (-1)])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"incr"|],
       helper1 (
         Seq
         ( Apply (Primitive Faa, [Var "1"; Int 1])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"make"|],
       helper1 (
         Apply (Primitive Ref, [Var "1"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"get"|],
       helper1 (
         Ref_get (Var "1")
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"set"|],
       helper2 (
         Ref_set (Var "1", Var "2")
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (
         Apply (Primitive Xchg, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (
         Apply (Primitive Cas, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"; Var "3"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (
         Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (
         Seq
         ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Int (-1)])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (
         Seq
         ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Int 1])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Zoo";"resolve_with"|],
       helper3 (
         Apply (Primitive Resolve, [Var "1"; Var "2"; Var "3"])
-      ),
-      None
+      )
     ; [|"Zoo";"resolve_silent"|],
       helper2 (
         Apply (Primitive Resolve, [Apply (Primitive Skip, []); Var "1"; Var "2"])
-      ),
-      None
+      )
     ; [|"Zoo";"resolve"|],
       helper2 (
         Seq
         ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); Var "1"; Var "2"])
         , Var "2"
         )
-      ),
-      None
+      )
     |]
   let values =
-    Array.fold_left (fun acc (path, expr, dep) ->
-      Path.Map.add (Path.of_array path) (expr, dep) acc
+    Array.fold_left (fun acc (path, expr) ->
+      Path.Map.add (Path.of_array path) expr acc
     ) Path.Map.empty values
   let values =
     Path.Set.fold (fun path acc ->
       let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
-      let dep = Some Dependency.diverge in
-      Path.Map.add path (expr, dep) acc
+      Path.Map.add path expr acc
     ) raising values
 
   type applications =
@@ -346,275 +280,223 @@ module Builtin = struct
     [|[|"Stdlib";"ignore"|],
       helper1 (fun expr ->
         Seq (expr, Tuple [])
-      ),
-      None
+      )
     ; [|"Stdlib";"not"|],
       helper1 (fun expr ->
         Unop (Unop_neg, expr)
-      ),
-      None
+      )
     ; [|"Stdlib";"~-"|],
       helper1 (fun expr ->
         Unop (Unop_minus, expr)
-      ),
-      None
+      )
     ; [|"Stdlib";"+"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_plus, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"-"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_minus, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"*"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_mult, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"/"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_quot, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"mod"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_rem, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"land"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_land, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"lor"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_lor, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"lsl"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_lsl, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"lsr"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_lsr, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"=="|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_eq, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"!="|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_ne, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"<="|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_le, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"<"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_lt, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";">="|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_ge, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";">"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_gt, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"&&"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_and, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"||"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_or, expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"="|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_structeq, expr1, expr2)
-      ),
-      Some Dependency.structeq
+      )
     ; [|"Stdlib";"<>"|],
       helper2 (fun expr1 expr2 ->
         Binop (Binop_structne, expr1, expr2)
-      ),
-      Some Dependency.structeq
+      )
     ; [|"Stdlib";"ref"|],
       helper1 (fun expr ->
         Apply (Primitive Ref, [expr])
-      ),
-      None
+      )
     ; [|"Stdlib";"!"|],
       helper1 (fun expr ->
         Ref_get expr
-      ),
-      None
+      )
     ; [|"Stdlib";":="|],
       helper2 (fun expr1 expr2 ->
         Ref_set (expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"repr"|],
       helper1 (fun expr ->
         expr
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"obj"|],
       helper1 (fun expr ->
         expr
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"magic"|],
       helper1 (fun expr ->
         expr
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"is_int"|],
       helper1 (fun expr ->
         Apply (Primitive Immediate, [expr])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"tag"|],
       helper1 (fun expr ->
         Apply (Primitive Tag, [expr])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"size"|],
       helper1 (fun expr ->
         Apply (Primitive Size, [expr])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"field"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Load, [expr1; expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"set_field"|],
       helper3 (fun expr1 expr2 expr3 ->
         Apply (Primitive Store, [expr1; expr2; expr3])
-      ),
-      None
+      )
     ; [|"Stdlib";"Obj";"new_block"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Alloc, [expr1; expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"get"|],
       helper1 (fun expr ->
         Apply (Primitive Load, [Proj (expr, Gpath.Builtin._0); Proj (expr, Gpath.Builtin._1)])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"set"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Store, [Proj (expr1, Gpath.Builtin._0); Proj (expr1, Gpath.Builtin._1); expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Xchg, [expr1; expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
       helper3 (fun expr1 expr2 expr3 ->
         Apply (Primitive Cas, [expr1; expr2; expr3])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Faa, [expr1; expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"decr"|],
       helper1 (fun expr ->
         Seq
         ( Apply (Primitive Faa, [expr; Int (-1)])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"Loc";"incr"|],
       helper1 (fun expr ->
         Seq
         ( Apply (Primitive Faa, [expr; Int 1])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"make"|],
       helper1 (fun expr ->
         Apply (Primitive Ref, [expr])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"get"|],
       helper1 (fun expr ->
         Ref_get expr
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"set"|],
       helper2 (fun expr1 expr2 ->
         Ref_set (expr1, expr2)
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"exchange"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Xchg, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"compare_and_set"|],
       helper3 (fun expr1 expr2 expr3 ->
         Apply (Primitive Cas, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2; expr3])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"fetch_and_add"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Faa, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2])
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"decr"|],
       helper1 (fun expr ->
         Seq
         ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.Builtin.contents); Int (-1)])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Stdlib";"Atomic";"incr"|],
       helper1 (fun expr ->
         Seq
         ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.Builtin.contents); Int 1])
         , Tuple []
         )
-      ),
-      None
+      )
     ; [|"Zoo";"proph"|],
       helper1 (fun _expr ->
         Apply (Primitive Proph, [])
-      ),
-      None
+      )
     ; [|"Zoo";"resolve_with"|],
       helper3 (fun expr1 expr2 expr3 ->
         Apply (Primitive Resolve, [expr1; expr2; expr3])
-      ),
-      None
+      )
     ; [|"Zoo";"resolve_silent"|],
       helper2 (fun expr1 expr2 ->
         Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; expr2])
-      ),
-      None
+      )
     ; [|"Zoo";"resolve"|],
       helper2 (fun expr1 expr2 ->
         Let
@@ -625,23 +507,20 @@ module Builtin = struct
           , Var Var.temporary
           )
         )
-      ),
-      None
+      )
     ; [|"Zoo";"id"|],
       helper1 (fun _expr ->
         Apply (Primitive Id, [])
-      ),
-      Some Dependency.identifier
+      )
     |]
   let applications =
-    Array.fold_left (fun acc (path, mk_expr, dep) ->
-      Path.Map.add (Path.of_array path) (Transparent mk_expr, dep) acc
+    Array.fold_left (fun acc (path, mk_expr) ->
+      Path.Map.add (Path.of_array path) (Transparent mk_expr) acc
     ) Path.Map.empty applications
   let applications =
     Path.Set.fold (fun path acc ->
       let expr = Apply (Primitive Diverge, [Tuple []]) in
-      let dep = Some Dependency.diverge in
-      Path.Map.add path (Opaque expr, dep) acc
+      Path.Map.add path (Opaque expr) acc
     ) raising applications
 
   let constant_constructors =
@@ -885,7 +764,6 @@ module Context = struct
     ; mutable env: Env.t
     ; final_env: Env.t
     ; mutable vars: Ident.Set.t
-    ; dependencies: string Hashset.t
     }
 
   let create ~lib ~mod_ ~final_env =
@@ -894,7 +772,6 @@ module Context = struct
     ; env= Env.empty
     ; final_env
     ; vars= Ident.Set.empty
-    ; dependencies= Hashset.create ()
     }
 
   let env t =
@@ -918,14 +795,6 @@ module Context = struct
     let res = fn () in
     t.vars <- vars ;
     res
-
-  let dependencies t =
-    t.dependencies
-  let add_dependency t =
-    Hashset.add t.dependencies
-  let add_dependency' t lib mod_ =
-    let dep = Printf.sprintf "%s.%s" lib mod_ in
-    add_dependency t dep
 
   let normalize name =
     if String.starts_with_uppercase name then
@@ -967,7 +836,6 @@ module Context = struct
                     lib, names |> List.map normalize
             in
             let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
-            add_dependency' t lib mod_ ;
             Global path
         ) else (
           let path = resolve_ident t kind id in
@@ -976,8 +844,7 @@ module Context = struct
         )
   let resolve_path t ~loc kind path =
     match Path.Map.find_opt path Builtin.values with
-    | Some (expr, dep) ->
-        Option.iter (add_dependency t) dep ;
+    | Some expr ->
         expr
     | None ->
         resolve_path t ~loc kind path
@@ -1183,18 +1050,15 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
           begin match Path.Map.find_opt path' Builtin.applications with
           | None ->
               default (arguments ())
-          | Some (mk_expr, dep) ->
-              Option.iter (Context.add_dependency ctx) dep ;
-              match mk_expr with
-              | Opaque expr ->
+          | Some (Opaque expr) ->
+              expr
+          | Some (Transparent mk_expr) ->
+              let exprs = arguments () in
+              match mk_expr exprs with
+              | Some expr ->
                   expr
-              | Transparent mk_expr ->
-                  let exprs = arguments () in
-                  match mk_expr exprs with
-                  | Some expr ->
-                      expr
-                  | None ->
-                      default exprs
+              | None ->
+                  default exprs
           end
       | _ ->
           default (arguments ())
@@ -1204,7 +1068,6 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       begin match expr1, expr2.exp_desc, expr3 with
       | Unop (Unop_neg, expr1), Texp_apply ({ exp_desc= Texp_ident (path, _, _); _ }, _), None
         when Path.Set.mem path Builtin.raising ->
-          Context.add_dependency ctx Dependency.assume ;
           Apply (Primitive Assume, [expr1])
       | _ ->
           let expr2 = transl_expression ~ctx expr2 in
@@ -1323,7 +1186,6 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_assert ({ exp_desc= Texp_construct (_, { cstr_name= "false"; _ }, _); _ }, _) ->
       Apply (Primitive Fail, [])
   | Texp_assert (expr, _) ->
-      Context.add_dependency ctx Dependency.assert_ ;
       let expr = transl_expression ~ctx expr in
       Apply (Primitive Assert, [expr])
   | Texp_open (open_, expr) ->
@@ -1596,7 +1458,6 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
       | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
           begin match String.split_on_char '.' raw with
           | [lib; mod_; name] ->
-              Context.add_dependency' ctx lib mod_ ;
               Val_expr (path, Global (Gpath.ident ~lib ~mod_ name))
           | _ ->
               error_overwrite ~loc:attr.attr_loc Raw Invalid
@@ -1718,9 +1579,7 @@ let transl_structure ~lib ~mod_ (str : Typedtree.structure) =
   in
   let ctx = Context.create ~lib ~mod_ ~final_env in
   let definitions = List.concat_map (transl_structure_item ~ctx mod_) str.str_items in
-  let dependencies = Context.dependencies ctx in
   { library= lib
   ; module_= mod_
-  ; dependencies
   ; definitions
   }

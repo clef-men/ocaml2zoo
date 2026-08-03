@@ -12,6 +12,9 @@ module type S = sig
   val add :
     t -> elt -> unit
 
+  val remove :
+    t -> elt -> unit
+
   val to_list :
     t -> elt list
   val to_list_sort :

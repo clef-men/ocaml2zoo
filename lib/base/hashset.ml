@@ -12,6 +12,9 @@ let singleton elt =
   add t elt ;
   t
 
+let remove =
+  Hashtbl.remove
+
 let to_list =
   Hashtbl.keys
 let to_list_sort compare t =
@@ -51,6 +54,9 @@ module Make
     let t = create () in
     add t elt ;
     t
+
+  let remove =
+    Hashtbl.remove
 
   let to_list =
     Hashtbl.keys

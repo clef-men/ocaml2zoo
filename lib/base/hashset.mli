@@ -9,6 +9,9 @@ val singleton :
 val add :
   'a t -> 'a -> unit
 
+val remove :
+  'a t -> 'a -> unit
+
 val to_list :
   'a t -> 'a list
 val to_list_sort :
