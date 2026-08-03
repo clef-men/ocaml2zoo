@@ -822,7 +822,7 @@ module Context = struct
         ) else if Ident.global id then (
           let id = Ident.name id in
           if Array.mem id Builtin.types then
-            Global (Gpath.ident id)
+            Const (Gpath.ident id)
           else
             let lib = id |> normalize in
             let mod_, names =
@@ -836,11 +836,12 @@ module Context = struct
                     lib, names |> List.map normalize
             in
             let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
-            Global path
+            Const path
         ) else (
           let path = resolve_ident t kind id in
           let path = names |> List.map normalize |> Lpath.append_list path in
-          Local path
+          let path = Gpath.make ~lib:t.library ~mod_:t.module_ path in
+          Const path
         )
   let resolve_path t ~loc kind path =
     match Path.Map.find_opt path Builtin.values with
@@ -859,12 +860,9 @@ module Context = struct
     let ty, typ_path = resolve_type t ~loc ty in
     let path =
       match typ_path with
-      | Global typ_path ->
+      | Const typ_path ->
           let path = Lpath.set_last typ_path.path name in
           { typ_path with path }
-      | Local typ_path ->
-          let path = Lpath.set_last typ_path name in
-          Gpath.make ~lib:t.library ~mod_:t.module_ path
       | _ ->
           assert false
     in
@@ -1458,7 +1456,7 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
       | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
           begin match String.split_on_char '.' raw with
           | [lib; mod_; name] ->
-              Val_expr (path, Global (Gpath.ident ~lib ~mod_ name))
+              Val_expr (path, Const (Gpath.ident ~lib ~mod_ name))
           | _ ->
               error_overwrite ~loc:attr.attr_loc Raw Invalid
           end

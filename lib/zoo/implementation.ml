@@ -53,8 +53,7 @@ type primitive =
   | Xchg
 
 type expression =
-  | Global of Gpath.t
-  | Local of Lpath.t
+  | Const of Gpath.t
   | Var of Var.t
   | Bool of bool
   | Int of int
@@ -106,8 +105,7 @@ type t =
   }
 
 let rec expression_is_value = function
-  | Global _
-  | Local _
+  | Const _
   | Bool _
   | Int _
   | Fun _ ->

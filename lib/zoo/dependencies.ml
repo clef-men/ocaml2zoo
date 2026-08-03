@@ -58,10 +58,8 @@ let of_primitive t = function
       ()
 
 let rec of_expression t = function
-  | Global path ->
+  | Const path ->
       of_gpath t path
-  | Local _ ->
-      ()
   | Var _ ->
       ()
   | Bool _ ->
@@ -140,7 +138,7 @@ let of_value t = function
   | Val_fun (_path, _bdrs, expr) ->
       of_expression t expr
   | Val_recs recs ->
-      recs |> List.iter @@ fun (_, _, _, expr) ->
+      recs |> List.iter @@ fun (_path, _var, _bdrs, expr) ->
         of_expression t expr
   | Val_opaque _ ->
       ()

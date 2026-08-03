@@ -357,8 +357,7 @@ let next_level lvl =
 let rec level = function
   | Constr (_, { module_= ""; path= Ident "::"; _ }, _) ->
       60
-  | Global _
-  | Local _
+  | Const _
   | Var _
   | Bool _
   | Int _
@@ -422,10 +421,8 @@ let rec level = function
       max_level
 
 let rec pp_expression' ~mod_ lvl ppf = function
-  | Global path ->
+  | Const path ->
       Gpath.pp ~sep:separator ppf path
-  | Local path ->
-      Lpath.pp ~sep:separator ~mod_ ppf path
   | Var var ->
       pp_variable ppf var
   | Bool bool ->

@@ -53,8 +53,7 @@ type primitive =
   | Xchg
 
 type expression =
-  | Global of Gpath.t
-  | Local of Lpath.t
+  | Const of Gpath.t
   | Var of Var.t
   | Bool of bool
   | Int of int
