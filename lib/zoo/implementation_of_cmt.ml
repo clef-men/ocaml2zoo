@@ -1370,7 +1370,7 @@ let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
   Context.set_env ctx str_item.str_env ;
   transl_structure_item ~ctx mod_ str_item
 
-let transl_structure ~lib ~mod_ (str : Typedtree.structure) =
+let transl ~lib ~mod_ (str : Typedtree.structure) =
   let final_env =
     try
       Envaux.env_of_only_summary str.str_final_env
