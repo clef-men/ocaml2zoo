@@ -576,6 +576,9 @@ module Context = struct
     ; vars= Ident.Set.empty
     }
 
+  let module_ t =
+    t.module_
+
   let env t =
     t.env
   let set_env t env =
@@ -1217,7 +1220,7 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path
         Val_expr (path, expr)
       else
         unsupported ~loc:bdg.vb_loc Def_invalid
-let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
+let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
       transl_value_binding ~ctx rec_flag bdgs bdg path id Nonrecursive bdg.vb_expr
@@ -1226,12 +1229,17 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
       | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
           let env = Context.env ctx in
           let add ~env ~loc id =
+            let uid =
+              Context.module_ ctx
+              |> Ident.create_persistent
+              |> Types.Uid.of_compilation_unit_id
+            in
             env |> Env.add_value id
               { val_type= Ctype.newvar ()
               ; val_attributes= []
               ; val_kind= Val_reg
               ; val_loc= loc
-              ; val_uid= Types.Uid.of_compilation_unit_id (Ident.create_persistent mod_)
+              ; val_uid= uid
               }
           in
           let env =
@@ -1266,7 +1274,7 @@ let transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc =
           error_overwrite ~loc:attr.attr_loc Raw Invalid
       end
 
-let transl_value_bindings ~ctx mod_ rec_flag bdgs =
+let transl_value_bindings ~ctx rec_flag bdgs =
   let bdgs =
     bdgs |> List.map @@ fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
@@ -1285,7 +1293,7 @@ let transl_value_bindings ~ctx mod_ rec_flag bdgs =
   else
     let vals =
       bdgs |> List.map @@ fun (bdg, path, id, loc) ->
-        transl_value_binding ~ctx mod_ rec_flag bdgs bdg path id loc
+        transl_value_binding ~ctx rec_flag bdgs bdg path id loc
     in
     match rec_flag with
     | Nonrecursive ->
@@ -1333,10 +1341,10 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 
-let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
+let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   match str_item.str_desc with
   | Tstr_value (rec_flag, bdgs) ->
-      let vals = transl_value_bindings ~ctx mod_ rec_flag bdgs in
+      let vals = transl_value_bindings ~ctx rec_flag bdgs in
       List.map (fun val_ -> Val val_) vals
   | Tstr_type (_, tys) ->
       List.concat_map transl_type_declaration tys
@@ -1366,9 +1374,12 @@ let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
       unsupported ~loc:str_item.str_loc Def_class_type
   | Tstr_include _ ->
       unsupported ~loc:str_item.str_loc Def_include
-let transl_structure_item ~ctx mod_ (str_item : Typedtree.structure_item) =
+let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   Context.set_env ctx str_item.str_env ;
-  transl_structure_item ~ctx mod_ str_item
+  transl_structure_item ~ctx str_item
+
+let transl_structure ~ctx (str : Typedtree.structure) =
+  List.concat_map (transl_structure_item ~ctx) str.str_items
 
 let transl ~lib ~mod_ (str : Typedtree.structure) =
   let final_env =
@@ -1378,8 +1389,8 @@ let transl ~lib ~mod_ (str : Typedtree.structure) =
       error ~loc:Location.none (Envaux err)
   in
   let ctx = Context.create ~lib ~mod_ ~final_env in
-  let definitions = List.concat_map (transl_structure_item ~ctx mod_) str.str_items in
+  let defs = transl_structure ~ctx str in
   { library= lib
   ; module_= mod_
-  ; definitions
+  ; definitions= defs
   }
