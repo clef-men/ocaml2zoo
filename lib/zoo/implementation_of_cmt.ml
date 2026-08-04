@@ -786,11 +786,11 @@ module Context = struct
     Ident.Set.mem id t.vars
   let add_var t id =
     t.vars <- Ident.Set.add id t.vars
-  let save_vars t =
+  let begin_scope t =
     let vars = t.vars in
     fun () ->
       t.vars <- vars
-  let protect_vars t fn =
+  let with_scope t fn =
     let vars = t.vars in
     let res = fn () in
     t.vars <- vars ;
@@ -992,7 +992,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       unsupported ~loc:expr.exp_loc Literal_non_integer
   | Texp_let (rec_flag, [bdg], expr2) ->
       let expr1 = transl_expression ~ctx bdg.vb_expr in
-      Context.protect_vars ctx @@ fun () ->
+      Context.with_scope ctx @@ fun () ->
         begin match transl_pattern ~ctx bdg.vb_pat with
         | None ->
             let expr2 = transl_expression ~ctx expr2 in
@@ -1012,7 +1012,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_let (_, _, _) ->
       unsupported ~loc:expr.exp_loc Expr_let_mutual
   | Texp_function (params, body) ->
-      Context.protect_vars ctx @@ fun () ->
+      Context.with_scope ctx @@ fun () ->
         let bdrs =
           params |> List.map @@ fun (param : Typedtree.function_param) ->
             check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
@@ -1102,7 +1102,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         | _ ->
             Binop (Binop_plus, expr2, Int 1)
       in
-      Context.protect_vars ctx @@ fun () ->
+      Context.with_scope ctx @@ fun () ->
         Context.add_var ctx id ;
         let expr3 = transl_expression ~ctx expr3 in
         For (bdr, expr1, expr2, expr3)
@@ -1261,7 +1261,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
         acc, None
     | br :: brs ->
         Option.iter (fun expr -> unsupported ~loc:expr.Typedtree.exp_loc Pattern_guard) br.Typedtree.c_guard ;
-        let restore_vars = Context.save_vars ctx in
+        let end_scope = Context.begin_scope ctx in
         let pat = br.c_lhs in
         let pat =
           match (pat.pat_desc : a Typedtree.pattern_desc) with
@@ -1304,12 +1304,12 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
           match pat.pat_desc with
           | Tpat_any ->
               let expr = transl_expression ~ctx br.c_rhs in
-              restore_vars () ;
+              end_scope () ;
               acc, Some { fallback_as= bdr; fallback_expr= expr }
           | Tpat_var (id, _, _) ->
               Context.add_var ctx id ;
               let expr = transl_expression ~ctx br.c_rhs in
-              restore_vars () ;
+              end_scope () ;
               let var = Ident.name id in
               begin match bdr with
               | None ->
@@ -1370,7 +1370,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                     | _ ->
                         unsupported ~loc:pat.pat_loc Pattern_invalid
               in
-              restore_vars () ;
+              end_scope () ;
               let br =
                 { branch_tag= tag
                 ; branch_fields= bdrs
@@ -1389,7 +1389,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
 
 let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path id rec_flag' expr =
   let rec_flag, rec_flag', expr =
-    Context.protect_vars ctx @@ fun () ->
+    Context.with_scope ctx @@ fun () ->
       begin match rec_flag, rec_flag' with
       | Recursive, _ ->
           List.iter (fun (_, _, id, _) -> Context.add_var ctx id) bdgs
