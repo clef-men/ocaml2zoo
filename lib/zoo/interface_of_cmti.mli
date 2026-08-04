@@ -1,4 +1,4 @@
 exception Ignore
 
-val transl_signature :
+val transl :
   lib:string -> mod_:string -> Typedtree.signature -> Interface.t

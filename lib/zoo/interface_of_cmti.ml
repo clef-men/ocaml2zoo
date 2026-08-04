@@ -14,8 +14,11 @@ let transl_signature_item (sig_item : Typedtree.signature_item) =
   | _ ->
       None
 
-let transl_signature ~lib ~mod_ (sig_ : Typedtree.signature) =
-  let values = List.filter_map transl_signature_item sig_.sig_items in
+let transl_signature (sig_ : Typedtree.signature) =
+  List.filter_map transl_signature_item sig_.sig_items
+
+let transl ~lib ~mod_ sig_ =
+  let values = transl_signature sig_ in
   { library= lib
   ; module_= mod_
   ; values
