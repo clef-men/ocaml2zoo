@@ -1,6 +1,9 @@
 type t =
   string
 
+val of_int :
+  int -> t
+
 val internal :
   string -> t
 val temporary :

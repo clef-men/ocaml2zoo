@@ -2,284 +2,55 @@ open Implementation
 
 module Builtin = struct
   let raising =
-    [|[|"Stdlib";"raise"|] ;
-      [|"Stdlib";"invalid_arg"|] ;
-      [|"Stdlib";"failwith"|] ;
+    [|[|"Stdlib";"raise"|]
+    ; [|"Stdlib";"invalid_arg"|]
+    ; [|"Stdlib";"failwith"|]
     |]
   let raising =
     Array.fold_left (fun acc path ->
       Path.Set.add (Path.of_array path) acc
     ) Path.Set.empty raising
 
-  let values =
-    let helper1 expr =
-      Fun ([Some "1"], expr)
+  let nonraising =
+    let helper1 mk_expr =
+      1,
+      ( function
+          | [expr] ->
+              Some (mk_expr expr)
+          | _ ->
+              None
+      ),
+      None
     in
-    let helper2 expr =
-      Fun ([Some "1"; Some "2"], expr)
+    let helper2 mk_expr =
+      2,
+      ( function
+          | [expr1; expr2] ->
+              Some (mk_expr expr1 expr2)
+          | _ ->
+              None
+      ),
+      None
     in
-    let helper3 expr =
-      Fun ([Some "1"; Some "2"; Some "3"], expr)
-    in
-    [|[|"Stdlib";"ignore"|],
-      Fun ([None],
-        Tuple []
-      )
-    ; [|"Stdlib";"not"|],
-      helper1 (
-        Unop (Unop_neg, Var "1")
-      )
-    ; [|"Stdlib";"~-"|],
-      helper1 (
-        Unop (Unop_minus, Var "1")
-      )
-    ; [|"Stdlib";"+"|],
-      helper2 (
-        Binop (Binop_plus, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"-"|],
-      helper2 (
-        Binop (Binop_minus, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"*"|],
-      helper2 (
-        Binop (Binop_mult, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"/"|],
-      helper2 (
-        Binop (Binop_quot, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"mod"|],
-      helper2 (
-        Binop (Binop_rem, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"land"|],
-      helper2 (
-        Binop (Binop_land, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"lor"|],
-      helper2 (
-        Binop (Binop_lor, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"lsl"|],
-      helper2 (
-        Binop (Binop_lsl, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"lsr"|],
-      helper2 (
-        Binop (Binop_lsr, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"=="|],
-      helper2 (
-        Binop (Binop_eq, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"!="|],
-      helper2 (
-        Binop (Binop_ne, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"<="|],
-      helper2 (
-        Binop (Binop_le, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"<"|],
-      helper2 (
-        Binop (Binop_lt, Var "1", Var "2")
-      )
-    ; [|"Stdlib";">="|],
-      helper2 (
-        Binop (Binop_ge, Var "1", Var "2")
-      )
-    ; [|"Stdlib";">"|],
-      helper2 (
-        Binop (Binop_gt, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"&&"|],
-      helper2 (
-        Binop (Binop_and, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"||"|],
-      helper2 (
-        Binop (Binop_or, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"="|],
-      helper2 (
-        Binop (Binop_structeq, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"<>"|],
-      helper2 (
-        Binop (Binop_structne, Var "1", Var "2")
-      )
-    ; [|"Stdlib";"ref"|],
-      helper1 (
-        Apply (Primitive Ref, [Var "1"])
-      )
-    ; [|"Stdlib";"!"|],
-      helper1 (
-        Ref_get (Var "1")
-      )
-    ; [|"Stdlib";":="|],
-      helper2 (
-        Ref_set (Var "1", Var "2")
-      )
-    ; [|"Stdlib";"Obj";"repr"|],
-      helper1 (
-        Var "1"
-      )
-    ; [|"Stdlib";"Obj";"obj"|],
-      helper1 (
-        Var "1"
-      )
-    ; [|"Stdlib";"Obj";"magic"|],
-      helper1 (
-        Var "1"
-      )
-    ; [|"Stdlib";"Obj";"is_int"|],
-      helper1 (
-        Apply (Primitive Immediate, [Var "1"])
-      )
-    ; [|"Stdlib";"Obj";"tag"|],
-      helper1 (
-        Apply (Primitive Tag, [Var "1"])
-      )
-    ; [|"Stdlib";"Obj";"size"|],
-      helper1 (
-        Apply (Primitive Size, [Var "1"])
-      )
-    ; [|"Stdlib";"Obj";"field"|],
-      helper2 (
-        Apply (Primitive Load, [Var "1"; Var "2"])
-      )
-    ; [|"Stdlib";"Obj";"set_field"|],
-      helper3 (
-        Apply (Primitive Store, [Var "1"; Var "2"; Var "3"])
-      )
-    ; [|"Stdlib";"Obj";"new_block"|],
-      helper2 (
-        Apply (Primitive Alloc, [Var "1"; Var "2"])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"get"|],
-      helper1 (
-        Apply (Primitive Load, [Proj (Var "1", Gpath.Builtin._0); Proj (Var "1", Gpath.Builtin._1)])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"set"|],
-      helper2 (
-        Apply (Primitive Store, [Proj (Var "1", Gpath.Builtin._0); Proj (Var "1", Gpath.Builtin._1); Var "2"])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
-      helper2 (
-        Apply (Primitive Xchg, [Var "1"; Var "2"])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
-      helper3 (
-        Apply (Primitive Cas, [Var "1"; Var "2"; Var "3"])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
-      helper2 (
-        Apply (Primitive Faa, [Var "1"; Var "2"])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"decr"|],
-      helper1 (
-        Seq
-        ( Apply (Primitive Faa, [Var "1"; Int (-1)])
-        , Tuple []
-        )
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"incr"|],
-      helper1 (
-        Seq
-        ( Apply (Primitive Faa, [Var "1"; Int 1])
-        , Tuple []
-        )
-      )
-    ; [|"Stdlib";"Atomic";"make"|],
-      helper1 (
-        Apply (Primitive Ref, [Var "1"])
-      )
-    ; [|"Stdlib";"Atomic";"get"|],
-      helper1 (
-        Ref_get (Var "1")
-      )
-    ; [|"Stdlib";"Atomic";"set"|],
-      helper2 (
-        Ref_set (Var "1", Var "2")
-      )
-    ; [|"Stdlib";"Atomic";"exchange"|],
-      helper2 (
-        Apply (Primitive Xchg, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"])
-      )
-    ; [|"Stdlib";"Atomic";"compare_and_set"|],
-      helper3 (
-        Apply (Primitive Cas, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"; Var "3"])
-      )
-    ; [|"Stdlib";"Atomic";"fetch_and_add"|],
-      helper2 (
-        Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Var "2"])
-      )
-    ; [|"Stdlib";"Atomic";"decr"|],
-      helper1 (
-        Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Int (-1)])
-        , Tuple []
-        )
-      )
-    ; [|"Stdlib";"Atomic";"incr"|],
-      helper1 (
-        Seq
-        ( Apply (Primitive Faa, [Atomic_loc (Var "1", Gpath.Builtin.contents); Int 1])
-        , Tuple []
-        )
-      )
-    ; [|"Zoo";"resolve_with"|],
-      helper3 (
-        Apply (Primitive Resolve, [Var "1"; Var "2"; Var "3"])
-      )
-    ; [|"Zoo";"resolve_silent"|],
-      helper2 (
-        Apply (Primitive Resolve, [Apply (Primitive Skip, []); Var "1"; Var "2"])
-      )
-    ; [|"Zoo";"resolve"|],
-      helper2 (
-        Seq
-        ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); Var "1"; Var "2"])
-        , Var "2"
-        )
-      )
-    |]
-  let values =
-    Array.fold_left (fun acc (path, expr) ->
-      Path.Map.add (Path.of_array path) expr acc
-    ) Path.Map.empty values
-  let values =
-    Path.Set.fold (fun path acc ->
-      let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
-      Path.Map.add path expr acc
-    ) raising values
-
-  type applications =
-    | Opaque of expression
-    | Transparent of (expression list -> expression option)
-  let applications =
-    let helper1 mk_expr = function
-      | [expr] ->
-          Some (mk_expr expr)
-      | _ ->
-          None
-    in
-    let helper2 mk_expr = function
-      | [expr1; expr2] ->
-          Some (mk_expr expr1 expr2)
-      | _ ->
-          None
-    in
-    let helper3 mk_expr = function
-      | [expr1; expr2; expr3] ->
-          Some (mk_expr expr1 expr2 expr3)
-      | _ ->
-          None
+    let helper3 mk_expr =
+      3,
+      ( function
+          | [expr1; expr2; expr3] ->
+              Some (mk_expr expr1 expr2 expr3)
+          | _ ->
+              None
+      ),
+      None
     in
     [|[|"Stdlib";"ignore"|],
-      helper1 (fun expr ->
-        Seq (expr, Tuple [])
+      ( 1,
+        ( function
+            | [expr] ->
+                Some (Seq (expr, Tuple []))
+            | _ ->
+                None
+        ),
+        Some (Fun ([None], Tuple []))
       )
     ; [|"Stdlib";"not"|],
       helper1 (fun expr ->
@@ -513,15 +284,46 @@ module Builtin = struct
         Apply (Primitive Id, [])
       )
     |]
+  let nonraising =
+    nonraising |> Array.map @@ fun (path, spec) ->
+      Path.of_array path, spec
+
+  type application =
+    | Raising of expression
+    | Nonraising of (expression list -> expression option)
   let applications =
-    Array.fold_left (fun acc (path, mk_expr) ->
-      Path.Map.add (Path.of_array path) (Transparent mk_expr) acc
-    ) Path.Map.empty applications
+    Path.Map.empty
   let applications =
     Path.Set.fold (fun path acc ->
       let expr = Apply (Primitive Diverge, [Tuple []]) in
-      Path.Map.add path (Opaque expr) acc
+      Path.Map.add path (Raising expr) acc
     ) raising applications
+  let applications =
+    Array.fold_left (fun acc (path, (_arity, mk_expr, _expr)) ->
+      Path.Map.add path (Nonraising mk_expr) acc
+    ) applications nonraising
+
+  let values =
+    Path.Map.empty
+  let values =
+    Path.Set.fold (fun path acc ->
+      let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
+      Path.Map.add path expr acc
+    ) raising values
+  let values =
+    Array.fold_left (fun acc (path, (arity, mk_expr, expr)) ->
+      let expr =
+        match expr with
+        | Some expr ->
+            expr
+        | None ->
+            let expr = mk_expr @@ List.init arity (fun i -> Var (Var.of_int (i + 1))) in
+            let expr = expr |> Option.get in
+            let expr = Fun (List.init arity (fun i -> Some (Var.of_int (i + 1))), expr) in
+            expr
+      in
+      Path.Map.add path expr acc
+    ) values nonraising
 
   let constant_constructors =
     [|[|"()"|],
@@ -1048,9 +850,9 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
           begin match Path.Map.find_opt path' Builtin.applications with
           | None ->
               default (arguments ())
-          | Some (Opaque expr) ->
+          | Some (Raising expr) ->
               expr
-          | Some (Transparent mk_expr) ->
+          | Some (Nonraising mk_expr) ->
               let exprs = arguments () in
               match mk_expr exprs with
               | Some expr ->

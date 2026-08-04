@@ -1,6 +1,9 @@
 type t =
   string
 
+let of_int =
+  string_of_int
+
 let internal =
   Printf.sprintf "@%s"
 let temporary =
