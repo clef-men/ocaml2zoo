@@ -19,6 +19,14 @@ let of_list = function
   | name :: names ->
       of_list (Ident name) names
 
+let rec of_list_rev = function
+  | [] ->
+      invalid_arg __FUNCTION__
+  | [name] ->
+      Ident name
+  | name :: names ->
+      Dot (of_list_rev names, name)
+
 let rec append t1 = function
   | Ident name ->
       Dot (t1, name)

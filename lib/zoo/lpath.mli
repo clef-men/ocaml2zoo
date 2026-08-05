@@ -8,6 +8,9 @@ val cons :
 val of_list :
   string list -> t
 
+val of_list_rev :
+  string list -> t
+
 val append :
   t -> t -> t
 val append_list :

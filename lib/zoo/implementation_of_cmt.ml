@@ -383,6 +383,7 @@ module Unsupported = struct
     | Expr_extension
     | Argument_optional
     | Argument_omitted
+    | Module_packed
     | Functor
     | Type_extensible
     | Def_recursive
@@ -391,7 +392,9 @@ module Unsupported = struct
     | Def_eval
     | Def_primitive
     | Def_exception
-    | Def_module
+    | Def_module_unnamed
+    | Def_module_rec
+    | Def_module_alias
     | Def_module_type
     | Def_class
     | Def_class_type
@@ -471,6 +474,8 @@ module Unsupported = struct
         "optional function argument"
     | Argument_omitted ->
         "omitted function argument"
+    | Module_packed ->
+        "first-class module"
     | Functor ->
         "module functor"
     | Type_extensible ->
@@ -487,8 +492,12 @@ module Unsupported = struct
         "primitive definition"
     | Def_exception ->
         "exception definition"
-    | Def_module ->
-        "module definition"
+    | Def_module_unnamed ->
+        "unnamed module"
+    | Def_module_rec ->
+        "recursive module"
+    | Def_module_alias ->
+        "module alias"
     | Def_module_type ->
         "module type definition"
     | Def_class ->
@@ -559,12 +568,28 @@ let record_type_is_mutable ty =
   let[@warning "-8"] Types.Type_record (lbls, _) = ty.Types.type_kind in
   record_is_mutable lbls
 
+module Envaux = struct
+  include Envaux
+
+  let env_of_only_summary env =
+    try
+      Envaux.env_of_only_summary env
+    with Error err ->
+      error ~loc:Location.none (Envaux err)
+end
+
 module Context = struct
   type t =
     { library: string
     ; module_: string
+    (* environment at the current item *)
     ; mutable env: Env.t
-    ; final_env: Env.t
+    (* module scoping *)
+    ; mutable path: string list
+    ; mutable locals: Lpath.t Ident.Map.t
+    ; modules: Ident.Set.t Stack.t
+    ; final_env: Env.t Stack.t
+    (* variables for the current item *)
     ; mutable vars: Ident.Set.t
     }
 
@@ -572,7 +597,10 @@ module Context = struct
     { library= lib
     ; module_= mod_
     ; env= Env.empty
-    ; final_env
+    ; path= []
+    ; locals= Ident.Map.empty
+    ; modules= Stack.of_list [Ident.Set.empty]
+    ; final_env= Stack.of_list [final_env]
     ; vars= Ident.Set.empty
     }
 
@@ -584,8 +612,48 @@ module Context = struct
   let set_env t env =
     t.env <- Envaux.env_of_only_summary env
 
+  let final_env t =
+    Stack.top t.final_env
+
   let find_type t path =
     Env.find_type path t.env
+
+  let normalize name =
+    if String.starts_with_uppercase name then
+      name |> String.uncapitalize_ascii
+    else
+      name
+
+  let find_local t id =
+    Ident.Map.find id t.locals
+  let add_local t kind id =
+    let path =
+      let name = id |> Ident.name |> normalize in
+      let name =
+        let[@warning "-8"] Some idx = Env.find_index kind id (final_env t) in
+        if idx = 0 then
+          name
+        else
+          name ^ Int.to_string_subscript idx
+      in
+      Lpath.of_list_rev (name :: t.path)
+    in
+    t.locals <- Ident.Map.add id path t.locals ;
+    let ids = Stack.pop t.modules in
+    let ids = Ident.Set.add id ids in
+    Stack.push ids t.modules
+  let with_module t ~mod_ ~final_env fn =
+    let mod_ = mod_ |> Ident.name |> normalize in
+    let final_env = Envaux.env_of_only_summary final_env in
+    t.path <- mod_ :: t.path ;
+    Stack.push Ident.Set.empty t.modules ;
+    Stack.push final_env t.final_env ;
+    let res = fn () in
+    Stack.pop t.final_env |> ignore ;
+    let ids = Stack.pop t.modules in
+    t.locals <- Ident.Set.fold Ident.Map.remove ids t.locals ;
+    t.path <- List.tl t.path ;
+    res
 
   let mem_var t id =
     Ident.Set.mem id t.vars
@@ -601,22 +669,7 @@ module Context = struct
     t.vars <- vars ;
     res
 
-  let normalize name =
-    if String.starts_with_uppercase name then
-      name |> String.uncapitalize_ascii
-    else
-      name
-  let resolve_ident t kind id =
-    let name = id |> Ident.name |> normalize in
-    let name =
-      let[@warning "-8"] Some idx = Env.find_index kind id t.final_env in
-      if idx = 0 then
-        name
-      else
-        name ^ Int.to_string_subscript idx
-    in
-    Lpath.Ident name
-  let resolve_path t ~loc kind path =
+  let resolve_path t ~loc path =
     match Path.to_list path with
     | None ->
         unsupported ~loc Functor
@@ -643,22 +696,22 @@ module Context = struct
             let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
             Const path
         ) else (
-          let path = resolve_ident t kind id in
+          let path = find_local t id in
           let path = names |> List.map normalize |> Lpath.append_list path in
           let path = Gpath.make ~lib:t.library ~mod_:t.module_ path in
           Const path
         )
-  let resolve_path t ~loc kind path =
+  let resolve_path t ~loc path =
     match Path.Map.find_opt path Builtin.values with
     | Some expr ->
         expr
     | None ->
-        resolve_path t ~loc kind path
+        resolve_path t ~loc path
 
   let resolve_type t ~loc ty =
     match Types.get_desc ty with
     | Tconstr (ty, _, _) ->
-        ty, resolve_path t ~loc IdentType ty
+        ty, resolve_path t ~loc ty
     | _ ->
         assert false
   let resolve_constructor_or_label t ~loc ty name =
@@ -1029,7 +1082,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_extension_constructor _ ->
       unsupported ~loc:expr.exp_loc Expr_extension
 and transl_expression_ident ~ctx ~loc path =
-  Context.resolve_path ctx ~loc IdentValue path
+  Context.resolve_path ctx ~loc path
 and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
@@ -1060,6 +1113,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
       expr
   | Right ext_expr ->
       Let (Pat_var Var.temporary, ext_expr, expr)
+
 and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * fallback option = fun ~ctx brs ->
   let rec aux1 acc = function
     | [] ->
@@ -1279,7 +1333,8 @@ let transl_value_bindings ~ctx rec_flag bdgs =
     bdgs |> List.map @@ fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
       | Tpat_var (id, { loc; _ }, _) ->
-          let path = Context.resolve_ident ctx IdentValue id in
+          Context.add_local ctx Ident_value id ;
+          let path = Context.find_local ctx id in
           bdg, path, id, loc
       | _ ->
           unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
@@ -1309,7 +1364,8 @@ let transl_type_declaration_record lbls =
     Type_record lbls
   else
     Type_product lbls
-let transl_type_declaration (ty : Typedtree.type_declaration) =
+let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
+  Context.add_local ctx Ident_type ty.typ_id ;
   let name = ty.typ_name.txt in
   match ty.typ_type.type_kind with
   | Type_abstract _ ->
@@ -1341,13 +1397,37 @@ let transl_type_declaration (ty : Typedtree.type_declaration) =
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 
-let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
+let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
+  match mexpr.mod_desc with
+  | Tmod_structure str ->
+      transl_structure ~ctx ~mod_ str
+  | Tmod_constraint (mexpr, _ty, _constraint, _coerc) ->
+      transl_module_expr ~ctx ~mod_ mexpr
+  | Tmod_ident _ ->
+      unsupported ~loc:mexpr.mod_loc Def_module_alias
+  | Tmod_functor _
+  | Tmod_apply _
+  | Tmod_apply_unit _ ->
+      unsupported ~loc:mexpr.mod_loc Functor
+  | Tmod_unpack _ ->
+      unsupported ~loc:mexpr.mod_loc Module_packed
+
+and transl_module_binding ~ctx (mbdg : Typedtree.module_binding) =
+  match mbdg.mb_id with
+  | None ->
+      unsupported ~loc:mbdg.mb_loc Def_module_unnamed
+  | Some mod_ ->
+      Context.add_local ctx Ident_module mod_ ;
+      transl_module_expr ~ctx ~mod_ mbdg.mb_expr
+
+and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
+  Context.set_env ctx str_item.str_env ;
   match str_item.str_desc with
   | Tstr_value (rec_flag, bdgs) ->
       let vals = transl_value_bindings ~ctx rec_flag bdgs in
       List.map (fun val_ -> Val val_) vals
   | Tstr_type (_, tys) ->
-      List.concat_map transl_type_declaration tys
+      List.concat_map (transl_type_declaration ~ctx) tys
   | Tstr_open open_ ->
       transl_open_declaration ~loc:str_item.str_loc open_ ;
       []
@@ -1355,6 +1435,8 @@ let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
       if Attribute.has_ignore [attr] then
         raise Ignore ;
       []
+  | Tstr_module mbdg ->
+      transl_module_binding ~ctx mbdg
   | Tstr_eval _ ->
       unsupported ~loc:str_item.str_loc Def_eval
   | Tstr_primitive _ ->
@@ -1363,9 +1445,8 @@ let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
       unsupported ~loc:str_item.str_loc Type_extensible
   | Tstr_exception _ ->
       unsupported ~loc:str_item.str_loc Def_exception
-  | Tstr_module _
   | Tstr_recmodule _ ->
-      unsupported ~loc:str_item.str_loc Def_module
+      unsupported ~loc:str_item.str_loc Def_module_rec
   | Tstr_modtype _ ->
       unsupported ~loc:str_item.str_loc Def_module_type
   | Tstr_class _ ->
@@ -1374,20 +1455,20 @@ let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
       unsupported ~loc:str_item.str_loc Def_class_type
   | Tstr_include _ ->
       unsupported ~loc:str_item.str_loc Def_include
-let transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
-  Context.set_env ctx str_item.str_env ;
-  transl_structure_item ~ctx str_item
 
-let transl_structure ~ctx (str : Typedtree.structure) =
+and transl_structure' ~ctx (str : Typedtree.structure) =
   List.concat_map (transl_structure_item ~ctx) str.str_items
+and transl_structure ~ctx ?mod_ str =
+  match mod_ with
+  | None ->
+      transl_structure' ~ctx str
+  | Some mod_ ->
+      let final_env = str.str_final_env in
+      Context.with_module ctx ~mod_ ~final_env @@ fun () ->
+        transl_structure' ~ctx str
 
 let transl ~lib ~mod_ (str : Typedtree.structure) =
-  let final_env =
-    try
-      Envaux.env_of_only_summary str.str_final_env
-    with Envaux.Error err ->
-      error ~loc:Location.none (Envaux err)
-  in
+  let final_env = Envaux.env_of_only_summary str.str_final_env in
   let ctx = Context.create ~lib ~mod_ ~final_env in
   let defs = transl_structure ~ctx str in
   { library= lib

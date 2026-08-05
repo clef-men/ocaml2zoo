@@ -1,0 +1,16 @@
+Require Import zoo.prelude.
+Require Import zoo.language.typeclasses.
+Require Import zoo.language.notations.
+Require Import zoo.options.
+
+Definition module_1٠test₂ : val :=
+  0.
+
+Definition module_1٠m٠test : val :=
+  module_1٠test₂.
+
+Definition module_1٠test₁ : val :=
+  module_1٠test₂.
+
+Definition module_1٠test : val :=
+  module_1٠m٠test.

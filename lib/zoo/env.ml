@@ -1,24 +1,24 @@
 include Ocaml_common.Env
 
 type ident_kind =
-  | IdentValue
-  | IdentType
-  | IdentModule
-  | IdentModtype
-  | IdentClass
-  | IdentCltype
+  | Ident_value
+  | Ident_type
+  | Ident_module
+  | Ident_modtype
+  | Ident_class
+  | Ident_cltype
 
 let find_index kind =
   match kind with
-  | IdentValue ->
+  | Ident_value ->
       find_value_index
-  | IdentType ->
+  | Ident_type ->
       find_type_index
-  | IdentModule ->
+  | Ident_module ->
       find_module_index
-  | IdentModtype ->
+  | Ident_modtype ->
       find_modtype_index
-  | IdentClass ->
+  | Ident_class ->
       find_class_index
-  | IdentCltype ->
+  | Ident_cltype ->
       find_cltype_index
