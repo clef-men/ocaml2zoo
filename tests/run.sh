@@ -4,7 +4,15 @@ set -eou pipefail
 
 . tests/common.sh
 
-for test in $test_dir/*.ml ; do
+if [[ 0 < $# ]] ; then
+	tests="$@"
+	tests="${tests/#/$test_dir/}"
+	tests="${tests/%/.ml}"
+else
+  tests="$(ls $test_dir/*.ml)"
+fi
+
+for test in $tests ; do
 	test="${test%.*}"
 
 	$ocamlopt "$test.ml"
