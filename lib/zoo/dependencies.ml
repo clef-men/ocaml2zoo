@@ -1,4 +1,4 @@
-open Implementation
+open Ast
 
 type t =
   string Hashset.t
@@ -149,9 +149,9 @@ let of_definition t = function
   | Val val_ ->
       of_value t val_
 
-let of_implementation impl =
+let of_ast ast =
   let t = Hashset.create () in
-  List.iter (of_definition t) impl.definitions ;
+  List.iter (of_definition t) ast.definitions ;
   Hashset.remove t "." ;
-  Hashset.remove t (Printf.sprintf "%s.%s" impl.library impl.module_) ;
+  Hashset.remove t (Printf.sprintf "%s.%s" ast.library ast.module_) ;
   t

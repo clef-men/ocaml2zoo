@@ -31,7 +31,7 @@ let output output_dir mod_name =
   ; output_opaque= output ^ "__opaque.v"
   }
 
-let implementation ~lib_name ~mod_name ~input ~output =
+let main_cmt ~lib_name ~mod_name ~input ~output =
   match Cmt_format.read_cmt input with
   | exception Sys_error err ->
       invalid_cmt ": %s" err
@@ -42,36 +42,37 @@ let implementation ~lib_name ~mod_name ~input ~output =
       match cmt.cmt_annots with
       | Implementation str ->
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Implementation_of_cmt.transl ~lib:lib_name ~mod_:mod_name str with
-          | exception Zoo.Implementation_of_cmt.Error (loc, err) ->
+          begin match Zoo.Ast_of_cmt.transl ~lib:lib_name ~mod_:mod_name str with
+          | exception Zoo.Ast_of_cmt.Error (loc, err) ->
               error ~usage:false "%a:@,%a"
                 Location.print_loc loc
-                Zoo.Implementation_of_cmt.Error.pp err
-          | exception Zoo.Implementation_of_cmt.Ignore ->
+                Zoo.Ast_of_cmt.Error.pp err
+          | exception Zoo.Ast_of_cmt.Ignore ->
               ()
-          | impl ->
-              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Types impl in
+          | ast ->
+              let rocq = Zoo.Ast_to_rocq.transl ~mode:Types ast in
               Out_channel.with_open_text output.output_types (fun chan ->
                 Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
               ) ;
-              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Code impl in
+              let rocq = Zoo.Ast_to_rocq.transl ~mode:Code ast in
               Out_channel.with_open_text output.output_code (fun chan ->
                 Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
               ) ;
-              if not impl.transparent then
-                let rocq = Zoo.Implementation_to_rocq.transl ~mode:Opaque impl in
+              if not ast.transparent then
+                let rocq = Zoo.Ast_to_rocq.transl ~mode:Opaque ast in
                 Out_channel.with_open_text output.output_opaque (fun chan ->
                   Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
                 )
           end
       | _ ->
           invalid_cmt ": not an implementation"
+
 let main_singlefile args =
   let input = args.input in
   let lib_name = Filename.(input |> dirname |> basename) |> String.uncapitalize_ascii in
   let mod_name = Filename.(input |> basename |> remove_extension) |> String.uncapitalize_ascii in
   let output = output args.output mod_name in
-  implementation ~lib_name ~mod_name ~input ~output
+  main_cmt ~lib_name ~mod_name ~input ~output
 
 let check ~args ~input ~output =
   if args.force then
@@ -101,7 +102,7 @@ let main_directory args (dune : Dune.t) =
             let input = Filename.concat args.input mod_.module_cmt in
             let output = output output_dir mod_name in
             if check ~args ~input ~output then
-              implementation ~lib_name ~mod_name ~input ~output
+              main_cmt ~lib_name ~mod_name ~input ~output
             else if not args.quiet then
               Fmt.pr {|Ignoring module "%s" from library "%s" (already up-to-date).@.|}
                 mod_name

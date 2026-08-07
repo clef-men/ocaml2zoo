@@ -1,5 +1,5 @@
 type t =
   string Hashset.t
 
-val of_implementation :
-  Implementation.t -> t
+val of_ast :
+  Ast.t -> t

@@ -1,4 +1,4 @@
-open Implementation
+open Ast
 
 let separator =
   "٠"
@@ -908,7 +908,7 @@ let dependencies ~mode t =
             assert false
       in
       t
-      |> Dependencies.of_implementation
+      |> Dependencies.of_ast
       |> Hashset.to_list_sort String.compare
       |> List.map (Rocq.require require_kind)
   | Opaque ->

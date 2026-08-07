@@ -4,4 +4,4 @@ type mode =
   | Opaque
 
 val transl :
-  mode:mode -> Implementation.t -> Rocq.t
+  mode:mode -> Ast.t -> Rocq.t
