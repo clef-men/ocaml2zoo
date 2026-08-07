@@ -11,14 +11,14 @@ type scope =
   string
 
 type require_kind =
-  | RequireOnly
-  | RequireImport
-  | RequireExport
+  | Require_only
+  | Require_import
+  | Require_export
 
 type locality =
-  | LocalityNormal
-  | LocalityLocal
-  | LocalityGlobal
+  | Locality_normal
+  | Locality_local
+  | Locality_global
 
 type custom =
   unit Fmt.t
@@ -51,19 +51,19 @@ let[@inline] opaque local id =
   Opaque (local, id)
 
 let pp_require_kind ppf = function
-  | RequireOnly ->
+  | Require_only ->
       ()
-  | RequireImport ->
+  | Require_import ->
       Fmt.pf ppf " Import"
-  | RequireExport ->
+  | Require_export ->
       Fmt.pf ppf " Export"
 
 let pp_locality ppf = function
-  | LocalityNormal ->
+  | Locality_normal ->
       ()
-  | LocalityLocal ->
+  | Locality_local ->
       Fmt.pf ppf "#[local] "
-  | LocalityGlobal ->
+  | Locality_global ->
       Fmt.pf ppf "#[global] "
 
 let pp_item ppf = function

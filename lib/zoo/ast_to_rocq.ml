@@ -712,7 +712,7 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
       flds |> List.mapi @@ fun i fld ->
         let fld = Lpath.set_last lpath fld in
         Rocq.notation
-          LocalityNormal
+          Locality_normal
           (Lpath.to_string ~sep:separator ~mod_ fld)
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%a" %i|}
@@ -724,7 +724,7 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
       flds |> List.mapi @@ fun i fld ->
         let fld = Lpath.set_last lpath fld in
         Rocq.notation
-          LocalityNormal
+          Locality_normal
           (Lpath.to_string ~sep:separator ~mod_ fld)
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%a" %i|}
@@ -736,7 +736,7 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
       tags |> List.mapi @@ fun i tag ->
         let tag = Lpath.set_last lpath tag in
         Rocq.notation
-          LocalityNormal
+          Locality_normal
           (Lpath.to_string ~sep:separator ~mod_ tag)
           ( fun ppf () ->
               Fmt.pf ppf {|in_type "%a" %i|}
@@ -755,7 +755,7 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
 let transl_value_code ~mod_ ~gen = function
   | Val_expr (path, expr) ->
       [ Rocq.definition
-          LocalityNormal
+          Locality_normal
           Lpath.(path |> to_string ~sep:separator ~mod_)
           (Some Type.value)
           ( fun ppf () ->
@@ -764,7 +764,7 @@ let transl_value_code ~mod_ ~gen = function
       ]
   | Val_fun (path, params, expr) ->
       [ Rocq.definition
-          LocalityNormal
+          Locality_normal
           Lpath.(path |> to_string ~sep:separator ~mod_)
           (Some Type.value)
           ( fun ppf () ->
@@ -777,7 +777,7 @@ let transl_value_code ~mod_ ~gen = function
       ]
   | Val_recs [path, var, params, body] ->
       [ Rocq.definition
-          LocalityNormal
+          Locality_normal
           Lpath.(path |> to_string ~sep:separator ~mod_)
           (Some Type.value)
           ( fun ppf () ->
@@ -793,7 +793,7 @@ let transl_value_code ~mod_ ~gen = function
       let id = Generator.next gen in
       List.concat
       [ [ Rocq.definition
-            LocalityLocal
+            Locality_local
             (Printf.sprintf "__zoo_recs_%i" id)
             None
             ( fun ppf () ->
@@ -818,7 +818,7 @@ let transl_value_code ~mod_ ~gen = function
         ]
       ; List.mapi (fun i (path, _, _, _) ->
           Rocq.definition
-            LocalityNormal
+            Locality_normal
             Lpath.(path |> to_string ~sep:separator ~mod_)
             None
             ( fun ppf () ->
@@ -829,7 +829,7 @@ let transl_value_code ~mod_ ~gen = function
         ) recs
       ; List.mapi (fun i (path, _, _, _) ->
           Rocq.instance
-            LocalityGlobal
+            Locality_global
             None
             ( fun ppf () ->
                 Fmt.pf ppf "@[<v>AsValRecs' %a %i __zoo_recs_%i [@,  @[<v>%a@]@,]@]"
@@ -850,7 +850,7 @@ let transl_value_code ~mod_ ~gen = function
       ]
 let transl_value_opaque ~mod_ path =
   Rocq.opaque
-    LocalityGlobal
+    Locality_global
     Lpath.(path |> cons mod_ |> to_string ~sep:separator)
 let transl_value_opaque ~mod_ = function
   | Val_expr (path, _)
@@ -880,9 +880,9 @@ let prelude ~mode =
   match mode with
   | Types
   | Code ->
-      [ Rocq.require RequireImport "zoo.prelude"
-      ; Rocq.require RequireImport "zoo.language.typeclasses"
-      ; Rocq.require RequireImport "zoo.language.notations"
+      [ Rocq.require Require_import "zoo.prelude"
+      ; Rocq.require Require_import "zoo.language.typeclasses"
+      ; Rocq.require Require_import "zoo.language.notations"
       ]
   | Opaque ->
       []
@@ -890,7 +890,7 @@ let postlude ~mode =
   match mode with
   | Types
   | Code ->
-      [ Rocq.require RequireImport "zoo.options"
+      [ Rocq.require Require_import "zoo.options"
       ]
   | Opaque ->
       []
@@ -901,9 +901,9 @@ let dependencies ~mode t =
       let require_kind : Rocq.require_kind =
         match mode with
         | Types ->
-            RequireExport
+            Require_export
         | Code ->
-            RequireImport
+            Require_import
         | Opaque ->
             assert false
       in
@@ -913,7 +913,7 @@ let dependencies ~mode t =
       |> List.map (Rocq.require require_kind)
   | Opaque ->
       [ Rocq.require
-          RequireImport
+          Require_import
           (Printf.sprintf "%s.%s__code" t.library t.module_)
       ]
 let body ~mode t =

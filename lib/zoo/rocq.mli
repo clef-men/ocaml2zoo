@@ -11,14 +11,14 @@ type scope =
   string
 
 type require_kind =
-  | RequireOnly
-  | RequireImport
-  | RequireExport
+  | Require_only
+  | Require_import
+  | Require_export
 
 type locality =
-  | LocalityNormal
-  | LocalityLocal
-  | LocalityGlobal
+  | Locality_normal
+  | Locality_local
+  | Locality_global
 
 type custom =
   unit Fmt.t
