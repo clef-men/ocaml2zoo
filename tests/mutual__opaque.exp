@@ -1,0 +1,6 @@
+Require Import tests.mutual__code.
+
+#[global] Opaque mutual٠test3.
+#[global] Opaque mutual٠test4.
+#[global] Opaque mutual٠test5.
+#[global] Opaque mutual٠test6.

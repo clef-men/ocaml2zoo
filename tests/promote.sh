@@ -4,14 +4,6 @@ set -eou pipefail
 
 . tests/common.sh
 
-if [[ 0 < $# ]] ; then
-	tests="$@"
-	tests="${tests/#/$test_dir/}"
-	tests="${tests/%/.ml}"
-else
-  tests="$(ls $test_dir/*.ml)"
-fi
-
 for test in $tests ; do
 	if [ ! -f "$test" ] ; then
 		echo "error: test does not exist: $test"
@@ -25,6 +17,7 @@ for test in $tests ; do
 
 	cp "${test}__types.v" "${test}__types.exp"
 	cp "${test}__code.v" "${test}__code.exp"
+	cp "${test}__opaque.v" "${test}__opaque.exp"
 
   echo "test promoted: $(basename $test)"
 done

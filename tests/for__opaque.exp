@@ -1,0 +1,4 @@
+Require Import tests.for__code.
+
+#[global] Opaque for٠test1.
+#[global] Opaque for٠test2.

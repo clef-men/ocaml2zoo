@@ -30,3 +30,8 @@ val overwrite :
   string
 val has_overwrite :
   t list -> (overwrite_kind * t) option
+
+val transparent :
+  string
+val has_transparent :
+  t list -> bool

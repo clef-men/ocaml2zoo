@@ -1,0 +1,17 @@
+Require Import tests.shadowing__code.
+
+#[global] Opaque shadowing٠test₁₄.
+#[global] Opaque shadowing٠test₁₃.
+#[global] Opaque shadowing٠test₁₂.
+#[global] Opaque shadowing٠test₁₁.
+#[global] Opaque shadowing٠test₁₀.
+#[global] Opaque shadowing٠test₉.
+#[global] Opaque shadowing٠test₈.
+#[global] Opaque shadowing٠test₇.
+#[global] Opaque shadowing٠test₆.
+#[global] Opaque shadowing٠test₅.
+#[global] Opaque shadowing٠test₄.
+#[global] Opaque shadowing٠test₃.
+#[global] Opaque shadowing٠test₂.
+#[global] Opaque shadowing٠test₁.
+#[global] Opaque shadowing٠test.

@@ -1,0 +1,4 @@
+Require Import tests.list__code.
+
+#[global] Opaque list٠test1.
+#[global] Opaque list٠test2.

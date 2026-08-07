@@ -102,6 +102,7 @@ type t =
   { library: string
   ; module_: string
   ; definitions: definition list
+  ; transparent: bool
   }
 
 val expression_is_value :

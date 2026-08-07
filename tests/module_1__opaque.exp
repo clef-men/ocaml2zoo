@@ -1,0 +1,6 @@
+Require Import tests.module_1__code.
+
+#[global] Opaque module_1٠test₂.
+#[global] Opaque module_1٠m٠test.
+#[global] Opaque module_1٠test₁.
+#[global] Opaque module_1٠test.

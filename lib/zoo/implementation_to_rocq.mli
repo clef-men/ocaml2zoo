@@ -1,7 +1,7 @@
-val separator :
-  string
+type mode =
+  | Types
+  | Code
+  | Opaque
 
-val transl_types :
-  Implementation.t -> Rocq.t
-val transl_code :
-  Implementation.t -> Rocq.t
+val transl :
+  mode:mode -> Implementation.t -> Rocq.t

@@ -1,0 +1,4 @@
+Require Import tests.operators_1__code.
+
+#[global] Opaque operators_1٠test1.
+#[global] Opaque operators_1٠test2.

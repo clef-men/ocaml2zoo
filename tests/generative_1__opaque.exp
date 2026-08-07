@@ -1,0 +1,3 @@
+Require Import tests.generative_1__code.
+
+#[global] Opaque generative_1٠test.

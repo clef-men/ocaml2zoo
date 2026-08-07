@@ -1,0 +1,5 @@
+Require Import tests.record_1__code.
+
+#[global] Opaque record_1٠test1.
+#[global] Opaque record_1٠test2.
+#[global] Opaque record_1٠test3.

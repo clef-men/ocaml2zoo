@@ -16,8 +16,6 @@ let error ?(usage = true) fmt =
   ) ("@[<v>" ^^ fmt ^^ "@]")
 let invalid_cmt ?(usage = true) fmt =
   error ~usage ("invalid .cmt file" ^^ fmt)
-let invalid_cmti ?(usage = true) fmt =
-  error ~usage ("invalid .cmti file" ^^ fmt)
 let invalid_directory ?(usage = true) fmt =
   error ~usage ("invalid directory" ^^ fmt)
 
@@ -52,41 +50,22 @@ let implementation ~lib_name ~mod_name ~input ~output =
           | exception Zoo.Implementation_of_cmt.Ignore ->
               ()
           | impl ->
-              let rocq = Zoo.Implementation_to_rocq.transl_types impl in
+              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Types impl in
               Out_channel.with_open_text output.output_types (fun chan ->
                 Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
               ) ;
-              let rocq = Zoo.Implementation_to_rocq.transl_code impl in
+              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Code impl in
               Out_channel.with_open_text output.output_code (fun chan ->
                 Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
-              )
+              ) ;
+              if not impl.transparent then
+                let rocq = Zoo.Implementation_to_rocq.transl ~mode:Opaque impl in
+                Out_channel.with_open_text output.output_opaque (fun chan ->
+                  Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+                )
           end
       | _ ->
           invalid_cmt ": not an implementation"
-
-let interface ~lib_name ~mod_name ~input ~output =
-  match Cmt_format.read_cmt input with
-  | exception Sys_error err ->
-      invalid_cmti ": %s" err
-  | exception Cmt_format.Error _
-  | exception Cmi_format.Error _ ->
-      invalid_cmti ""
-  | cmt ->
-      match cmt.cmt_annots with
-      | Interface sig_ ->
-          Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Interface_of_cmti.transl ~lib:lib_name ~mod_:mod_name sig_ with
-          | exception Zoo.Interface_of_cmti.Ignore ->
-              ()
-          | intf ->
-              let rocq = Zoo.Interface_to_rocq.transl intf in
-              Out_channel.with_open_text output.output_opaque (fun chan ->
-                Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
-              )
-          end
-      | _ ->
-          invalid_cmti ": not an interface"
-
 let main_singlefile args =
   let input = args.input in
   let lib_name = Filename.(input |> dirname |> basename) |> String.uncapitalize_ascii in
@@ -121,15 +100,9 @@ let main_directory args (dune : Dune.t) =
           if not @@ Filename.check_suffix mod_.module_impl "-gen" then
             let input = Filename.concat args.input mod_.module_cmt in
             let output = output output_dir mod_name in
-            if check ~args ~input ~output then (
-              implementation ~lib_name ~mod_name ~input ~output ;
-              match mod_.module_cmti with
-              | None ->
-                  ()
-              | Some cmti ->
-                  let input = Filename.concat args.input cmti in
-                  interface ~lib_name ~mod_name ~input ~output
-            ) else if not args.quiet then
+            if check ~args ~input ~output then
+              implementation ~lib_name ~mod_name ~input ~output
+            else if not args.quiet then
               Fmt.pr {|Ignoring module "%s" from library "%s" (already up-to-date).@.|}
                 mod_name
                 lib_name

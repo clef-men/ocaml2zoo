@@ -1,0 +1,5 @@
+Require Import tests.atomic__code.
+
+#[global] Opaque atomic٠test1.
+#[global] Opaque atomic٠test2.
+#[global] Opaque atomic٠test3.

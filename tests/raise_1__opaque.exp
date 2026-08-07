@@ -1,0 +1,5 @@
+Require Import tests.raise_1__code.
+
+#[global] Opaque raise_1٠test1.
+#[global] Opaque raise_1٠test2.
+#[global] Opaque raise_1٠test3.

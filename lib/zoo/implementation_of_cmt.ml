@@ -591,6 +591,8 @@ module Context = struct
     ; final_env: Env.t Stack.t
     (* variables for the current item *)
     ; mutable vars: Ident.Set.t
+    (* whether or not to generate a file to make definitions opaque *)
+    ; mutable transparent: bool
     }
 
   let create ~lib ~mod_ ~final_env =
@@ -602,6 +604,7 @@ module Context = struct
     ; modules= Stack.of_list [Ident.Set.empty]
     ; final_env= Stack.of_list [final_env]
     ; vars= Ident.Set.empty
+    ; transparent= false
     }
 
   let module_ t =
@@ -729,6 +732,11 @@ module Context = struct
     resolve_constructor_or_label t ~loc constr.cstr_res constr.cstr_name
   let resolve_label t ~loc (lbl : Data_types.label_description) =
     resolve_constructor_or_label t ~loc lbl.lbl_res lbl.lbl_name
+
+  let transparent t =
+    t.transparent
+  let set_transparent t =
+    t.transparent <- true
 end
 
 let transl_open_declaration ~loc (open_ : Typedtree.open_declaration) =
@@ -1434,6 +1442,8 @@ and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   | Tstr_attribute attr ->
       if Attribute.has_ignore [attr] then
         raise Ignore ;
+      if Attribute.has_transparent [attr] then
+        Context.set_transparent ctx ;
       []
   | Tstr_module mbdg ->
       transl_module_binding ~ctx mbdg
@@ -1474,4 +1484,5 @@ let transl ~lib ~mod_ (str : Typedtree.structure) =
   { library= lib
   ; module_= mod_
   ; definitions= defs
+  ; transparent= Context.transparent ctx
   }

@@ -1,0 +1,3 @@
+Require Import tests.open__code.
+
+#[global] Opaque open٠test.

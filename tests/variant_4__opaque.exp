@@ -1,0 +1,6 @@
+Require Import tests.variant_4__code.
+
+#[global] Opaque variant_4٠test1.
+#[global] Opaque variant_4٠test2.
+#[global] Opaque variant_4٠test3.
+#[global] Opaque variant_4٠test4.

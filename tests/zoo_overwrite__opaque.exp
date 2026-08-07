@@ -1,0 +1,6 @@
+Require Import tests.zoo_overwrite__code.
+
+#[global] Opaque zoo_overwrite٠test1.
+#[global] Opaque zoo_overwrite٠test2.
+#[global] Opaque zoo_overwrite٠test3.
+#[global] Opaque zoo_overwrite٠test4.

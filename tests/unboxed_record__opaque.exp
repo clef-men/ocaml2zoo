@@ -1,0 +1,5 @@
+Require Import tests.unboxed_record__code.
+
+#[global] Opaque unboxed_record٠test1.
+#[global] Opaque unboxed_record٠test2.
+#[global] Opaque unboxed_record٠test3.

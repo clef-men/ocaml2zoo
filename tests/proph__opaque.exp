@@ -1,0 +1,5 @@
+Require Import tests.proph__code.
+
+#[global] Opaque proph٠test1.
+#[global] Opaque proph٠test2.
+#[global] Opaque proph٠test3.

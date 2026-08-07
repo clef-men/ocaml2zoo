@@ -1,0 +1,5 @@
+Require Import tests.labeled_arguments__code.
+
+#[global] Opaque labeled_arguments٠test1.
+#[global] Opaque labeled_arguments٠test2.
+#[global] Opaque labeled_arguments٠test3.

@@ -57,3 +57,8 @@ let rec has_overwrite = function
             has_overwrite attrs
       else
         has_overwrite attrs
+
+let transparent =
+  zoo ^ ".transparent"
+let has_transparent =
+  has transparent

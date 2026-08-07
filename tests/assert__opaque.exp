@@ -1,0 +1,4 @@
+Require Import tests.assert__code.
+
+#[global] Opaque assert٠test1.
+#[global] Opaque assert٠test2.

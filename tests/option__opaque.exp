@@ -1,0 +1,4 @@
+Require Import tests.option__code.
+
+#[global] Opaque option٠test1.
+#[global] Opaque option٠test2.

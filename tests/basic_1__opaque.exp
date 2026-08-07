@@ -1,0 +1,12 @@
+Require Import tests.basic_1__code.
+
+#[global] Opaque basic_1٠test1.
+#[global] Opaque basic_1٠test2.
+#[global] Opaque basic_1٠test3.
+#[global] Opaque basic_1٠test4.
+#[global] Opaque basic_1٠test5.
+#[global] Opaque basic_1٠test6.
+#[global] Opaque basic_1٠test7.
+#[global] Opaque basic_1٠test8.
+#[global] Opaque basic_1٠test9.
+#[global] Opaque basic_1٠test10.

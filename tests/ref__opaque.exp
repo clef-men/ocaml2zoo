@@ -1,0 +1,3 @@
+Require Import tests.ref__code.
+
+#[global] Opaque ref٠test.

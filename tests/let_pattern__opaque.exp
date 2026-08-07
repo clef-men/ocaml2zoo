@@ -1,0 +1,4 @@
+Require Import tests.let_pattern__code.
+
+#[global] Opaque let_pattern٠test1.
+#[global] Opaque let_pattern٠test2.

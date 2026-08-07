@@ -1,0 +1,6 @@
+Require Import tests.zoo_opaque__code.
+
+#[global] Opaque zoo_opaque٠test1.
+#[global] Opaque zoo_opaque٠test2.
+#[global] Opaque zoo_opaque٠test3.
+#[global] Opaque zoo_opaque٠test4.

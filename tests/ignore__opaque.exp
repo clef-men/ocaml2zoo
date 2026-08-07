@@ -1,0 +1,5 @@
+Require Import tests.ignore__code.
+
+#[global] Opaque ignore٠test1.
+#[global] Opaque ignore٠test2.
+#[global] Opaque ignore٠test3.

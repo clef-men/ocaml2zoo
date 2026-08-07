@@ -1,0 +1,3 @@
+Require Import tests.id__code.
+
+#[global] Opaque id٠test.

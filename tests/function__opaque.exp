@@ -1,0 +1,4 @@
+Require Import tests.function__code.
+
+#[global] Opaque function٠test1.
+#[global] Opaque function٠test2.

@@ -694,6 +694,7 @@ let pp_expression ~mod_ =
 type mode =
   | Types
   | Code
+  | Opaque
 
 let transl_typ ~lib ~mod_ ~mode lpath ty =
   let gpath = Gpath.make ~lib ~mod_ lpath in
@@ -703,6 +704,8 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
         ""
     | Code ->
         mod_
+    | Opaque ->
+        assert false
   in
   match ty with
   | Type_product flds ->
@@ -741,8 +744,15 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
                 i
           )
           "zoo_tag"
+let transl_typ ~lib ~mod_ ~mode lpath ty =
+  match mode with
+  | Types
+  | Code ->
+      transl_typ ~lib ~mod_ ~mode lpath ty
+  | Opaque ->
+      []
 
-let transl_value ~mod_ ~gen = function
+let transl_value_code ~mod_ ~gen = function
   | Val_expr (path, expr) ->
       [ Rocq.definition
           LocalityNormal
@@ -838,12 +848,27 @@ let transl_value ~mod_ ~gen = function
           Lpath.(path |> to_string ~sep:separator ~mod_)
           Type.value
       ]
+let transl_value_opaque ~mod_ path =
+  Rocq.opaque
+    LocalityGlobal
+    Lpath.(path |> cons mod_ |> to_string ~sep:separator)
+let transl_value_opaque ~mod_ = function
+  | Val_expr (path, _)
+  | Val_fun (path, _, _)
+  | Val_recs [path, _, _, _]
+  | Val_opaque path ->
+      [transl_value_opaque ~mod_ path]
+  | Val_recs recs ->
+      recs |> List.map @@ fun (path, _var, _bdrs, _expr) ->
+        transl_value_opaque ~mod_ path
 let transl_value ~mod_ ~mode ~gen val_ =
   match mode with
   | Types ->
       []
   | Code ->
-      transl_value ~mod_ ~gen val_
+      transl_value_code ~mod_ ~gen val_
+  | Opaque ->
+      transl_value_opaque ~mod_ val_
 
 let transl_definition ~lib ~mod_ ~mode ~gen = function
   | Type (path, ty) ->
@@ -851,43 +876,67 @@ let transl_definition ~lib ~mod_ ~mode ~gen = function
   | Val val_ ->
       transl_value ~mod_ ~mode ~gen val_
 
-let prelude =
-  [ Rocq.require RequireImport "zoo.prelude"
-  ; Rocq.require RequireImport "zoo.language.typeclasses"
-  ; Rocq.require RequireImport "zoo.language.notations"
-  ]
-let postlude =
-  [ Rocq.require RequireImport "zoo.options"
-  ]
-let transl ~mode t =
+let prelude ~mode =
+  match mode with
+  | Types
+  | Code ->
+      [ Rocq.require RequireImport "zoo.prelude"
+      ; Rocq.require RequireImport "zoo.language.typeclasses"
+      ; Rocq.require RequireImport "zoo.language.notations"
+      ]
+  | Opaque ->
+      []
+let postlude ~mode =
+  match mode with
+  | Types
+  | Code ->
+      [ Rocq.require RequireImport "zoo.options"
+      ]
+  | Opaque ->
+      []
+let dependencies ~mode t =
+  match mode with
+  | Types
+  | Code ->
+      let require_kind : Rocq.require_kind =
+        match mode with
+        | Types ->
+            RequireExport
+        | Code ->
+            RequireImport
+        | Opaque ->
+            assert false
+      in
+      t
+      |> Dependencies.of_implementation
+      |> Hashset.to_list_sort String.compare
+      |> List.map (Rocq.require require_kind)
+  | Opaque ->
+      [ Rocq.require
+          RequireImport
+          (Printf.sprintf "%s.%s__code" t.library t.module_)
+      ]
+let body ~mode t =
   let body =
     let gen = Generator.create () in
     t.definitions |> List.map @@
       transl_definition ~lib:t.library ~mod_:t.module_ ~mode ~gen
   in
   let body = List.filter ((<>) []) body in
-  let body = List.interleave ~sep:[Rocq.newline] body in
-  let dependencies =
-    let require_kind : Rocq.require_kind =
-      match mode with
-      | Types ->
-          RequireExport
-      | Code ->
-          RequireImport
-    in
-    t
-    |> Dependencies.of_implementation
-    |> Hashset.to_list_sort String.compare
-    |> List.map (Rocq.require require_kind)
+  let body =
+    match mode with
+    | Types
+    | Code ->
+        List.interleave ~sep:[Rocq.newline] body
+    | Opaque ->
+        body
   in
+  body
+let transl ~mode t =
   List.concat @@
-    [ prelude
-    ; dependencies
-    ; postlude
+    [ prelude ~mode
+    ; dependencies ~mode t
+    ; postlude ~mode
     ; [Rocq.newline]
     ] @
-    body
-let transl_types =
-  transl ~mode:Types
-let transl_code =
-  transl ~mode:Code
+    body ~mode t

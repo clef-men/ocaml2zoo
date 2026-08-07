@@ -1,0 +1,3 @@
+Require Import tests.obj__code.
+
+#[global] Opaque obj٠test.

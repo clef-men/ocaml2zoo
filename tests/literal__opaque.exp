@@ -1,0 +1,3 @@
+Require Import tests.literal__code.
+
+#[global] Opaque literal٠test.
