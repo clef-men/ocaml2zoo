@@ -5,13 +5,13 @@ type t =
 
 module Builtin = struct
   let assert_ =
-    "zoo_std.assert"
+    "zoo.program_logic.assert"
   let assume =
-    "zoo_std.assume"
+    "zoo.program_logic.assume"
   let diverge =
-    "zoo_std.diverge"
+    "zoo.program_logic.diverge"
   let for_ =
-    "zoo_std.for_"
+    "zoo.program_logic.for_"
   let identifier =
     "zoo.program_logic.identifier"
   let structeq =
