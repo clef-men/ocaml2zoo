@@ -10,6 +10,8 @@ module Builtin = struct
     "zoo_std.assume"
   let diverge =
     "zoo_std.diverge"
+  let for_ =
+    "zoo_std.for_"
   let identifier =
     "zoo.program_logic.identifier"
   let structeq =
@@ -82,6 +84,7 @@ let rec of_expression t = function
       of_expression t expr2 ;
       Option.iter (of_expression t) expr3
   | For (_bdr, expr1, expr2, expr3) ->
+      Hashset.add t Builtin.for_ ;
       of_expression t expr1 ;
       of_expression t expr2 ;
       of_expression t expr3
