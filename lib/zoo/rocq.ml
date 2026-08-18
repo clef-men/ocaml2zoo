@@ -25,6 +25,7 @@ type custom =
 
 type item =
   | Newline
+  | Comment of string
   | Require of require_kind * path
   | Parameter of ident * term
   | Definition of locality * ident * term option * custom
@@ -37,6 +38,8 @@ type t =
 
 let newline =
   Newline
+let[@inline] comment str =
+  Comment str
 let[@inline] require kind path =
   Require (kind, path)
 let[@inline] parameter id tm =
@@ -69,6 +72,9 @@ let pp_locality ppf = function
 let pp_item ppf = function
   | Newline ->
       ()
+  | Comment str ->
+      Fmt.pf ppf "(* %s *)"
+        str
   | Require (kind, path) ->
       Fmt.pf ppf "Require%a %s."
         pp_require_kind kind
