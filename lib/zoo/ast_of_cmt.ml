@@ -346,6 +346,18 @@ module Builtin = struct
 end
 
 module Unsupported = struct
+  module Shadowing = struct
+    type t =
+      | Constructor
+      | Label
+
+    let to_string = function
+      | Constructor ->
+          "constructor"
+      | Label ->
+          "label"
+  end
+
   type t =
     | Literal_non_integer
     | Pattern_alias
@@ -400,6 +412,7 @@ module Unsupported = struct
     | Def_class_type
     | Def_include
     | Open
+    | Shadowing of Shadowing.t
 
   let to_string = function
     | Literal_non_integer ->
@@ -508,6 +521,9 @@ module Unsupported = struct
         {|"include" declaration|}
     | Open ->
         "opened module must be an identifier"
+    | Shadowing shadowing ->
+        Printf.sprintf "%s shadowing"
+          (Shadowing.to_string shadowing)
 
   let pp ppf t =
     Fmt.string ppf (to_string t)
@@ -581,6 +597,8 @@ end
 module Context = struct
   type scope =
     { scope_ids: Ident.Set.t
+    ; scope_constructors: string Hashset.t
+    ; scope_labels: string Hashset.t
     ; scope_final_env: Env.t
     }
 
@@ -602,6 +620,8 @@ module Context = struct
   let create ~lib ~mod_ ~final_env =
     let scope =
       { scope_ids= Ident.Set.empty
+      ; scope_constructors= Hashset.create ()
+      ; scope_labels= Hashset.create ()
       ; scope_final_env= final_env
       }
     in
@@ -661,6 +681,8 @@ module Context = struct
     t.path <- mod_ :: t.path ;
     let scope =
       { scope_ids= Ident.Set.empty
+      ; scope_constructors= Hashset.create ()
+      ; scope_labels= Hashset.create ()
       ; scope_final_env= final_env
       }
     in
@@ -670,6 +692,20 @@ module Context = struct
     t.locals <- Ident.Set.fold Ident.Map.remove scope.scope_ids t.locals ;
     t.path <- List.tl t.path ;
     res
+
+  let add_constructor t (constr : Types.constructor_declaration) =
+    let tag = constr.cd_id |> Ident.name in
+    let scope = Stack.top t.scopes in
+    if Hashset.mem scope.scope_constructors tag then
+      unsupported ~loc:constr.cd_loc (Shadowing Constructor) ;
+    Hashset.add scope.scope_constructors tag
+
+  let add_label t (lbl : Types.label_declaration) =
+    let tag = lbl.ld_id |> Ident.name in
+    let scope = Stack.top t.scopes in
+    if Hashset.mem scope.scope_labels tag then
+      unsupported ~loc:lbl.ld_loc (Shadowing Label) ;
+    Hashset.add scope.scope_labels tag
 
   let mem_var t id =
     Ident.Set.mem id t.vars
@@ -1379,9 +1415,13 @@ let transl_value_bindings ~ctx rec_flag bdgs =
         let recs = List.concat_map (function Val_recs recs -> recs | _ -> assert false) vals in
         [Val_recs recs]
 
-let transl_type_declaration_record lbls =
+let transl_type_declaration_record ~ctx lbls =
   let is_mut = record_is_mutable lbls in
-  let lbls = List.map (fun lbl -> lbl.Types.ld_id |> Ident.name) lbls in
+  let lbls =
+    lbls |> List.map @@ fun lbl ->
+      Context.add_label ctx lbl ;
+      lbl.Types.ld_id |> Ident.name
+  in
   if is_mut then
     Type_record lbls
   else
@@ -1394,18 +1434,19 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
   | Type_record (_, Record_unboxed _) ->
       []
   | Type_record (lbls, _) ->
-      let ty = transl_type_declaration_record lbls in
+      let ty = transl_type_declaration_record ~ctx lbls in
       [Type (path, Type_normal, ty)]
   | Type_variant (_, Variant_unboxed) ->
       []
   | Type_variant (constrs, _) ->
       let tags, defs =
         List.fold_right (fun (constr : Types.constructor_declaration) (tags, defs) ->
+          Context.add_constructor ctx constr ;
           let tag = Ident.name constr.cd_id in
           let defs =
             match constr.cd_args with
             | Cstr_record lbls ->
-                let ty = transl_type_declaration_record lbls in
+                let ty = transl_type_declaration_record ~ctx lbls in
                 Type (path, Type_inline tag, ty) :: defs
             | _ ->
                 defs

@@ -6,13 +6,13 @@ type t1 =
   | C2
 
 type t2 =
-  { f1: int
-  ; f2: int
+  { t2_1: int
+  ; t2_2: int
   }
 
 type t3 =
-  { mutable f1: int
-  ; mutable f2: int
+  { mutable t3_1: int
+  ; mutable t3_2: int
   }
 
 module M = struct
@@ -24,13 +24,13 @@ module M = struct
     | C2
 
   type t2 =
-    { f1: int
-    ; f2: int
+    { t2_1: int
+    ; t2_2: int
     }
 
   type t3 =
-    { mutable f1: int
-    ; mutable f2: int
+    { mutable t3_1: int
+    ; mutable t3_2: int
     }
 end
 

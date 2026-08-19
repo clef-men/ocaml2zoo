@@ -17,20 +17,20 @@ Notation "'module_1٠C2'" := (
 )(in custom zoo_tag
 ).
 
-Notation "'module_1٠f1'" := (
+Notation "'module_1٠t2_1'" := (
   in_type "tests.module_1.t2" 0
 )(in custom zoo_proj
 ).
-Notation "'module_1٠f2'" := (
+Notation "'module_1٠t2_2'" := (
   in_type "tests.module_1.t2" 1
 )(in custom zoo_proj
 ).
 
-Notation "'module_1٠f1'" := (
+Notation "'module_1٠t3_1'" := (
   in_type "tests.module_1.t3" 0
 )(in custom zoo_field
 ).
-Notation "'module_1٠f2'" := (
+Notation "'module_1٠t3_2'" := (
   in_type "tests.module_1.t3" 1
 )(in custom zoo_field
 ).
@@ -47,20 +47,20 @@ Notation "'module_1٠m٠C2'" := (
 )(in custom zoo_tag
 ).
 
-Notation "'module_1٠m٠f1'" := (
+Notation "'module_1٠m٠t2_1'" := (
   in_type "tests.module_1.m.t2" 0
 )(in custom zoo_proj
 ).
-Notation "'module_1٠m٠f2'" := (
+Notation "'module_1٠m٠t2_2'" := (
   in_type "tests.module_1.m.t2" 1
 )(in custom zoo_proj
 ).
 
-Notation "'module_1٠m٠f1'" := (
+Notation "'module_1٠m٠t3_1'" := (
   in_type "tests.module_1.m.t3" 0
 )(in custom zoo_field
 ).
-Notation "'module_1٠m٠f2'" := (
+Notation "'module_1٠m٠t3_2'" := (
   in_type "tests.module_1.m.t3" 1
 )(in custom zoo_field
 ).

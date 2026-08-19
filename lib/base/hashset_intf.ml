@@ -9,6 +9,9 @@ module type S = sig
   val singleton :
     elt -> t
 
+  val mem :
+    t -> elt -> bool
+
   val add :
     t -> elt -> unit
 

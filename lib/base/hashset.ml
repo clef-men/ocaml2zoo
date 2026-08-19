@@ -12,6 +12,9 @@ let singleton elt =
   add t elt ;
   t
 
+let mem =
+  Hashtbl.mem
+
 let remove =
   Hashtbl.remove
 
@@ -54,6 +57,9 @@ module Make
     let t = create () in
     add t elt ;
     t
+
+  let mem =
+    Hashtbl.mem
 
   let remove =
     Hashtbl.remove

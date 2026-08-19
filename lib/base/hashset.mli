@@ -6,6 +6,9 @@ val create :
 val singleton :
   'a -> 'a t
 
+val mem :
+  'a t -> 'a -> bool
+
 val add :
   'a t -> 'a -> unit
 
