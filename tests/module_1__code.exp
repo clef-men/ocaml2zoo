@@ -9,11 +9,11 @@ Definition module_1٠test₂ : val :=
   0.
 
 Notation "'module_1٠C1'" := (
-  in_type "tests.module_1.t1" 0
+  in_type "tests.module_1.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'module_1٠C2'" := (
-  in_type "tests.module_1.t1" 1
+  in_type "tests.module_1.t1" Tag1
 )(in custom zoo_tag
 ).
 
@@ -39,11 +39,11 @@ Definition module_1٠m٠test : val :=
   module_1٠test₂.
 
 Notation "'module_1٠m٠C1'" := (
-  in_type "tests.module_1.m.t1" 0
+  in_type "tests.module_1.m.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'module_1٠m٠C2'" := (
-  in_type "tests.module_1.m.t1" 1
+  in_type "tests.module_1.m.t1" Tag1
 )(in custom zoo_tag
 ).
 

@@ -747,7 +747,7 @@ let transl_typ ~lib ~mod_ ~mode lpath kind ty =
           Locality_normal
           (Lpath.to_string ~sep:separator ~mod_ tag)
           ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%a" %i|}
+              Fmt.pf ppf {|in_type "%a" Tag%i|}
                 (Gpath.pp_full ~sep:".") gpath
                 i
           )

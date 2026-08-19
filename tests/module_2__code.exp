@@ -9,11 +9,11 @@ Definition module_2٠test₃ : val :=
   0.
 
 Notation "'module_2٠C1'" := (
-  in_type "tests.module_2.t1" 0
+  in_type "tests.module_2.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'module_2٠C2'" := (
-  in_type "tests.module_2.t1" 1
+  in_type "tests.module_2.t1" Tag1
 )(in custom zoo_tag
 ).
 
@@ -39,11 +39,11 @@ Definition module_2٠m1٠test₂ : val :=
   module_2٠test₃.
 
 Notation "'module_2٠m1٠C1'" := (
-  in_type "tests.module_2.m1.t1" 0
+  in_type "tests.module_2.m1.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'module_2٠m1٠C2'" := (
-  in_type "tests.module_2.m1.t1" 1
+  in_type "tests.module_2.m1.t1" Tag1
 )(in custom zoo_tag
 ).
 
@@ -72,11 +72,11 @@ Definition module_2٠m1٠m2٠test : val :=
   module_2٠m1٠m2٠test₁.
 
 Notation "'module_2٠m1٠m2٠C1'" := (
-  in_type "tests.module_2.m1.m2.t1" 0
+  in_type "tests.module_2.m1.m2.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'module_2٠m1٠m2٠C2'" := (
-  in_type "tests.module_2.m1.m2.t1" 1
+  in_type "tests.module_2.m1.m2.t1" Tag1
 )(in custom zoo_tag
 ).
 

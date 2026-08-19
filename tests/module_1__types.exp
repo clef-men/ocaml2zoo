@@ -6,11 +6,11 @@ Require Import zoo.language.notations.
 Require Import zoo.options.
 
 Notation "'C1'" := (
-  in_type "tests.module_1.t1" 0
+  in_type "tests.module_1.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'C2'" := (
-  in_type "tests.module_1.t1" 1
+  in_type "tests.module_1.t1" Tag1
 )(in custom zoo_tag
 ).
 
@@ -33,11 +33,11 @@ Notation "'t3_2'" := (
 ).
 
 Notation "'m٠C1'" := (
-  in_type "tests.module_1.m.t1" 0
+  in_type "tests.module_1.m.t1" Tag0
 )(in custom zoo_tag
 ).
 Notation "'m٠C2'" := (
-  in_type "tests.module_1.m.t1" 1
+  in_type "tests.module_1.m.t1" Tag1
 )(in custom zoo_tag
 ).
 
