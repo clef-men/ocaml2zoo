@@ -579,6 +579,11 @@ module Envaux = struct
 end
 
 module Context = struct
+  type scope =
+    { scope_ids: Ident.Set.t
+    ; scope_final_env: Env.t
+    }
+
   type t =
     { library: string
     ; module_: string
@@ -587,8 +592,7 @@ module Context = struct
     (* module scoping *)
     ; mutable path: string list
     ; mutable locals: Lpath.t Ident.Map.t
-    ; modules: Ident.Set.t Stack.t
-    ; final_env: Env.t Stack.t
+    ; scopes: scope Stack.t
     (* variables for the current item *)
     ; mutable vars: Ident.Set.t
     (* whether or not to generate a file to make definitions opaque *)
@@ -596,13 +600,17 @@ module Context = struct
     }
 
   let create ~lib ~mod_ ~final_env =
+    let scope =
+      { scope_ids= Ident.Set.empty
+      ; scope_final_env= final_env
+      }
+    in
     { library= lib
     ; module_= mod_
     ; env= Env.empty
     ; path= []
     ; locals= Ident.Map.empty
-    ; modules= Stack.of_list [Ident.Set.empty]
-    ; final_env= Stack.of_list [final_env]
+    ; scopes= Stack.of_list [scope]
     ; vars= Ident.Set.empty
     ; transparent= false
     }
@@ -616,7 +624,8 @@ module Context = struct
     t.env <- Envaux.env_of_only_summary env
 
   let final_env t =
-    Stack.top t.final_env
+    let scope = Stack.top t.scopes in
+    scope.scope_final_env
 
   let find_type t path =
     Env.find_type path t.env
@@ -642,20 +651,23 @@ module Context = struct
       Lpath.of_list_rev (name :: t.path)
     in
     t.locals <- Ident.Map.add id path t.locals ;
-    let ids = Stack.pop t.modules in
-    let ids = Ident.Set.add id ids in
-    Stack.push ids t.modules ;
+    let scope = Stack.pop t.scopes in
+    let ids = Ident.Set.add id scope.scope_ids in
+    Stack.push { scope with scope_ids= ids } t.scopes ;
     path
   let with_module t ~mod_ ~final_env fn =
     let mod_ = mod_ |> Ident.name |> normalize in
     let final_env = Envaux.env_of_only_summary final_env in
     t.path <- mod_ :: t.path ;
-    Stack.push Ident.Set.empty t.modules ;
-    Stack.push final_env t.final_env ;
+    let scope =
+      { scope_ids= Ident.Set.empty
+      ; scope_final_env= final_env
+      }
+    in
+    Stack.push scope t.scopes ;
     let res = fn () in
-    Stack.pop t.final_env |> ignore ;
-    let ids = Stack.pop t.modules in
-    t.locals <- Ident.Set.fold Ident.Map.remove ids t.locals ;
+    let scope = Stack.pop t.scopes in
+    t.locals <- Ident.Set.fold Ident.Map.remove scope.scope_ids t.locals ;
     t.path <- List.tl t.path ;
     res
 
