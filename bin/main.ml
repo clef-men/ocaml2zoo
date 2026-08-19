@@ -11,9 +11,9 @@ type arguments =
 exception Error of unit Cmdliner.Term.ret
 
 let error ?(usage = true) fmt =
-  Fmt.kstr (fun msg ->
+  let fmt = "@[<v>" ^^ fmt ^^ "@]" in
+  fmt |> Fmt.kstr @@ fun msg ->
     raise @@ Error (`Error (usage, msg))
-  ) ("@[<v>" ^^ fmt ^^ "@]")
 let invalid_cmt ?(usage = true) fmt =
   error ~usage ("invalid .cmt file" ^^ fmt)
 let invalid_directory ?(usage = true) fmt =
@@ -44,7 +44,7 @@ let main_cmt ~lib_name ~mod_name ~input ~output =
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
           begin match Zoo.Ast_of_cmt.transl ~lib:lib_name ~mod_:mod_name str with
           | exception Zoo.Ast_of_cmt.Error (loc, err) ->
-              error ~usage:false "%a:@,%a"
+              error ~usage:false "%a:@ %a"
                 Location.print_loc loc
                 Zoo.Ast_of_cmt.Error.pp err
           | exception Zoo.Ast_of_cmt.Ignore ->
