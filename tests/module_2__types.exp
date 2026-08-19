@@ -5,3 +5,83 @@ Require Import zoo.language.typeclasses.
 Require Import zoo.language.notations.
 Require Import zoo.options.
 
+Notation "'C1'" := (
+  in_type "tests.module_2.t1" 0
+)(in custom zoo_tag
+).
+Notation "'C2'" := (
+  in_type "tests.module_2.t1" 1
+)(in custom zoo_tag
+).
+
+Notation "'f1'" := (
+  in_type "tests.module_2.t2" 0
+)(in custom zoo_proj
+).
+Notation "'f2'" := (
+  in_type "tests.module_2.t2" 1
+)(in custom zoo_proj
+).
+
+Notation "'f1'" := (
+  in_type "tests.module_2.t3" 0
+)(in custom zoo_field
+).
+Notation "'f2'" := (
+  in_type "tests.module_2.t3" 1
+)(in custom zoo_field
+).
+
+Notation "'m1٠C1'" := (
+  in_type "tests.module_2.m1.t1" 0
+)(in custom zoo_tag
+).
+Notation "'m1٠C2'" := (
+  in_type "tests.module_2.m1.t1" 1
+)(in custom zoo_tag
+).
+
+Notation "'m1٠f1'" := (
+  in_type "tests.module_2.m1.t2" 0
+)(in custom zoo_proj
+).
+Notation "'m1٠f2'" := (
+  in_type "tests.module_2.m1.t2" 1
+)(in custom zoo_proj
+).
+
+Notation "'m1٠f1'" := (
+  in_type "tests.module_2.m1.t3" 0
+)(in custom zoo_field
+).
+Notation "'m1٠f2'" := (
+  in_type "tests.module_2.m1.t3" 1
+)(in custom zoo_field
+).
+
+Notation "'m1٠m2٠C1'" := (
+  in_type "tests.module_2.m1.m2.t1" 0
+)(in custom zoo_tag
+).
+Notation "'m1٠m2٠C2'" := (
+  in_type "tests.module_2.m1.m2.t1" 1
+)(in custom zoo_tag
+).
+
+Notation "'m1٠m2٠f1'" := (
+  in_type "tests.module_2.m1.m2.t2" 0
+)(in custom zoo_proj
+).
+Notation "'m1٠m2٠f2'" := (
+  in_type "tests.module_2.m1.m2.t2" 1
+)(in custom zoo_proj
+).
+
+Notation "'m1٠m2٠f1'" := (
+  in_type "tests.module_2.m1.m2.t3" 0
+)(in custom zoo_field
+).
+Notation "'m1٠m2٠f2'" := (
+  in_type "tests.module_2.m1.m2.t3" 1
+)(in custom zoo_field
+).

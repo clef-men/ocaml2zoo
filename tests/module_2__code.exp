@@ -8,14 +8,95 @@ Require Import zoo.options.
 Definition module_2٠test₃ : val :=
   0.
 
+Notation "'module_2٠C1'" := (
+  in_type "tests.module_2.t1" 0
+)(in custom zoo_tag
+).
+Notation "'module_2٠C2'" := (
+  in_type "tests.module_2.t1" 1
+)(in custom zoo_tag
+).
+
+Notation "'module_2٠f1'" := (
+  in_type "tests.module_2.t2" 0
+)(in custom zoo_proj
+).
+Notation "'module_2٠f2'" := (
+  in_type "tests.module_2.t2" 1
+)(in custom zoo_proj
+).
+
+Notation "'module_2٠f1'" := (
+  in_type "tests.module_2.t3" 0
+)(in custom zoo_field
+).
+Notation "'module_2٠f2'" := (
+  in_type "tests.module_2.t3" 1
+)(in custom zoo_field
+).
+
 Definition module_2٠m1٠test₂ : val :=
   module_2٠test₃.
+
+Notation "'module_2٠m1٠C1'" := (
+  in_type "tests.module_2.m1.t1" 0
+)(in custom zoo_tag
+).
+Notation "'module_2٠m1٠C2'" := (
+  in_type "tests.module_2.m1.t1" 1
+)(in custom zoo_tag
+).
+
+Notation "'module_2٠m1٠f1'" := (
+  in_type "tests.module_2.m1.t2" 0
+)(in custom zoo_proj
+).
+Notation "'module_2٠m1٠f2'" := (
+  in_type "tests.module_2.m1.t2" 1
+)(in custom zoo_proj
+).
+
+Notation "'module_2٠m1٠f1'" := (
+  in_type "tests.module_2.m1.t3" 0
+)(in custom zoo_field
+).
+Notation "'module_2٠m1٠f2'" := (
+  in_type "tests.module_2.m1.t3" 1
+)(in custom zoo_field
+).
 
 Definition module_2٠m1٠m2٠test₁ : val :=
   module_2٠m1٠test₂.
 
 Definition module_2٠m1٠m2٠test : val :=
   module_2٠m1٠m2٠test₁.
+
+Notation "'module_2٠m1٠m2٠C1'" := (
+  in_type "tests.module_2.m1.m2.t1" 0
+)(in custom zoo_tag
+).
+Notation "'module_2٠m1٠m2٠C2'" := (
+  in_type "tests.module_2.m1.m2.t1" 1
+)(in custom zoo_tag
+).
+
+Notation "'module_2٠m1٠m2٠f1'" := (
+  in_type "tests.module_2.m1.m2.t2" 0
+)(in custom zoo_proj
+).
+Notation "'module_2٠m1٠m2٠f2'" := (
+  in_type "tests.module_2.m1.m2.t2" 1
+)(in custom zoo_proj
+).
+
+Notation "'module_2٠m1٠m2٠f1'" := (
+  in_type "tests.module_2.m1.m2.t3" 0
+)(in custom zoo_field
+).
+Notation "'module_2٠m1٠m2٠f2'" := (
+  in_type "tests.module_2.m1.m2.t3" 1
+)(in custom zoo_field
+).
 
 Definition module_2٠m1٠test₁ : val :=
   module_2٠m1٠test₂.

@@ -696,8 +696,16 @@ type mode =
   | Code
   | Opaque
 
-let transl_typ ~lib ~mod_ ~mode lpath ty =
-  let gpath = Gpath.make ~lib ~mod_ lpath in
+let transl_typ ~lib ~mod_ ~mode lpath kind ty =
+  let gpath =
+    Gpath.make ~lib ~mod_
+      begin match kind with
+      | Type_normal ->
+          lpath
+      | Type_inline tag ->
+          Dot (lpath, tag)
+      end
+  in
   let mod_ =
     match mode with
     | Types ->
@@ -744,11 +752,11 @@ let transl_typ ~lib ~mod_ ~mode lpath ty =
                 i
           )
           "zoo_tag"
-let transl_typ ~lib ~mod_ ~mode lpath ty =
+let transl_typ ~lib ~mod_ ~mode path kind ty =
   match mode with
   | Types
   | Code ->
-      transl_typ ~lib ~mod_ ~mode lpath ty
+      transl_typ ~lib ~mod_ ~mode path kind ty
   | Opaque ->
       []
 
@@ -871,8 +879,8 @@ let transl_value ~mod_ ~mode ~gen val_ =
       transl_value_opaque ~mod_ val_
 
 let transl_definition ~lib ~mod_ ~mode ~gen = function
-  | Type (path, ty) ->
-      transl_typ ~lib ~mod_ ~mode path ty
+  | Type (path, kind, ty) ->
+      transl_typ ~lib ~mod_ ~mode path kind ty
   | Val val_ ->
       transl_value ~mod_ ~mode ~gen val_
 

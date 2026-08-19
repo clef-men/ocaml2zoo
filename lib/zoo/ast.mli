@@ -11,6 +11,10 @@ type mutability =
   | Immutable_generative_weak
   | Immutable_generative_strong
 
+type typ_kind =
+  | Type_normal
+  | Type_inline of string
+
 type typ =
   | Type_product of string list
   | Type_record of string list
@@ -95,7 +99,7 @@ type value =
   | Val_opaque of Lpath.t
 
 type definition =
-  | Type of Lpath.t * typ
+  | Type of Lpath.t * typ_kind * typ
   | Val of value
 
 type t =

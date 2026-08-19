@@ -644,7 +644,8 @@ module Context = struct
     t.locals <- Ident.Map.add id path t.locals ;
     let ids = Stack.pop t.modules in
     let ids = Ident.Set.add id ids in
-    Stack.push ids t.modules
+    Stack.push ids t.modules ;
+    path
   let with_module t ~mod_ ~final_env fn =
     let mod_ = mod_ |> Ident.name |> normalize in
     let final_env = Envaux.env_of_only_summary final_env in
@@ -704,7 +705,9 @@ module Context = struct
           let path = Gpath.make ~lib:t.library ~mod_:t.module_ path in
           Const path
         )
-  let resolve_path t ~loc path =
+  let resolve_path_type =
+    resolve_path
+  let resolve_path_value t ~loc path =
     match Path.Map.find_opt path Builtin.values with
     | Some expr ->
         expr
@@ -714,7 +717,7 @@ module Context = struct
   let resolve_type t ~loc ty =
     match Types.get_desc ty with
     | Tconstr (ty, _, _) ->
-        ty, resolve_path t ~loc ty
+        ty, resolve_path_type t ~loc ty
     | _ ->
         assert false
   let resolve_constructor_or_label t ~loc ty name =
@@ -1090,7 +1093,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_extension_constructor _ ->
       unsupported ~loc:expr.exp_loc Expr_extension
 and transl_expression_ident ~ctx ~loc path =
-  Context.resolve_path ctx ~loc path
+  Context.resolve_path_value ctx ~loc path
 and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
@@ -1341,8 +1344,7 @@ let transl_value_bindings ~ctx rec_flag bdgs =
     bdgs |> List.map @@ fun (bdg : Typedtree.value_binding) ->
       match bdg.vb_pat.pat_desc with
       | Tpat_var (id, { loc; _ }, _) ->
-          Context.add_local ctx Ident_value id ;
-          let path = Context.find_local ctx id in
+          let path = Context.add_local ctx Ident_value id in
           bdg, path, id, loc
       | _ ->
           unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
@@ -1367,14 +1369,13 @@ let transl_value_bindings ~ctx rec_flag bdgs =
 
 let transl_type_declaration_record lbls =
   let is_mut = record_is_mutable lbls in
-  let lbls = List.map (fun lbl -> Ident.name lbl.Types.ld_id) lbls in
+  let lbls = List.map (fun lbl -> lbl.Types.ld_id |> Ident.name) lbls in
   if is_mut then
     Type_record lbls
   else
     Type_product lbls
 let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
-  Context.add_local ctx Ident_type ty.typ_id ;
-  let name = ty.typ_name.txt in
+  let path = Context.add_local ctx Ident_type ty.typ_id in
   match ty.typ_type.type_kind with
   | Type_abstract _ ->
       []
@@ -1382,7 +1383,7 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
       []
   | Type_record (lbls, _) ->
       let ty = transl_type_declaration_record lbls in
-      [Type (Ident name, ty)]
+      [Type (path, Type_normal, ty)]
   | Type_variant (_, Variant_unboxed) ->
       []
   | Type_variant (constrs, _) ->
@@ -1393,15 +1394,15 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
             match constr.cd_args with
             | Cstr_record lbls ->
                 let ty = transl_type_declaration_record lbls in
-                let name = Printf.sprintf "%s.%s" name tag in
-                Type (Ident name, ty) :: defs
+                Type (path, Type_inline tag, ty) :: defs
             | _ ->
                 defs
           in
           tag :: tags, defs
         ) constrs ([], [])
       in
-      Type (Ident name, Type_variant tags) :: defs
+      let def = Type (path, Type_normal, Type_variant tags) in
+      def :: defs
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
 
@@ -1425,7 +1426,7 @@ and transl_module_binding ~ctx (mbdg : Typedtree.module_binding) =
   | None ->
       unsupported ~loc:mbdg.mb_loc Def_module_unnamed
   | Some mod_ ->
-      Context.add_local ctx Ident_module mod_ ;
+      let _path = Context.add_local ctx Ident_module mod_ in
       transl_module_expr ~ctx ~mod_ mbdg.mb_expr
 
 and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
