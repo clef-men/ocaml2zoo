@@ -4,19 +4,19 @@ set -eou pipefail
 
 . tests/common.sh
 
-for test in $tests ; do
+for test in ${tests} ; do
+	if [ ! -f "${test}" ] ; then
+		error "test does not exist: ${test}"
+	fi
+
 	test="${test%.*}"
 
-	$ocamlopt "$test.ml"
-	$ocaml2zoo "$test.cmt" "$test_dir"
+	${ocamlopt} "${test}.ml"
+	${ocaml2zoo} "${test}.cmt" "${test_dir}"
 
-	if diff "${test}__types.v" "${test}__types.exp" > /dev/null \
-	&& diff "${test}__code.v" "${test}__code.exp" > /dev/null \
-	&& diff "${test}__opaque.v" "${test}__opaque.exp" > /dev/null
-	then
-		echo "test successful: $(basename $test)"
+	if test_diff "${test}" ; then
+		echo "test successful: $(basename ${test})"
 	else
-		echo "test failed: $(basename $test)"
-		exit 1
+		failwith "test failed: $(basename ${test})"
 	fi
 done
