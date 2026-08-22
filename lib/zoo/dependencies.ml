@@ -1,25 +1,13 @@
 open Ast
 
-type t =
-  string Hashset.t
+module Builtin =
+  Dependency.Builtin
 
-module Builtin = struct
-  let assert_ =
-    "zoo.program_logic.assert"
-  let assume =
-    "zoo.program_logic.assume"
-  let diverge =
-    "zoo.program_logic.diverge"
-  let for_ =
-    "zoo.program_logic.for_"
-  let identifier =
-    "zoo.program_logic.identifier"
-  let structeq =
-    "zoo.program_logic.structural_equality"
-end
+type t =
+  Dependency.t Hashset.t
 
 let of_gpath t (path : Gpath.t) =
-  let dep = Printf.sprintf "%s.%s" path.library path.module_ in
+  let dep = Dependency.make path.library path.module_ in
   Hashset.add t dep
 
 let of_unop _t _unop =
@@ -156,5 +144,5 @@ let of_ast ast =
   let t = Hashset.create () in
   List.iter (of_definition t) ast.definitions ;
   Hashset.remove t "." ;
-  Hashset.remove t (Printf.sprintf "%s.%s" ast.library ast.module_) ;
+  Hashset.remove t (Dependency.make ast.library ast.module_) ;
   t

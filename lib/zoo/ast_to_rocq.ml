@@ -925,7 +925,7 @@ let dependencies ~mode t =
   | Opaque ->
       [ Rocq.require
           Require_import
-          (Printf.sprintf "%s.%s__code" t.library t.module_)
+          (Dependency.make t.library t.module_ ~suff:"__code")
       ]
 let body ~mode t =
   let body =
