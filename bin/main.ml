@@ -24,11 +24,13 @@ type output =
   ; output_code: string
   ; output_opaque: string
   }
-let output output_dir mod_name =
+let output output_dir mod_name mode =
   let output = Filename.concat output_dir mod_name in
-  { output_types= output ^ "__types.v"
-  ; output_code= output ^ "__code.v"
-  ; output_opaque= output ^ "__opaque.v"
+  Printf.sprintf "%s%s.v" output (Zoo.Mode.to_string mode)
+let output output_dir mod_name =
+  { output_types= output output_dir mod_name Types
+  ; output_code= output output_dir mod_name Code
+  ; output_opaque= output output_dir mod_name Opaque
   }
 
 let main_cmt ~lib_name ~mod_name ~input ~output =

@@ -1,9 +1,6 @@
 type t =
   string
 
-let make ?(suff = "") lib mod_ =
-  Printf.sprintf "%s.%s%s" lib mod_ suff
-
 module Builtin = struct
   let assert_ =
     "zoo.program_logic.assert"
@@ -18,3 +15,16 @@ module Builtin = struct
   let structeq =
     "zoo.program_logic.structural_equality"
 end
+
+let self =
+  "."
+
+let make ?mode lib mod_ =
+  let mode = Option.fold ~none:"" ~some:Mode.to_string mode in
+  Printf.sprintf "%s.%s%s" lib mod_ mode
+
+let compare =
+  String.compare
+
+let to_rocq ~require_kind t =
+  Rocq.require require_kind t

@@ -1,8 +1,4 @@
-type t =
-  string
-
-val make :
-  ?suff:string -> string -> string -> t
+type t
 
 module Builtin : sig
   val assert_ :
@@ -18,3 +14,15 @@ module Builtin : sig
   val structeq :
     t
 end
+
+val self :
+  t
+
+val make :
+  ?mode:Mode.t -> string -> string -> t
+
+val compare :
+  t -> t -> int
+
+val to_rocq :
+  require_kind:Rocq.require_kind -> t -> Rocq.item

@@ -143,6 +143,11 @@ let of_definition t = function
 let of_ast ast =
   let t = Hashset.create () in
   List.iter (of_definition t) ast.definitions ;
-  Hashset.remove t "." ;
+  Hashset.remove t Dependency.self ;
   Hashset.remove t (Dependency.make ast.library ast.module_) ;
   t
+
+let to_rocq ~require_kind t =
+  t
+  |> Hashset.to_list_sort Dependency.compare
+  |> List.map (Dependency.to_rocq ~require_kind)

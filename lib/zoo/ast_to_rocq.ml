@@ -1,4 +1,5 @@
 open Ast
+open Mode
 
 let separator =
   "٠"
@@ -691,11 +692,6 @@ and pp_fallback ~mod_ ppf fb =
 let pp_expression ~mod_ =
   pp_expression ~mod_ max_level
 
-type mode =
-  | Types
-  | Code
-  | Opaque
-
 let transl_typ ~lib ~mod_ ~mode lpath kind ty =
   let gpath =
     Gpath.make ~lib ~mod_
@@ -920,12 +916,10 @@ let dependencies ~mode t =
       in
       t
       |> Dependencies.of_ast
-      |> Hashset.to_list_sort String.compare
-      |> List.map (Rocq.require require_kind)
+      |> Dependencies.to_rocq ~require_kind
   | Opaque ->
-      [ Rocq.require
-          Require_import
-          (Dependency.make t.library t.module_ ~suff:"__code")
+      [ Dependency.make t.library t.module_ ~mode:Code
+        |> Dependency.to_rocq ~require_kind:Require_import
       ]
 let body ~mode t =
   let body =
