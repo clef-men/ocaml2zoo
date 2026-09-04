@@ -18,7 +18,7 @@ To make sure it is up-to-date, run:
 opam update --all --repositories
 ```
 
-Then, you need to install [this custom version of the OCaml compiler](https://github.com/clef-men/ocaml/tree/generative_constructors) featuring atomic record fields, atomic arrays and generative constructors.
+Then, you need to install [this custom version of the OCaml compiler](https://github.com/clef-men/ocaml/tree/generative_constructors) featuring generative constructors.
 Hopefully, it should be merged into the OCaml compiler one day.
 
 The following commands take care of this:

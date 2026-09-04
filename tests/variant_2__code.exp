@@ -18,10 +18,7 @@ Definition variant_2٠test1 : val :=
   𝗳𝘂𝗻 ⎽ ->
     §variant_2٠Leaf ⍮
     ‘variant_2٠Node( §variant_2٠Leaf, 0, §variant_2٠Leaf ) ⍮
-    ‘variant_2٠Node( ‘variant_2٠Node( §variant_2٠Leaf,
-                          0,
-                          §variant_2٠Leaf
-                        ),
+    ‘variant_2٠Node( ‘variant_2٠Node( §variant_2٠Leaf, 0, §variant_2٠Leaf ),
       1,
       §variant_2٠Leaf
     ) ⍮
