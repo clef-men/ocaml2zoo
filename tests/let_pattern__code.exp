@@ -7,7 +7,7 @@ Require Import zoo.options.
 
 Definition let_pattern٠test1 : val :=
   𝗳𝘂𝗻 ⎽ ->
-    𝗹𝗲𝘁 "x", "y" = (0, 1) 𝗶𝗻
+    𝗹𝗲𝘁 "x", "y" = ( 0, 1 ) 𝗶𝗻
     "x" + "y".
 
 Definition let_pattern٠test2 : val :=

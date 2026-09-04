@@ -15,10 +15,10 @@ Definition basic_1٠test3 : val :=
   basic_1٠test1.
 
 Definition basic_1٠test4 : val :=
-  (0, true).
+  ( 0, true ).
 
 Definition basic_1٠test5 : val :=
-  (basic_1٠test2, basic_1٠test3).
+  ( basic_1٠test2, basic_1٠test3 ).
 
 Definition basic_1٠test6 : val :=
   §None.
@@ -33,4 +33,4 @@ Definition basic_1٠test9 : val :=
   ‘Some( §None ).
 
 Definition basic_1٠test10 : val :=
-  ‘Some( (‘Some( 𝗳𝘂𝗻 ⎽ -> () ), ‘Some( () )) ).
+  ‘Some( ( ‘Some( 𝗳𝘂𝗻 ⎽ -> () ), ‘Some( () ) ) ).

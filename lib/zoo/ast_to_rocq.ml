@@ -487,14 +487,18 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Keyword.do_
         (pp_expression ~mod_ max_level) expr3
         Keyword.done_
+  | Tuple [] ->
+      Fmt.pf ppf "%s%s"
+        Punctuation.paren_left
+        Punctuation.paren_right
   | Tuple exprs ->
-      Fmt.pf ppf "@[<hv>%s%a@,%s@]"
+      Fmt.pf ppf "@[<hv>%s %a@;%s@]"
         Punctuation.paren_left
         Fmt.(
           list
             ~sep:(
               fun ppf () ->
-                Fmt.pf ppf "%s@;<1 1>"
+                Fmt.pf ppf "@,%s "
                   Punctuation.comma
             )
             (pp_expression_box ~mod_)
@@ -507,7 +511,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
           list
             ~sep:(
               fun ppf () ->
-                Fmt.pf ppf "%s@;<1 2>"
+                Fmt.pf ppf "@,%s "
                   Punctuation.comma
             )
             (pp_expression_box ~mod_)
@@ -526,7 +530,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.tag
         (Gpath.pp ~sep:separator) tag
   | Constr (flag, tag, exprs) ->
-      Fmt.pf ppf "@[<hv>%s%a%s %a@;%s@]"
+      Fmt.pf ppf "@[<hv>%s%a%s@;<1 2>%a@;%s@]"
         Punctuation.backtick
         (Gpath.pp ~sep:separator) tag
         ( match flag with
@@ -543,7 +547,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
           list
             ~sep:(
               fun ppf () ->
-                Fmt.pf ppf "%s@;<1 2>"
+                Fmt.pf ppf "@,%s "
                   Punctuation.comma
             )
             (pp_expression_box ~mod_)
