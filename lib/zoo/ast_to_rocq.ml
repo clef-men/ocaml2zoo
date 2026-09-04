@@ -431,7 +431,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
   | Int int ->
       pp_integer ppf int
   | Let (pat, expr1, expr2) ->
-      Fmt.pf ppf "@[<v>@[<hv>%s %a %s@;<1 2>@[%a@]@;%s@]@,%a@]"
+      Fmt.pf ppf "@[<v>@[<hv>%s %a %s@;<1 2>@[%a@]@ %s@]@,%a@]"
         Keyword.let_
         pp_pattern pat
         Punctuation.equal
@@ -439,7 +439,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Keyword.in_
         (pp_expression ~mod_ max_level) expr2
   | Letrec (rec_flag, var, bdrs, expr1, expr2) ->
-      Fmt.pf ppf "@[<v>@[<hv>%s %a %a %s@;<1 2>@[%a@]@;%s@]@,%a@]"
+      Fmt.pf ppf "@[<v>@[<hv>%s %a %a %s@;<1 2>@[%a@]@ %s@]@,%a@]"
         Keyword.(match rec_flag with Nonrecursive -> let_ | Recursive -> letrec)
         pp_variable var
         Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
@@ -465,19 +465,19 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.arrow
         (pp_expression ~mod_ max_level) expr
   | Unop (op, expr) ->
-      Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@]"
+      Fmt.pf ppf "@[<hv>@[%a@]@ @[%a@]@]"
         pp_unop op
         (pp_expression ~mod_ lvl) expr
   | Binop (op, expr1, expr2) ->
       let assoc = associativity op in
-      Fmt.pf ppf "@[<hv>@[%a@]@;@[%a@]@;@[%a@]@]"
+      Fmt.pf ppf "@[<hv>@[%a@]@ @[%a@]@ @[%a@]@]"
         (pp_expression ~mod_ @@ if assoc = Left then lvl else next_level lvl) expr1
         pp_binop op
         (pp_expression ~mod_ @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
       pp_expression_if ~mod_ ppf expr1 expr2 expr3
   | For (bdr, expr1, expr2, expr3) ->
-      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@;%s@;<1 2>@[%a@]@;%s@;<1 2>@[%a@]@;%s@]@,  @[%a@]@,%s@]"
+      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@ %s@;<1 2>@[%a@]@ %s@;<1 2>@[%a@]@ %s@]@,  @[%a@]@,%s@]"
         Keyword.for_
         pp_binder bdr
         Punctuation.equal
@@ -492,7 +492,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.paren_left
         Punctuation.paren_right
   | Tuple exprs ->
-      Fmt.pf ppf "@[<hv>%s %a@;%s@]"
+      Fmt.pf ppf "@[<hv>%s %a@ %s@]"
         Punctuation.paren_left
         Fmt.(
           list
@@ -505,7 +505,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
         ) exprs
         Punctuation.paren_right
   | Record exprs ->
-      Fmt.pf ppf "@[<hv>%s %a@;%s@]"
+      Fmt.pf ppf "@[<hv>%s %a@ %s@]"
         Punctuation.brace_left
         Fmt.(
           list
@@ -530,7 +530,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.tag
         (Gpath.pp ~sep:separator) tag
   | Constr (flag, tag, exprs) ->
-      Fmt.pf ppf "@[<hv>%s%a%s@;<1 2>%a@;%s@]"
+      Fmt.pf ppf "@[<hv>%s%a%s@;<1 2>%a@ %s@]"
         Punctuation.backtick
         (Gpath.pp ~sep:separator) tag
         ( match flag with
@@ -568,7 +568,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
         (Gpath.pp ~sep:separator) fld
         Punctuation.proj_right
   | Match (expr, brs, fb) ->
-      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@;%s@]@,%a%a%s@]"
+      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@ %s@]@,%a%a%s@]"
         Keyword.match_
         (pp_expression ~mod_ max_level) expr
         Keyword.with_
@@ -626,7 +626,7 @@ and pp_expression ~mod_ lvl ppf expr =
 and pp_expression_box ~mod_ ppf expr =
   Fmt.box (pp_expression ~mod_ max_level) ppf expr
 and pp_expression_if_aux ~mod_ ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
-  Fmt.pf ppf "@[<hv>%s%s@;<1 2>@[%a@]@;%s %s@]@,  @[%a@]@,%s"
+  Fmt.pf ppf "@[<hv>%s%s@;<1 2>@[%a@]@ %s %s@]@,  @[%a@]@,%s"
     (if nested then " 𝗲𝗹𝘀𝗲 " else "")
     Keyword.if_
     (pp_expression ~mod_ max_level) expr1
