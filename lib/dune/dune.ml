@@ -21,8 +21,12 @@ type sexp = Csexp.t =
   | List of sexp list
 
 exception Of_sexp of string
-let[@inline] invalid () =
+let invalid () =
   raise @@ Of_sexp "dune description is ill-formed"
+let (!!) ref =
+  if !ref = "" then
+    invalid () ;
+  !ref
 let (let@) sexp fn =
   match sexp with
   | Atom _ ->
@@ -63,7 +67,7 @@ let module_of_sexp sexp =
   let impl = ref "" in
   let cmt = ref "" in
   let cmti = ref None in
-  List.iter (function
+  sexps |> List.iter (function
     | List (Atom "name" :: sexps) ->
         let< sexp = sexps in
         name := string_of_sexp sexp
@@ -80,23 +84,18 @@ let module_of_sexp sexp =
           cmti := Some (string_of_sexp sexp)
     | _ ->
         ()
-  ) sexps ;
-  let name = if !name = "" then invalid () ; !name in
-  let name = String.uncapitalize_ascii name in
-  let impl = if !impl = "" then invalid () ; !impl in
-  let cmt = if !cmt = "" then invalid () ; !cmt in
-  let cmti = !cmti in
-  { module_name= name
-  ; module_impl= impl
-  ; module_cmt= cmt
-  ; module_cmti= cmti
+  ) ;
+  { module_name= String.uncapitalize_ascii !!name
+  ; module_impl= !!impl
+  ; module_cmt= !!cmt
+  ; module_cmti= !cmti
   }
 let library_of_sexp sexp =
   let@ sexps = sexp in
   let name = ref "" in
   let local = ref None in
   let mods = Hashtbl.create () in
-  List.iter (function
+  sexps |> List.iter (function
     | List (Atom "name" :: sexps) ->
         let< sexp = sexps in
         name := String.uncapitalize_ascii (string_of_sexp sexp)
@@ -105,36 +104,33 @@ let library_of_sexp sexp =
         local := Some (bool_of_sexp sexp)
     | List (Atom "modules" :: sexps) ->
         let<@ sexps = sexps in
-        List.iter (fun sexp ->
+        sexps |> List.iter (fun sexp ->
           let mod_ = module_of_sexp sexp in
           Hashtbl.add mods mod_.module_name mod_
-        ) sexps
+        )
     | _ ->
         ()
-  ) sexps ;
-  let name = if !name = "" then invalid () ; !name in
-  let local = Option.get_lazy invalid !local in
-  { library_name= name
-  ; library_local= local
+  ) ;
+  { library_name= !!name
+  ; library_local= Option.get_lazy invalid !local
   ; library_modules= mods
   }
 let of_sexp sexp =
   let@ sexps = sexp in
-  let ctx = ref "" in
+  let build_context = ref "" in
   let libs = Hashtbl.create () in
-  List.iter (function
+  sexps |> List.iter (function
     | List (Atom "build_context" :: sexps) ->
         let< sexp = sexps in
-        ctx := string_of_sexp sexp
+        build_context := string_of_sexp sexp
     | List (Atom "library" :: sexps) ->
         let< sexp = sexps in
         let lib = library_of_sexp sexp in
         Hashtbl.add libs lib.library_name lib
     | _ ->
         ()
-  ) sexps ;
-  let ctx = if !ctx = "" then invalid () ; !ctx in
-  { build_context= ctx
+  ) ;
+  { build_context= !!build_context
   ; libraries= libs
   }
 let of_sexp sexp =
