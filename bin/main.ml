@@ -44,24 +44,24 @@ let main_cmt ~lib_name ~mod_name ~input ~output =
       match cmt.cmt_annots with
       | Implementation str ->
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Ast_of_cmt.transl ~lib:lib_name ~mod_:mod_name str with
-          | exception Zoo.Ast_of_cmt.Error (loc, err) ->
+          begin match Zoo.Implementation_of_cmt.transl ~lib:lib_name ~mod_:mod_name str with
+          | exception Zoo.Implementation_of_cmt.Error (loc, err) ->
               error ~usage:false "%a:@ %a"
                 Location.print_loc loc
-                Zoo.Ast_of_cmt.Error.pp err
-          | exception Zoo.Ast_of_cmt.Ignore ->
+                Zoo.Implementation_of_cmt.Error.pp err
+          | exception Zoo.Implementation_of_cmt.Ignore ->
               ()
           | ast ->
-              let rocq = Zoo.Ast_to_rocq.transl ~mode:Types ast in
+              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Types ast in
               Out_channel.with_open_text output.output_types (fun chan ->
                 Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
               ) ;
-              let rocq = Zoo.Ast_to_rocq.transl ~mode:Code ast in
+              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Code ast in
               Out_channel.with_open_text output.output_code (fun chan ->
                 Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
               ) ;
               if not ast.transparent then
-                let rocq = Zoo.Ast_to_rocq.transl ~mode:Opaque ast in
+                let rocq = Zoo.Implementation_to_rocq.transl ~mode:Opaque ast in
                 Out_channel.with_open_text output.output_opaque (fun chan ->
                   Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
                 )
