@@ -399,19 +399,19 @@ module Error = struct
       | Functor
       | Type_extensible
       | Type_external
-      | Def_recursive
-      | Def_invalid
-      | Def_pattern
-      | Def_eval
-      | Def_external
-      | Def_exception
-      | Def_module_unnamed
-      | Def_module_rec
-      | Def_module_alias
-      | Def_module_type
-      | Def_class
-      | Def_class_type
-      | Def_include
+      | Decl_recursive
+      | Decl_invalid
+      | Decl_pattern
+      | Decl_eval
+      | Decl_external
+      | Decl_exception
+      | Decl_module_unnamed
+      | Decl_module_rec
+      | Decl_module_alias
+      | Decl_module_type
+      | Decl_class
+      | Decl_class_type
+      | Decl_include
       | Open
       | Shadowing of Shadowing.t
 
@@ -492,31 +492,31 @@ module Error = struct
           "extensible variant"
       | Type_external ->
           "external type"
-      | Def_recursive ->
-          "recursive toplevel definition must be a function"
-      | Def_invalid ->
-          "toplevel definition must be a constant or a function"
-      | Def_pattern ->
-          "toplevel definition pattern must be a variable"
-      | Def_eval ->
+      | Decl_recursive ->
+          "recursive toplevel declaration must be a function"
+      | Decl_invalid ->
+          "toplevel declaration must be a constant or a function"
+      | Decl_pattern ->
+          "toplevel declaration pattern must be a variable"
+      | Decl_eval ->
           "evaluated expression"
-      | Def_external ->
+      | Decl_external ->
           "external declaration"
-      | Def_exception ->
-          "exception definition"
-      | Def_module_unnamed ->
+      | Decl_exception ->
+          "exception declaration"
+      | Decl_module_unnamed ->
           "unnamed module"
-      | Def_module_rec ->
+      | Decl_module_rec ->
           "recursive module"
-      | Def_module_alias ->
+      | Decl_module_alias ->
           "module alias"
-      | Def_module_type ->
-          "module type definition"
-      | Def_class ->
-          "class definition"
-      | Def_class_type ->
-          "class type definition"
-      | Def_include ->
+      | Decl_module_type ->
+          "module type declaration"
+      | Decl_class ->
+          "class declaration"
+      | Decl_class_type ->
+          "class type declaration"
+      | Decl_include ->
           {|"include" declaration|}
       | Open ->
           "opened module must be an identifier"
@@ -613,7 +613,7 @@ module Context = struct
     ; scopes: scope Stack.t
     (* variables for the current item *)
     ; mutable vars: Ident.Set.t
-    (* whether or not to generate a file to make definitions opaque *)
+    (* whether or not to generate a file to make declarations opaque *)
     ; mutable transparent: bool
     }
 
@@ -1326,11 +1326,11 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path
         Val_fun (path, bdrs, expr)
   | _ ->
       if rec_ then
-        unsupported ~loc:bdg.vb_loc Def_recursive ;
+        unsupported ~loc:bdg.vb_loc Decl_recursive ;
       if expression_is_value expr then
         Val_expr (path, expr)
       else
-        unsupported ~loc:bdg.vb_loc Def_invalid
+        unsupported ~loc:bdg.vb_loc Decl_invalid
 let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
@@ -1396,7 +1396,7 @@ let transl_value_bindings ~ctx rec_flag bdgs =
           let path = Context.add_local ctx Ident_value id in
           bdg, path, id, loc
       | _ ->
-          unsupported ~loc:bdg.vb_pat.pat_loc Def_pattern
+          unsupported ~loc:bdg.vb_pat.pat_loc Decl_pattern
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
   if Attribute.has_ignore bdg.vb_attributes then
@@ -1440,23 +1440,23 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
   | Type_variant (_, Variant_unboxed) ->
       []
   | Type_variant (constrs, _) ->
-      let tags, defs =
-        List.fold_right (fun (constr : Types.constructor_declaration) (tags, defs) ->
+      let tags, decls =
+        List.fold_right (fun (constr : Types.constructor_declaration) (tags, decls) ->
           Context.add_constructor ctx constr ;
           let tag = Ident.name constr.cd_id in
-          let defs =
+          let decls =
             match constr.cd_args with
             | Cstr_record lbls ->
                 let ty = transl_type_declaration_record ~ctx lbls in
-                Type (path, Type_inline tag, ty) :: defs
+                Type (path, Type_inline tag, ty) :: decls
             | _ ->
-                defs
+                decls
           in
-          tag :: tags, defs
+          tag :: tags, decls
         ) constrs ([], [])
       in
-      let def = Type (path, Type_normal, Type_variant tags) in
-      def :: defs
+      let decl = Type (path, Type_normal, Type_variant tags) in
+      decl :: decls
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible
   | Type_external _ ->
@@ -1469,7 +1469,7 @@ let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
   | Tmod_constraint (mexpr, _ty, _constraint, _coerc) ->
       transl_module_expr ~ctx ~mod_ mexpr
   | Tmod_ident _ ->
-      unsupported ~loc:mexpr.mod_loc Def_module_alias
+      unsupported ~loc:mexpr.mod_loc Decl_module_alias
   | Tmod_functor _
   | Tmod_apply _
   | Tmod_apply_unit _ ->
@@ -1480,7 +1480,7 @@ let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
 and transl_module_binding ~ctx (mbdg : Typedtree.module_binding) =
   match mbdg.mb_id with
   | None ->
-      unsupported ~loc:mbdg.mb_loc Def_module_unnamed
+      unsupported ~loc:mbdg.mb_loc Decl_module_unnamed
   | Some mod_ ->
       let _path = Context.add_local ctx Ident_module mod_ in
       transl_module_expr ~ctx ~mod_ mbdg.mb_expr
@@ -1505,23 +1505,23 @@ and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   | Tstr_module mbdg ->
       transl_module_binding ~ctx mbdg
   | Tstr_eval _ ->
-      unsupported ~loc:str_item.str_loc Def_eval
+      unsupported ~loc:str_item.str_loc Decl_eval
   | Tstr_primitive _ ->
-      unsupported ~loc:str_item.str_loc Def_external
+      unsupported ~loc:str_item.str_loc Decl_external
   | Tstr_typext _ ->
       unsupported ~loc:str_item.str_loc Type_extensible
   | Tstr_exception _ ->
-      unsupported ~loc:str_item.str_loc Def_exception
+      unsupported ~loc:str_item.str_loc Decl_exception
   | Tstr_recmodule _ ->
-      unsupported ~loc:str_item.str_loc Def_module_rec
+      unsupported ~loc:str_item.str_loc Decl_module_rec
   | Tstr_modtype _ ->
-      unsupported ~loc:str_item.str_loc Def_module_type
+      unsupported ~loc:str_item.str_loc Decl_module_type
   | Tstr_class _ ->
-      unsupported ~loc:str_item.str_loc Def_class
+      unsupported ~loc:str_item.str_loc Decl_class
   | Tstr_class_type _ ->
-      unsupported ~loc:str_item.str_loc Def_class_type
+      unsupported ~loc:str_item.str_loc Decl_class_type
   | Tstr_include _ ->
-      unsupported ~loc:str_item.str_loc Def_include
+      unsupported ~loc:str_item.str_loc Decl_include
 
 and transl_structure' ~ctx (str : Typedtree.structure) =
   List.concat_map (transl_structure_item ~ctx) str.str_items
@@ -1537,9 +1537,9 @@ and transl_structure ~ctx ?mod_ str =
 let transl ~lib ~mod_ (str : Typedtree.structure) =
   let final_env = Envaux.env_of_only_summary str.str_final_env in
   let ctx = Context.create ~lib ~mod_ ~final_env in
-  let defs = transl_structure ~ctx str in
+  let decls = transl_structure ~ctx str in
   { library= lib
   ; module_= mod_
-  ; definitions= defs
+  ; declarations= decls
   ; transparent= Context.transparent ctx
   }

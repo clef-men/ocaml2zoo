@@ -134,7 +134,7 @@ let of_value t = function
   | Val_opaque _ ->
       ()
 
-let of_definition t = function
+let of_declaration t = function
   | Type _ ->
       ()
   | Val val_ ->
@@ -142,7 +142,7 @@ let of_definition t = function
 
 let of_ast ast =
   let t = Hashset.create () in
-  List.iter (of_definition t) ast.definitions ;
+  List.iter (of_declaration t) ast.declarations ;
   Hashset.remove t Dependency.self ;
   Hashset.remove t (Dependency.make ast.library ast.module_) ;
   t

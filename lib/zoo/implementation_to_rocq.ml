@@ -878,7 +878,7 @@ let transl_value ~mod_ ~mode ~gen val_ =
   | Opaque ->
       transl_value_opaque ~mod_ val_
 
-let transl_definition ~lib ~mod_ ~mode ~gen = function
+let transl_declaration ~lib ~mod_ ~mode ~gen = function
   | Type (path, kind, ty) ->
       transl_typ ~lib ~mod_ ~mode path kind ty
   | Val val_ ->
@@ -928,8 +928,8 @@ let dependencies ~mode t =
 let body ~mode t =
   let body =
     let gen = Generator.create () in
-    t.definitions |> List.map @@
-      transl_definition ~lib:t.library ~mod_:t.module_ ~mode ~gen
+    t.declarations |> List.map @@
+      transl_declaration ~lib:t.library ~mod_:t.module_ ~mode ~gen
   in
   let body = List.filter ((<>) []) body in
   let body =

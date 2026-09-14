@@ -98,14 +98,14 @@ type value =
   | Val_recs of (Lpath.t * Var.t * binder list * expression) list
   | Val_opaque of Lpath.t
 
-type definition =
+type declaration =
   | Type of Lpath.t * typ_kind * typ
   | Val of value
 
 type t =
   { library: string
   ; module_: string
-  ; definitions: definition list
+  ; declarations: declaration list
   ; transparent: bool
   }
 
