@@ -403,7 +403,7 @@ module Error = struct
       | Def_invalid
       | Def_pattern
       | Def_eval
-      | Def_primitive
+      | Def_external
       | Def_exception
       | Def_module_unnamed
       | Def_module_rec
@@ -500,8 +500,8 @@ module Error = struct
           "toplevel definition pattern must be a variable"
       | Def_eval ->
           "evaluated expression"
-      | Def_primitive ->
-          "primitive definition"
+      | Def_external ->
+          "external declaration"
       | Def_exception ->
           "exception definition"
       | Def_module_unnamed ->
@@ -1507,7 +1507,7 @@ and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   | Tstr_eval _ ->
       unsupported ~loc:str_item.str_loc Def_eval
   | Tstr_primitive _ ->
-      unsupported ~loc:str_item.str_loc Def_primitive
+      unsupported ~loc:str_item.str_loc Def_external
   | Tstr_typext _ ->
       unsupported ~loc:str_item.str_loc Type_extensible
   | Tstr_exception _ ->
