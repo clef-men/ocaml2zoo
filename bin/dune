@@ -1,13 +1,13 @@
 (executable
-  (name ocaml2zoo)
-  (public_name ocaml2zoo)
-  (libraries
-    dune
-    zoo
-    unix
-    cmdliner
-  )
-  (promote
-    (until-clean)
-  )
+ (name ocaml2zoo)
+ (public_name ocaml2zoo)
+ (libraries
+  dune
+  zoo
+  unix
+  cmdliner
+ )
+ (promote
+  (until-clean)
+ )
 )

@@ -5,22 +5,22 @@
 (generate_opam_files)
 
 (authors
-  "Clément Allain"
+ "Clément Allain"
 )
 (maintainers
-  "clement.allain@inria.fr"
+ "clement.allain@inria.fr"
 )
 
 (source (github clef-men/ocaml2zoo))
 (license ISC)
 
 (package
-  (name ocaml2zoo)
-  (synopsis "OCaml to Zoo")
-  (depends
-    ocaml-compiler-libs
-    csexp
-    fmt
-    cmdliner
-  )
+ (name ocaml2zoo)
+ (synopsis "OCaml to Zoo")
+ (depends
+  ocaml-compiler-libs
+  csexp
+  fmt
+  cmdliner
+ )
 )
