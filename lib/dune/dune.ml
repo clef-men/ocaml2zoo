@@ -16,128 +16,141 @@ type t =
   ; libraries: (string, library) Hashtbl.t
   }
 
-type sexp = Csexp.t =
-  | Atom of string
-  | List of sexp list
+module Of_sexp = struct
+  exception Error of string
 
-exception Of_sexp of string
-let invalid () =
-  raise @@ Of_sexp "dune description is ill-formed"
-let (!!) ref =
-  if !ref = "" then
-    invalid () ;
-  !ref
-let (let@) sexp fn =
-  match sexp with
-  | Atom _ ->
-      invalid ()
-  | List sexps ->
-      fn sexps
-let (let<) sexps fn =
-  match sexps with
-  | [] ->
-      invalid ()
-  | sexp :: _ ->
-      fn sexp
-let (let<@) sexps fn =
-  match sexps with
-  | List sexps :: _ ->
-      fn sexps
-  | _ ->
-      invalid ()
-let rec bool_of_sexp = function
-  | Atom "true" ->
-      true
-  | Atom "false" ->
-      false
-  | List [sexp] ->
-      bool_of_sexp sexp
-  | _ ->
-      invalid ()
-let rec string_of_sexp = function
-  | Atom str ->
-      str
-  | List [sexp] ->
-      string_of_sexp sexp
-  | _ ->
-      invalid ()
-let module_of_sexp sexp =
-  let@ sexps = sexp in
-  let name = ref "" in
-  let impl = ref "" in
-  let cmt = ref "" in
-  let cmti = ref None in
-  sexps |> List.iter (function
-    | List (Atom "name" :: sexps) ->
-        let< sexp = sexps in
-        name := string_of_sexp sexp
-    | List (Atom "impl" :: sexps) ->
-        let<@ sexps = sexps in
-        let< sexp = sexps in
-        impl := string_of_sexp sexp
-    | List (Atom "cmt" :: sexps) ->
-        let< sexp = sexps in
-        cmt := string_of_sexp sexp
-    | List (Atom "cmti" :: sexps) ->
-        let< sexp = sexps in
-        if sexp <> List [] then
-          cmti := Some (string_of_sexp sexp)
+  let invalid () =
+    raise @@ Error "dune description is ill-formed"
+
+  let (!!) ref =
+    if !ref = "" then
+      invalid () ;
+    !ref
+
+  type sexp = Csexp.t =
+    | Atom of string
+    | List of sexp list
+
+  let (let@) sexp fn =
+    match sexp with
+    | Atom _ ->
+        invalid ()
+    | List sexps ->
+        fn sexps
+  let (let<) sexps fn =
+    match sexps with
+    | [] ->
+        invalid ()
+    | sexp :: _ ->
+        fn sexp
+  let (let<@) sexps fn =
+    match sexps with
+    | List sexps :: _ ->
+        fn sexps
     | _ ->
-        ()
-  ) ;
-  { module_name= String.uncapitalize_ascii !!name
-  ; module_impl= !!impl
-  ; module_cmt= !!cmt
-  ; module_cmti= !cmti
-  }
-let library_of_sexp sexp =
-  let@ sexps = sexp in
-  let name = ref "" in
-  let local = ref None in
-  let mods = Hashtbl.create () in
-  sexps |> List.iter (function
-    | List (Atom "name" :: sexps) ->
-        let< sexp = sexps in
-        name := String.uncapitalize_ascii (string_of_sexp sexp)
-    | List (Atom "local" :: sexps) ->
-        let< sexp = sexps in
-        local := Some (bool_of_sexp sexp)
-    | List (Atom "modules" :: sexps) ->
-        let<@ sexps = sexps in
-        sexps |> List.iter (fun sexp ->
-          let mod_ = module_of_sexp sexp in
-          Hashtbl.add mods mod_.module_name mod_
-        )
+        invalid ()
+
+  let rec bool = function
+    | Atom "true" ->
+        true
+    | Atom "false" ->
+        false
+    | List [sexp] ->
+        bool sexp
     | _ ->
-        ()
-  ) ;
-  { library_name= !!name
-  ; library_local= Option.get_lazy invalid !local
-  ; library_modules= mods
-  }
-let of_sexp sexp =
-  let@ sexps = sexp in
-  let build_context = ref "" in
-  let libs = Hashtbl.create () in
-  sexps |> List.iter (function
-    | List (Atom "build_context" :: sexps) ->
-        let< sexp = sexps in
-        build_context := string_of_sexp sexp
-    | List (Atom "library" :: sexps) ->
-        let< sexp = sexps in
-        let lib = library_of_sexp sexp in
-        Hashtbl.add libs lib.library_name lib
+        invalid ()
+
+  let rec string = function
+    | Atom str ->
+        str
+    | List [sexp] ->
+        string sexp
     | _ ->
-        ()
-  ) ;
-  { build_context= !!build_context
-  ; libraries= libs
-  }
-let of_sexp sexp =
-  try
-    Ok (of_sexp sexp)
-  with Of_sexp err ->
-    Error err
+        invalid ()
+
+  let module_ sexp =
+    let@ sexps = sexp in
+    let name = ref "" in
+    let impl = ref "" in
+    let cmt = ref "" in
+    let cmti = ref None in
+    sexps |> List.iter (function
+      | List (Atom "name" :: sexps) ->
+          let< sexp = sexps in
+          name := string sexp
+      | List (Atom "impl" :: sexps) ->
+          let<@ sexps = sexps in
+          let< sexp = sexps in
+          impl := string sexp
+      | List (Atom "cmt" :: sexps) ->
+          let< sexp = sexps in
+          cmt := string sexp
+      | List (Atom "cmti" :: sexps) ->
+          let< sexp = sexps in
+          if sexp <> List [] then
+            cmti := Some (string sexp)
+      | _ ->
+          ()
+    ) ;
+    { module_name= String.uncapitalize_ascii !!name
+    ; module_impl= !!impl
+    ; module_cmt= !!cmt
+    ; module_cmti= !cmti
+    }
+
+  let library sexp =
+    let@ sexps = sexp in
+    let name = ref "" in
+    let local = ref None in
+    let mods = Hashtbl.create () in
+    sexps |> List.iter (function
+      | List (Atom "name" :: sexps) ->
+          let< sexp = sexps in
+          name := String.uncapitalize_ascii (string sexp)
+      | List (Atom "local" :: sexps) ->
+          let< sexp = sexps in
+          local := Some (bool sexp)
+      | List (Atom "modules" :: sexps) ->
+          let<@ sexps = sexps in
+          sexps |> List.iter (fun sexp ->
+            let mod_ = module_ sexp in
+            Hashtbl.add mods mod_.module_name mod_
+          )
+      | _ ->
+          ()
+    ) ;
+    { library_name= !!name
+    ; library_local= Option.get_lazy invalid !local
+    ; library_modules= mods
+    }
+
+  let main sexp =
+    let@ sexps = sexp in
+    let build_context = ref "" in
+    let libs = Hashtbl.create () in
+    sexps |> List.iter (function
+      | List (Atom "build_context" :: sexps) ->
+          let< sexp = sexps in
+          build_context := string sexp
+      | List (Atom "library" :: sexps) ->
+          let< sexp = sexps in
+          let lib = library sexp in
+          Hashtbl.add libs lib.library_name lib
+      | _ ->
+          ()
+    ) ;
+    { build_context= !!build_context
+    ; libraries= libs
+    }
+  let main sexp =
+    try
+      Ok (main sexp)
+    with Error err ->
+      Error err
+end
+
+let of_sexp =
+  Of_sexp.main
 
 let describe_command =
   "dune describe --lang 0.1 --format csexp --root ."
