@@ -491,7 +491,7 @@ module Error = struct
       | Type_extensible ->
           "extensible variant"
       | Type_external ->
-          "extensible variant"
+          "external type"
       | Def_recursive ->
           "recursive toplevel definition must be a function"
       | Def_invalid ->
