@@ -123,6 +123,12 @@ module Of_sexp = struct
     ; library_local= Option.get_lazy invalid !local
     ; library_modules= mods
     }
+  let library sexp =
+    let lib = library sexp in
+    let name = String.replace_all ~sub:"-" ~by:"_" lib.library_name in
+    { lib with
+      library_name= name
+    }
 
   let main sexp =
     let@ sexps = sexp in
