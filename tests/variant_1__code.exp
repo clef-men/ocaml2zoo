@@ -63,21 +63,21 @@ Definition variant_1٠test5 : val :=
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
     | variant_1٠A ->
         ()
-    | ⎽ ->
+    |⎽ ->
         ()
     𝗲𝗻𝗱.
 
 Definition variant_1٠test6 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | ⎽ 𝗮𝘀 "t" ->
+    |⎽ 𝗮𝘀 "t" ->
         "t"
     𝗲𝗻𝗱.
 
 Definition variant_1٠test7 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | ⎽ 𝗮𝘀 "t" ->
+    |⎽ 𝗮𝘀 "t" ->
         𝗹𝗲𝘁 "t'" = "t" 𝗶𝗻
         "t" ⍮
         "t'"

@@ -12,13 +12,13 @@ Definition unboxed_variant٠test1 : val :=
 Definition unboxed_variant٠test2 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | ⎽ 𝗮𝘀 "x" ->
+    |⎽ 𝗮𝘀 "x" ->
         "x"
     𝗲𝗻𝗱.
 
 Definition unboxed_variant٠test3 : val :=
   𝗳𝘂𝗻 "t" ->
     𝗺𝗮𝘁𝗰𝗵 "t" 𝘄𝗶𝘁𝗵
-    | ⎽ 𝗮𝘀 "x" ->
+    |⎽ 𝗮𝘀 "x" ->
         "x"
     𝗲𝗻𝗱.

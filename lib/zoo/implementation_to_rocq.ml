@@ -683,7 +683,7 @@ and pp_branch ~mod_ ppf br =
     Punctuation.arrow
     (pp_expression ~mod_ max_level) br.branch_expr
 and pp_fallback ~mod_ ppf fb =
-  Fmt.pf ppf "%s %s%a %s@,    @[%a@]@,"
+  Fmt.pf ppf "%s%s%a %s@,    @[%a@]@,"
     Punctuation.alt
     Punctuation.wildcard
     Fmt.(option @@ fun ppf ->
