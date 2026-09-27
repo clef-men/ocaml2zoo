@@ -1,22 +1,45 @@
 failwith () {
-  echo "$1"
+  echo "${1}"
   exit 1
 }
 
 error () {
-  failwith "error: $1"
+  failwith "error: ${1}"
 }
 
+test_generated () {
+  echo "${1}__${2}.v"
+}
+test_expected () {
+  echo "${1}__${2}.exp"
+}
+
+test_diff_aux () {
+  local generated="$(test_generated "${1}" "${2}")"
+  local expected="$(test_expected "${1}" "${2}")"
+
+	if [ ! -f "${expected}" ] ; then
+    return 1
+	fi
+
+  diff "${generated}" "${expected}" > /dev/null
+}
 test_diff () {
-	diff "${1}__types.v" "${1}__types.exp" > /dev/null && \
-  diff "${1}__code.v" "${1}__code.exp" > /dev/null && \
-  diff "${1}__opaque.v" "${1}__opaque.exp" > /dev/null
+  test_diff_aux "${1}" "types" && \
+  test_diff_aux "${1}" "code" && \
+  test_diff_aux "${1}" "opaque"
 }
 
+test_copy_aux () {
+  local generated="$(test_generated "${1}" "${2}")"
+  local expected="$(test_expected "${1}" "${2}")"
+
+  cp "${generated}" "${expected}"
+}
 test_copy () {
-	cp "${1}__types.v" "${1}__types.exp"
-	cp "${1}__code.v" "${1}__code.exp"
-	cp "${1}__opaque.v" "${1}__opaque.exp"
+  test_copy_aux "${1}" "types"
+  test_copy_aux "${1}" "code"
+  test_copy_aux "${1}" "opaque"
 }
 
 test_dir="tests"
