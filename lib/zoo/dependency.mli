@@ -13,6 +13,8 @@ module Builtin : sig
     t
   val structeq :
     t
+  val while_ :
+    t
 end
 
 val self :

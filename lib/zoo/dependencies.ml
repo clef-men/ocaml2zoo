@@ -71,6 +71,10 @@ let rec of_expression t = function
       of_expression t expr1 ;
       of_expression t expr2 ;
       Option.iter (of_expression t) expr3
+  | While (expr1, expr2) ->
+      Hashset.add t Builtin.while_ ;
+      of_expression t expr1 ;
+      of_expression t expr2
   | For (_bdr, expr1, expr2, expr3) ->
       Hashset.add t Builtin.for_ ;
       of_expression t expr1 ;

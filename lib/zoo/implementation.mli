@@ -66,6 +66,7 @@ type expression =
   | Seq of expression * expression
   | Fun of binder list * expression
   | If of expression * expression * expression option
+  | While of expression * expression
   | For of binder * expression * expression * expression
   | Tuple of expression list
   | Record of expression list

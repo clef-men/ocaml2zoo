@@ -150,6 +150,8 @@ module Keyword = struct
     "𝘁𝗵𝗲𝗻"
   let to_ =
     "𝘁𝗼"
+  let while_ =
+    "𝘄𝗵𝗶𝗹𝗲"
   let with_ =
     "𝘄𝗶𝘁𝗵"
 
@@ -363,6 +365,7 @@ let rec level = function
   | Bool _
   | Int _
   | If _
+  | While _
   | For _
   | Tuple _
   | Record _
@@ -476,6 +479,13 @@ let rec pp_expression' ~mod_ lvl ppf = function
         (pp_expression ~mod_ @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
       pp_expression_if ~mod_ ppf expr1 expr2 expr3
+  | While (expr1, expr2) ->
+      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@ %s@]@,  @[%a@]@,%s@]"
+        Keyword.while_
+        (pp_expression ~mod_ max_level) expr1
+        Keyword.do_
+        (pp_expression ~mod_ max_level) expr2
+        Keyword.done_
   | For (bdr, expr1, expr2, expr3) ->
       Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@ %s@;<1 2>@[%a@]@ %s@;<1 2>@[%a@]@ %s@]@,  @[%a@]@,%s@]"
         Keyword.for_

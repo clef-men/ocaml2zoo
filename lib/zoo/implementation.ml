@@ -66,6 +66,7 @@ type expression =
   | Seq of expression * expression
   | Fun of binder list * expression
   | If of expression * expression * expression option
+  | While of expression * expression
   | For of binder * expression * expression * expression
   | Tuple of expression list
   | Record of expression list
@@ -123,6 +124,7 @@ let rec expression_is_value = function
   | Letrec _
   | Seq _
   | If _
+  | While _
   | For _
   | Record _
   | Constr _

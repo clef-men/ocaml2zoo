@@ -14,6 +14,8 @@ module Builtin = struct
     "zoo.program_logic.identifier"
   let structeq =
     "zoo.program_logic.structural_equality"
+  let while_ =
+    "zoo.program_logic.while_"
 end
 
 let self =

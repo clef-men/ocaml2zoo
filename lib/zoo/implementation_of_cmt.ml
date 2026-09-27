@@ -380,7 +380,6 @@ module Error = struct
       | Expr_array
       | Expr_try
       | Expr_variant
-      | Expr_while
       | Expr_send
       | Expr_new
       | Expr_inst_var
@@ -456,8 +455,6 @@ module Error = struct
           {|"try" expression|}
       | Expr_variant ->
           "variant expression"
-      | Expr_while ->
-          {|"while" expression|}
       | Expr_send ->
           "method call"
       | Expr_new ->
@@ -1000,6 +997,10 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       in
       let expr2 = transl_expression ~ctx expr2 in
       Seq (expr1, expr2)
+  | Texp_while (expr1, expr2) ->
+      let expr1 = transl_expression ~ctx expr1 in
+      let expr2 = transl_expression ~ctx expr2 in
+      While (expr1, expr2)
   | Texp_for (id, pat, expr1, expr2, Upto, expr3) ->
       let bdr =
         match pat.ppat_desc with
@@ -1112,8 +1113,6 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       unsupported ~loc:expr.exp_loc Expr_try
   | Texp_variant _ ->
       unsupported ~loc:expr.exp_loc Expr_variant
-  | Texp_while _ ->
-      unsupported ~loc:expr.exp_loc Expr_while
   | Texp_send _ ->
       unsupported ~loc:expr.exp_loc Expr_send
   | Texp_new _ ->
