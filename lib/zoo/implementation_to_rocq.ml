@@ -367,11 +367,11 @@ let rec level = function
   | If _
   | While _
   | For _
+  | Match _
+  | Primitive _
   | Tuple _
   | Record _
-  | Constr _
-  | Match _
-  | Primitive _ ->
+  | Constr _ ->
       1
   | Apply (expr, []) when level expr <= 1 ->
       1
@@ -433,6 +433,20 @@ let rec pp_expression' ~mod_ lvl ppf = function
       pp_boolean ppf bool
   | Int int ->
       pp_integer ppf int
+  | Fun (bdrs, expr) ->
+      Fmt.pf ppf "@[<hv>%s %a %s@;<1 2>@[%a@]@]"
+        Keyword.fun_
+        Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
+        Punctuation.arrow
+        (pp_expression ~mod_ max_level) expr
+  | Apply (expr, exprs) ->
+      Fmt.pf ppf "@[<hv>@[%a@]%a@]"
+        (pp_expression ~mod_ lvl) expr
+        Fmt.(
+          list ~sep:nop @@ fun ppf ->
+            pf ppf "@;<1 2>@[%a@]"
+              (pp_expression ~mod_ @@ next_level lvl)
+        ) exprs
   | Let (pat, expr1, expr2) ->
       Fmt.pf ppf "@[<v>@[<hv>%s %a %s@;<1 2>@[%a@]@ %s@]@,%a@]"
         Keyword.let_
@@ -461,22 +475,6 @@ let rec pp_expression' ~mod_ lvl ppf = function
       Fmt.pf ppf "@] %s@,%a@]"
         Punctuation.semicolon
         (pp_expression ~mod_ max_level) expr2
-  | Fun (bdrs, expr) ->
-      Fmt.pf ppf "@[<hv>%s %a %s@;<1 2>@[%a@]@]"
-        Keyword.fun_
-        Fmt.(list ~sep:(const char ' ') pp_binder) bdrs
-        Punctuation.arrow
-        (pp_expression ~mod_ max_level) expr
-  | Unop (op, expr) ->
-      Fmt.pf ppf "@[<hv>@[%a@]@ @[%a@]@]"
-        pp_unop op
-        (pp_expression ~mod_ lvl) expr
-  | Binop (op, expr1, expr2) ->
-      let assoc = associativity op in
-      Fmt.pf ppf "@[<hv>@[%a@]@ @[%a@]@ @[%a@]@]"
-        (pp_expression ~mod_ @@ if assoc = Left then lvl else next_level lvl) expr1
-        pp_binop op
-        (pp_expression ~mod_ @@ if assoc = Left then next_level lvl else lvl) expr2
   | If (expr1, expr2, expr3) ->
       pp_expression_if ~mod_ ppf expr1 expr2 expr3
   | While (expr1, expr2) ->
@@ -497,6 +495,26 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Keyword.do_
         (pp_expression ~mod_ max_level) expr3
         Keyword.done_
+  | Match (expr, brs, fb) ->
+      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@ %s@]@,%a%a%s@]"
+        Keyword.match_
+        (pp_expression ~mod_ max_level) expr
+        Keyword.with_
+        Fmt.(list ~sep:nop @@ pp_branch ~mod_) brs
+        Fmt.(option @@ pp_fallback ~mod_) fb
+        Keyword.end_
+  | Unop (op, expr) ->
+      Fmt.pf ppf "@[<hv>@[%a@]@ @[%a@]@]"
+        pp_unop op
+        (pp_expression ~mod_ lvl) expr
+  | Binop (op, expr1, expr2) ->
+      let assoc = associativity op in
+      Fmt.pf ppf "@[<hv>@[%a@]@ @[%a@]@ @[%a@]@]"
+        (pp_expression ~mod_ @@ if assoc = Left then lvl else next_level lvl) expr1
+        pp_binop op
+        (pp_expression ~mod_ @@ if assoc = Left then next_level lvl else lvl) expr2
+  | Primitive prim ->
+      pp_primitive ppf prim
   | Tuple [] ->
       Fmt.pf ppf "%s%s"
         Punctuation.paren_left
@@ -577,14 +595,6 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.proj_left
         (Gpath.pp ~sep:separator) fld
         Punctuation.proj_right
-  | Match (expr, brs, fb) ->
-      Fmt.pf ppf "@[<v>@[<hv>%s@;<1 2>@[%a@]@ %s@]@,%a%a%s@]"
-        Keyword.match_
-        (pp_expression ~mod_ max_level) expr
-        Keyword.with_
-        Fmt.(list ~sep:nop @@ pp_branch ~mod_) brs
-        Fmt.(option @@ pp_fallback ~mod_) fb
-        Keyword.end_
   | Ref_get expr ->
       Fmt.pf ppf "%s@[%a@]"
         Punctuation.ref_get
@@ -613,16 +623,6 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.atomic_loc_left
         (Gpath.pp ~sep:separator) fld
         Punctuation.atomic_loc_right
-  | Primitive prim ->
-      pp_primitive ppf prim
-  | Apply (expr, exprs) ->
-      Fmt.pf ppf "@[<hv>@[%a@]%a@]"
-        (pp_expression ~mod_ lvl) expr
-        Fmt.(
-          list ~sep:nop @@ fun ppf ->
-            pf ppf "@;<1 2>@[%a@]"
-              (pp_expression ~mod_ @@ next_level lvl)
-        ) exprs
 and pp_expression ~mod_ lvl ppf expr =
   let lvl_expr = level expr in
   if lvl < lvl_expr then

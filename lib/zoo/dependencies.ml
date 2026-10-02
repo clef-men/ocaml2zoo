@@ -56,6 +56,11 @@ let rec of_expression t = function
       ()
   | Int _ ->
       ()
+  | Fun (_bdrs, expr) ->
+      of_expression t expr
+  | Apply (expr, exprs) ->
+      of_expression t expr ;
+      List.iter (of_expression t) exprs
   | Let (_pat, expr1, expr2) ->
       of_expression t expr1 ;
       of_expression t expr2
@@ -65,8 +70,6 @@ let rec of_expression t = function
   | Seq (expr1, expr2) ->
       of_expression t expr1 ;
       of_expression t expr2
-  | Fun (_bdrs, expr) ->
-      of_expression t expr
   | If (expr1, expr2, expr3) ->
       of_expression t expr1 ;
       of_expression t expr2 ;
@@ -80,6 +83,19 @@ let rec of_expression t = function
       of_expression t expr1 ;
       of_expression t expr2 ;
       of_expression t expr3
+  | Match (expr, brs, fb) ->
+      of_expression t expr ;
+      List.iter (of_branch t) brs ;
+      Option.iter (of_fallback t) fb
+  | Unop (unop, expr) ->
+      of_unop t unop ;
+      of_expression t expr
+  | Binop (binop, expr1, expr2) ->
+      of_binop t binop ;
+      of_expression t expr1 ;
+      of_expression t expr2
+  | Primitive prim ->
+      of_primitive t prim
   | Tuple exprs ->
       List.iter (of_expression t) exprs
   | Record exprs ->
@@ -90,10 +106,6 @@ let rec of_expression t = function
   | Proj (expr, path) ->
       of_expression t expr ;
       of_gpath t path
-  | Match (expr, brs, fb) ->
-      of_expression t expr ;
-      List.iter (of_branch t) brs ;
-      Option.iter (of_fallback t) fb
   | Ref_get expr ->
       of_expression t expr
   | Ref_set (expr1, expr2) ->
@@ -109,18 +121,6 @@ let rec of_expression t = function
   | Atomic_loc (expr, path) ->
       of_expression t expr ;
       of_gpath t path
-  | Unop (unop, expr) ->
-      of_unop t unop ;
-      of_expression t expr
-  | Binop (binop, expr1, expr2) ->
-      of_binop t binop ;
-      of_expression t expr1 ;
-      of_expression t expr2
-  | Primitive prim ->
-      of_primitive t prim
-  | Apply (expr, exprs) ->
-      of_expression t expr ;
-      List.iter (of_expression t) exprs
 and of_branch t br =
   of_gpath t br.branch_tag ;
   of_expression t br.branch_expr

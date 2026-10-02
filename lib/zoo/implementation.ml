@@ -61,27 +61,27 @@ type expression =
   | Var of Var.t
   | Bool of bool
   | Int of int
+  | Fun of binder list * expression
+  | Apply of expression * expression list
   | Let of pattern * expression * expression
   | Letrec of rec_flag * Var.t * binder list * expression * expression
   | Seq of expression * expression
-  | Fun of binder list * expression
   | If of expression * expression * expression option
   | While of expression * expression
   | For of binder * expression * expression * expression
+  | Match of expression * branch list * fallback option
+  | Unop of unop * expression
+  | Binop of binop * expression * expression
+  | Primitive of primitive
   | Tuple of expression list
   | Record of expression list
   | Constr of mutability * Gpath.t * expression list
   | Proj of expression * Gpath.t
-  | Match of expression * branch list * fallback option
   | Ref_get of expression
   | Ref_set of expression * expression
   | Record_get of expression * Gpath.t
   | Record_set of expression * Gpath.t * expression
   | Atomic_loc of expression * Gpath.t
-  | Unop of unop * expression
-  | Binop of binop * expression * expression
-  | Primitive of primitive
-  | Apply of expression * expression list
 and branch =
   { branch_tag: Gpath.t
   ; branch_fields: binder list
