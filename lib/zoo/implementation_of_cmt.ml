@@ -1,56 +1,70 @@
 open Implementation
 
 module Builtin = struct
-  let raising =
+  let raisings =
     [|[|"Stdlib";"raise"|]
     ; [|"Stdlib";"invalid_arg"|]
     ; [|"Stdlib";"failwith"|]
     |]
-  let raising =
+  let raisings =
     Array.fold_left (fun acc path ->
       Path.Set.add (Path.of_array path) acc
-    ) Path.Set.empty raising
+    ) Path.Set.empty raisings
 
-  let nonraising =
+  type nonraising =
+    | Nonraising_untyped of (expression list -> expression option) * expression option
+    | Nonraising_typed of ((Types.type_expr * expression) list -> expression option)
+  let nonraisings =
     let helper1 mk_expr =
-      1,
-      ( function
-          | [expr] ->
-              Some (mk_expr expr)
-          | _ ->
-              None
-      ),
-      None
+      ( 1
+      , Nonraising_untyped
+        ( ( function
+              | [expr] ->
+                  Some (mk_expr expr)
+              | _ ->
+                  None
+          )
+        , None
+        )
+      )
     in
     let helper2 mk_expr =
-      2,
-      ( function
-          | [expr1; expr2] ->
-              Some (mk_expr expr1 expr2)
-          | _ ->
-              None
-      ),
-      None
+      ( 2
+      , Nonraising_untyped
+        ( ( function
+              | [expr1; expr2] ->
+                  Some (mk_expr expr1 expr2)
+              | _ ->
+                  None
+          )
+        , None
+        )
+      )
     in
     let helper3 mk_expr =
-      3,
-      ( function
-          | [expr1; expr2; expr3] ->
-              Some (mk_expr expr1 expr2 expr3)
-          | _ ->
-              None
-      ),
-      None
+      ( 3
+      , Nonraising_untyped
+        ( ( function
+              | [expr1; expr2; expr3] ->
+                  Some (mk_expr expr1 expr2 expr3)
+              | _ ->
+                  None
+          )
+        , None
+        )
+      )
     in
     [|[|"Stdlib";"ignore"|],
-      ( 1,
-        ( function
-            | [expr] ->
-                Some (Seq (expr, Tuple []))
-            | _ ->
-                None
-        ),
-        Some (Fun ([None], Tuple []))
+      ( 1
+      , Nonraising_untyped
+        ( ( function
+              | [expr] ->
+                  Some (Seq (expr, Tuple []))
+              | _ ->
+                  None
+          )
+        , Some (Fun ([None], Tuple []))
+        )
       )
     ; [|"Stdlib";"not"|],
       helper1 (fun expr ->
@@ -105,20 +119,56 @@ module Builtin = struct
         Binop (Binop_ne, expr1, expr2)
       )
     ; [|"Stdlib";"<="|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_le, expr1, expr2)
+      ( 2
+      , Nonraising_typed (
+          function
+            | [ty1, expr1; _ty2, expr2] ->
+                if Types.is_int ty1 then
+                  Some (Binop (Binop_le, expr1, expr2))
+                else
+                  None
+            | _ ->
+                None
+        )
       )
     ; [|"Stdlib";"<"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_lt, expr1, expr2)
+      ( 2
+      , Nonraising_typed (
+          function
+            | [ty1, expr1; _ty2, expr2] ->
+                if Types.is_int ty1 then
+                  Some (Binop (Binop_lt, expr1, expr2))
+                else
+                  None
+            | _ ->
+                None
+        )
       )
     ; [|"Stdlib";">="|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_ge, expr1, expr2)
+      ( 2
+      , Nonraising_typed (
+          function
+            | [ty1, expr1; _ty2, expr2] ->
+                if Types.is_int ty1 then
+                  Some (Binop (Binop_ge, expr1, expr2))
+                else
+                  None
+            | _ ->
+                None
+        )
       )
     ; [|"Stdlib";">"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_gt, expr1, expr2)
+      ( 2
+      , Nonraising_typed (
+          function
+            | [ty1, expr1; _ty2, expr2] ->
+                if Types.is_int ty1 then
+                  Some (Binop (Binop_gt, expr1, expr2))
+                else
+                  None
+            | _ ->
+                None
+        )
       )
     ; [|"Stdlib";"&&"|],
       helper2 (fun expr1 expr2 ->
@@ -284,24 +334,32 @@ module Builtin = struct
         Apply (Primitive Id, [])
       )
     |]
-  let nonraising =
-    nonraising |> Array.map @@ fun (path, spec) ->
+  let nonraisings =
+    nonraisings |> Array.map @@ fun (path, spec) ->
       Path.of_array path, spec
 
   type application =
     | Raising of expression
-    | Nonraising of (expression list -> expression option)
+    | Nonraising of ((Types.type_expr * expression) list -> expression option)
   let applications =
     Path.Map.empty
   let applications =
     Path.Set.fold (fun path acc ->
       let expr = Apply (Primitive Diverge, [Tuple []]) in
       Path.Map.add path (Raising expr) acc
-    ) raising applications
+    ) raisings applications
   let applications =
-    Array.fold_left (fun acc (path, (_arity, mk_expr, _expr)) ->
+    Array.fold_left (fun acc (path, (_arity, nonraising)) ->
+      let mk_expr =
+        match nonraising with
+        | Nonraising_untyped (mk_expr, _) ->
+            fun args ->
+              args |> List.map snd |> mk_expr
+        | Nonraising_typed mk_expr ->
+            mk_expr
+      in
       Path.Map.add path (Nonraising mk_expr) acc
-    ) applications nonraising
+    ) applications nonraisings
 
   let values =
     Path.Map.empty
@@ -309,21 +367,25 @@ module Builtin = struct
     Path.Set.fold (fun path acc ->
       let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
       Path.Map.add path expr acc
-    ) raising values
+    ) raisings values
   let values =
-    Array.fold_left (fun acc (path, (arity, mk_expr, expr)) ->
-      let expr =
-        match expr with
-        | Some expr ->
-            expr
-        | None ->
-            let expr = mk_expr @@ List.init arity (fun i -> Var (Var.of_int (i + 1))) in
-            let expr = expr |> Option.get in
-            let expr = Fun (List.init arity (fun i -> Some (Var.of_int (i + 1))), expr) in
-            expr
-      in
-      Path.Map.add path expr acc
-    ) values nonraising
+    Array.fold_left (fun acc (path, (arity, nonraising)) ->
+      match nonraising with
+      | Nonraising_untyped (mk_expr, expr) ->
+          let expr =
+            match expr with
+            | Some expr ->
+                expr
+            | None ->
+                let expr = mk_expr @@ List.init arity (fun i -> Var (Var.of_int (i + 1))) in
+                let expr = expr |> Option.get in
+                let expr = Fun (List.init arity (fun i -> Some (Var.of_int (i + 1))), expr) in
+                expr
+          in
+          Path.Map.add path expr acc
+      | Nonraising_typed _ ->
+          acc
+    ) values nonraisings
 
   let constant_constructors =
     [|[|"()"|],
@@ -944,42 +1006,43 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             Fun (bdrs @ [Some var], Match (Var var, brs, fb))
         end
   | Texp_apply (expr', exprs) ->
-      let arguments () =
-        exprs |> List.map @@ fun (lbl, expr') ->
+      let args () =
+        exprs |> List.map @@ fun (lbl, expr' : _ * Typedtree.apply_arg) ->
           check_argument_label ~loc:expr.exp_loc lbl ;
           match expr' with
-          | Typedtree.Omitted () ->
+          | Omitted () ->
               unsupported ~loc:expr.exp_loc Argument_omitted
           | Arg expr' ->
-              transl_expression ~ctx expr'
+              expr'.exp_type, transl_expression ~ctx expr'
       in
-      let default exprs =
+      let default args =
         let expr' = transl_expression ~ctx expr' in
+        let exprs = args |> List.map snd in
         Apply (expr', exprs)
       in
       begin match expr'.exp_desc with
       | Texp_ident (path', _, _) ->
           begin match Path.Map.find_opt path' Builtin.applications with
           | None ->
-              default (arguments ())
+              default (args ())
           | Some (Raising expr) ->
               expr
           | Some (Nonraising mk_expr) ->
-              let exprs = arguments () in
-              match mk_expr exprs with
+              let args = args () in
+              match mk_expr args with
               | Some expr ->
                   expr
               | None ->
-                  default exprs
+                  default args
           end
       | _ ->
-          default (arguments ())
+          default (args ())
       end
   | Texp_ifthenelse (expr1, expr2, expr3) ->
       let expr1 = transl_expression ~ctx expr1 in
       begin match expr1, expr2.exp_desc, expr3 with
       | Unop (Unop_neg, expr1), Texp_apply ({ exp_desc= Texp_ident (path, _, _); _ }, _), None
-        when Path.Set.mem path Builtin.raising ->
+        when Path.Set.mem path Builtin.raisings ->
           Apply (Primitive Assume, [expr1])
       | _ ->
           let expr2 = transl_expression ~ctx expr2 in
