@@ -16,18 +16,24 @@ Definition mutual٠test3 :=
 Definition mutual٠test4 :=
   ValRecs 1 __zoo_recs_0.
 #[global] Instance :
-  AsValRecs' mutual٠test3 0 __zoo_recs_0 [
-    mutual٠test3 ;
-    mutual٠test4
-  ].
+  AsValRecs'
+    mutual٠test3
+    0
+    __zoo_recs_0
+    [ mutual٠test3
+    ; mutual٠test4
+    ].
 Proof.
   done.
 Qed.
 #[global] Instance :
-  AsValRecs' mutual٠test4 1 __zoo_recs_0 [
-    mutual٠test3 ;
+  AsValRecs'
     mutual٠test4
-  ].
+    1
+    __zoo_recs_0
+    [ mutual٠test3
+    ; mutual٠test4
+    ].
 Proof.
   done.
 Qed.
@@ -43,18 +49,24 @@ Definition mutual٠test5 :=
 Definition mutual٠test6 :=
   ValRecs 1 __zoo_recs_1.
 #[global] Instance :
-  AsValRecs' mutual٠test5 0 __zoo_recs_1 [
-    mutual٠test5 ;
-    mutual٠test6
-  ].
+  AsValRecs'
+    mutual٠test5
+    0
+    __zoo_recs_1
+    [ mutual٠test5
+    ; mutual٠test6
+    ].
 Proof.
   done.
 Qed.
 #[global] Instance :
-  AsValRecs' mutual٠test6 1 __zoo_recs_1 [
-    mutual٠test5 ;
+  AsValRecs'
     mutual٠test6
-  ].
+    1
+    __zoo_recs_1
+    [ mutual٠test5
+    ; mutual٠test6
+    ].
 Proof.
   done.
 Qed.

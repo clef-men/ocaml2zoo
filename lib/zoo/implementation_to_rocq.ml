@@ -850,12 +850,12 @@ let transl_value_code ~mod_ ~gen = function
             Locality_global
             None
             ( fun ppf () ->
-                Fmt.pf ppf "@[<v>AsValRecs' %a %i __zoo_recs_%i [@,  @[<v>%a@]@,]@]"
+                Fmt.pf ppf "@[<v>AsValRecs'@,  @[<v>%a@,%i@,__zoo_recs_%i@,[ %a@,]@]@]"
                   (Lpath.pp ~sep:separator ~mod_) path
                   i
                   id
                   Fmt.(
-                    list ~sep:(any " ;@,") @@ fun ppf (path, _, _, _) ->
+                    list ~sep:(any "@,; ") @@ fun ppf (path, _, _, _) ->
                       Lpath.pp ~sep:separator ~mod_ ppf path
                   ) recs
             )
