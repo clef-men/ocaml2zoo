@@ -372,14 +372,14 @@ let rec level = function
   | Tuple _
   | Record _
   | Constr _ ->
-      1
-  | Apply (expr, []) when level expr <= 1 ->
-      1
-  | Proj _ ->
-      2
-  | Ref_get _
+      0
+  | Apply (expr, []) when level expr = 0 ->
+      0
+  | Proj _
   | Record_get _
   | Atomic_loc _ ->
+      1
+  | Ref_get _ ->
       9
   | Apply _ ->
       10
