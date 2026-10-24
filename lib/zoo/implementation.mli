@@ -5,19 +5,22 @@ type rec_flag = Asttypes.rec_flag =
   | Nonrecursive
   | Recursive
 
-type mutability =
+type mutability = Asttypes.mutable_flag =
+  | Immutable
   | Mutable
-  | Immutable_nongenerative
-  | Immutable_generative_weak
-  | Immutable_generative_strong
+
+type constructor_mutability =
+  | Constr_immutable_nongenerative
+  | Constr_immutable_generative_weak
+  | Constr_immutable_generative_strong
+  | Constr_mutable
 
 type typ_kind =
   | Type_normal
   | Type_inline of string
 
 type typ =
-  | Type_product of string list
-  | Type_record of string list
+  | Type_record of mutability * string list
   | Type_variant of string list
 
 type pattern =
@@ -75,7 +78,7 @@ type expression =
   | Primitive of primitive
   | Tuple of expression list
   | Record of expression list
-  | Constr of mutability * Gpath.t * expression list
+  | Constr of constructor_mutability * Gpath.t * expression list
   | Proj of expression * Gpath.t
   | Ref_get of expression
   | Ref_set of expression * expression

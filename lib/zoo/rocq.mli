@@ -7,9 +7,6 @@ type ident =
 type term =
   string
 
-type scope =
-  string
-
 type require_kind =
   | Require_only
   | Require_import
@@ -23,6 +20,18 @@ type locality =
 type custom =
   unit Fmt.t
 
+type qualification =
+  | Qualified
+  | Nonqualified
+
+type mutability = Implementation.mutability =
+  | Immutable
+  | Mutable
+
+type zoo_type =
+  | Zoo_record of mutability * string list
+  | Zoo_variant of string list
+
 type item =
   | Newline
   | Comment of string
@@ -30,8 +39,8 @@ type item =
   | Parameter of ident * term
   | Definition of locality * ident * term option * custom
   | Instance of locality * ident option * custom
-  | Notation of locality * string * custom * scope
   | Opaque of locality * ident
+  | Zoo_type of qualification * Lpath.t * zoo_type
 
 val newline :
   item
@@ -45,10 +54,10 @@ val definition :
   locality -> ident -> term option -> custom -> item
 val instance :
   locality -> ident option -> custom -> item
-val notation :
-  locality -> string -> custom -> scope -> item
 val opaque :
   locality -> ident -> item
+val zoo_type :
+  qualification -> Lpath.t -> zoo_type -> item
 
 type t =
   item list

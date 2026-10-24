@@ -562,14 +562,14 @@ let rec pp_expression' ~mod_ lvl ppf = function
         Punctuation.backtick
         (Gpath.pp ~sep:separator) tag
         ( match flag with
-          | Mutable ->
-              Punctuation.brace_left
-          | Immutable_nongenerative ->
+          | Constr_immutable_nongenerative ->
               Punctuation.paren_left
-          | Immutable_generative_weak ->
+          | Constr_immutable_generative_weak ->
               Punctuation.bracket_left
-          | Immutable_generative_strong ->
+          | Constr_immutable_generative_strong ->
               Punctuation.bracket_left'
+          | Constr_mutable ->
+              Punctuation.brace_left
         )
         Fmt.(
           list
@@ -581,13 +581,13 @@ let rec pp_expression' ~mod_ lvl ppf = function
             (pp_expression_box ~mod_)
         ) exprs
         ( match flag with
-          | Mutable ->
-              Punctuation.brace_right
-          | Immutable_nongenerative ->
+          | Constr_immutable_nongenerative ->
               Punctuation.paren_right
-          | Immutable_generative_weak
-          | Immutable_generative_strong ->
+          | Constr_immutable_generative_weak
+          | Constr_immutable_generative_strong ->
               Punctuation.bracket_right
+          | Constr_mutable ->
+              Punctuation.brace_right
         )
   | Proj (expr, fld) ->
       Fmt.pf ppf "@[%a@]%s%a%s"
@@ -706,67 +706,39 @@ and pp_fallback ~mod_ ppf fb =
 let pp_expression ~mod_ =
   pp_expression ~mod_ max_level
 
-let transl_typ ~lib ~mod_ ~mode lpath kind ty =
-  let gpath =
-    Gpath.make ~lib ~mod_
-      begin match kind with
-      | Type_normal ->
-          lpath
-      | Type_inline tag ->
-          Dot (lpath, tag)
-      end
+let transl_typ ~mode lpath kind ty =
+  let lpath =
+    match kind with
+    | Type_normal ->
+        lpath
+    | Type_inline tag ->
+        Lpath.Dot (lpath, tag)
   in
-  let mod_ =
+  let qualif : Rocq.qualification =
     match mode with
     | Types ->
-        ""
+        Nonqualified
     | Code ->
-        mod_
+        Qualified
     | Opaque ->
         assert false
   in
   match ty with
-  | Type_product flds ->
-      flds |> List.mapi @@ fun i fld ->
-        let fld = Lpath.set_last lpath fld in
-        Rocq.notation
-          Locality_normal
-          (Lpath.to_string ~sep:separator ~mod_ fld)
-          ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%a" %i|}
-                (Gpath.pp_full ~sep:".") gpath
-                i
-          )
-          "zoo_proj"
-  | Type_record flds ->
-      flds |> List.mapi @@ fun i fld ->
-        let fld = Lpath.set_last lpath fld in
-        Rocq.notation
-          Locality_normal
-          (Lpath.to_string ~sep:separator ~mod_ fld)
-          ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%a" %i|}
-                (Gpath.pp_full ~sep:".") gpath
-                i
-          )
-          "zoo_field"
-  | Type_variant tags ->
-      tags |> List.mapi @@ fun i tag ->
-        let tag = Lpath.set_last lpath tag in
-        Rocq.notation
-          Locality_normal
-          (Lpath.to_string ~sep:separator ~mod_ tag)
-          ( fun ppf () ->
-              Fmt.pf ppf {|in_type "%a" Tag%i|}
-                (Gpath.pp_full ~sep:".") gpath
-                i
-          )
-          "zoo_tag"
-let transl_typ ~lib ~mod_ ~mode path kind ty =
+  | Type_record (mut, flds) ->
+      Rocq.zoo_type
+        qualif
+        lpath
+        (Zoo_record (mut, flds))
+  | Type_variant constrs ->
+      Rocq.zoo_type
+        qualif
+        lpath
+        (Zoo_variant constrs)
+let transl_typ ~mode path kind ty =
   match mode with
   | Types
   | Code ->
-      transl_typ ~lib ~mod_ ~mode path kind ty
+      [transl_typ ~mode path kind ty]
   | Opaque ->
       []
 
@@ -888,9 +860,9 @@ let transl_value ~mod_ ~mode ~gen val_ =
   | Opaque ->
       transl_value_opaque ~mod_ val_
 
-let transl_declaration ~lib ~mod_ ~mode ~gen = function
+let transl_declaration ~mod_ ~mode ~gen = function
   | Type (path, kind, ty) ->
-      transl_typ ~lib ~mod_ ~mode path kind ty
+      transl_typ ~mode path kind ty
   | Val val_ ->
       transl_value ~mod_ ~mode ~gen val_
 
@@ -902,8 +874,9 @@ let prelude ~mode =
   | Types
   | Code ->
       [ Rocq.require Require_import "zoo.prelude"
-      ; Rocq.require Require_import "zoo.language.typeclasses"
+      ; Rocq.require Require_import "zoo.plugin"
       ; Rocq.require Require_import "zoo.language.notations"
+      ; Rocq.require Require_import "zoo.language.typeclasses"
       ]
   | Opaque ->
       []
@@ -939,7 +912,7 @@ let body ~mode t =
   let body =
     let gen = Generator.create () in
     t.declarations |> List.map @@
-      transl_declaration ~lib:t.library ~mod_:t.module_ ~mode ~gen
+      transl_declaration ~mod_:t.module_ ~mode ~gen
   in
   let body = List.filter ((<>) []) body in
   let body =

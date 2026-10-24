@@ -639,6 +639,11 @@ exception Ignore
 
 let record_is_mutable =
   List.exists @@ fun lbl -> lbl.Types.ld_mutable = Mutable
+let record_mutability lbls =
+  if record_is_mutable lbls then
+    Mutable
+  else
+    Immutable
 let record_type_is_mutable ty =
   let[@warning "-8"] Types.Type_record (lbls, _) = ty.Types.type_kind in
   record_is_mutable lbls
@@ -1118,12 +1123,12 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             let flag =
               match constr.cstr_generative with
               | Nongenerative ->
-                  Immutable_nongenerative
+                  Constr_immutable_nongenerative
               | Generative ->
                   if Attribute.has_generative_strong constr.cstr_attributes then
-                    Immutable_generative_strong
+                    Constr_immutable_generative_strong
                   else
-                    Immutable_generative_weak
+                    Constr_immutable_generative_weak
             in
             Constr (flag, tag, exprs)
           in
@@ -1139,7 +1144,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
               | Texp_record rcd ->
                   transl_expression_record ~ctx ~loc:expr.exp_loc rcd.fields rcd.extended_expression (fun exprs ->
                     if record_type_is_mutable ty then
-                      Constr (Mutable, tag, exprs)
+                      Constr (Constr_mutable, tag, exprs)
                     else
                       mk_immutable exprs
                   )
@@ -1479,16 +1484,13 @@ let transl_value_bindings ~ctx rec_flag bdgs =
         [Val_recs recs]
 
 let transl_type_declaration_record ~ctx lbls =
-  let is_mut = record_is_mutable lbls in
+  let mut = record_mutability lbls in
   let lbls =
     lbls |> List.map @@ fun lbl ->
       Context.add_label ctx lbl ;
       lbl.Types.ld_id |> Ident.name
   in
-  if is_mut then
-    Type_record lbls
-  else
-    Type_product lbls
+  Type_record (mut, lbls)
 let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
   let path = Context.add_local ctx Ident_type ty.typ_id in
   match ty.typ_type.type_kind with
@@ -1502,7 +1504,7 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
   | Type_variant (_, Variant_unboxed) ->
       []
   | Type_variant (constrs, _) ->
-      let tags, decls =
+      let constrs, decls =
         List.fold_right (fun (constr : Types.constructor_declaration) (tags, decls) ->
           Context.add_constructor ctx constr ;
           let tag = Ident.name constr.cd_id in
@@ -1517,7 +1519,7 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
           tag :: tags, decls
         ) constrs ([], [])
       in
-      let decl = Type (path, Type_normal, Type_variant tags) in
+      let decl = Type (path, Type_normal, Type_variant constrs) in
       decl :: decls
   | Type_open ->
       unsupported ~loc:ty.typ_loc Type_extensible

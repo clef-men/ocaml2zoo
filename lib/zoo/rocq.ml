@@ -7,9 +7,6 @@ type ident =
 type term =
   string
 
-type scope =
-  string
-
 type require_kind =
   | Require_only
   | Require_import
@@ -23,6 +20,18 @@ type locality =
 type custom =
   unit Fmt.t
 
+type qualification =
+  | Qualified
+  | Nonqualified
+
+type mutability = Implementation.mutability =
+  | Immutable
+  | Mutable
+
+type zoo_type =
+  | Zoo_record of mutability * string list
+  | Zoo_variant of string list
+
 type item =
   | Newline
   | Comment of string
@@ -30,8 +39,8 @@ type item =
   | Parameter of ident * term
   | Definition of locality * ident * term option * custom
   | Instance of locality * ident option * custom
-  | Notation of locality * string * custom * scope
   | Opaque of locality * ident
+  | Zoo_type of qualification * Lpath.t * zoo_type
 
 type t =
   item list
@@ -48,10 +57,10 @@ let[@inline] definition local id tm custom =
   Definition (local, id, tm, custom)
 let[@inline] instance local id custom =
   Instance (local, id, custom)
-let[@inline] notation local str custom scope =
-  Notation (local, str, custom, scope)
 let[@inline] opaque local id =
   Opaque (local, id)
+let[@inline] zoo_type qualif path typ =
+  Zoo_type (qualif, path, typ)
 
 let pp_require_kind ppf = function
   | Require_only ->
@@ -68,6 +77,27 @@ let pp_locality ppf = function
       Fmt.pf ppf "#[local] "
   | Locality_global ->
       Fmt.pf ppf "#[global] "
+
+let pp_qualification ppf = function
+  | Qualified ->
+      Fmt.pf ppf "#[qualified] "
+  | Nonqualified ->
+      ()
+
+let pp_mutability ppf = function
+  | Immutable ->
+      ()
+  | Mutable ->
+      Fmt.pf ppf " mutable"
+
+let pp_zoo_type ppf = function
+  | Zoo_record (mut, flds) ->
+      Fmt.pf ppf "%a@,  @[<v>{ %a@,}@]"
+        pp_mutability mut
+        Fmt.(list ~sep:(any "@,; ") string) flds
+  | Zoo_variant constrs ->
+      Fmt.pf ppf "@,  @[<v>| %a@]"
+        Fmt.(list ~sep:(any "@,| ") string) constrs
 
 let pp_item ppf = function
   | Newline ->
@@ -94,16 +124,15 @@ let pp_item ppf = function
         pp_locality local
         Fmt.(option string) id
         custom ()
-  | Notation (local, str, custom, scope) ->
-      Fmt.pf ppf {|%aNotation "'%s'" := (@,  %a@,)(in custom %s@,).|}
-        pp_locality local
-        str
-        custom ()
-        scope
   | Opaque (local, id) ->
       Fmt.pf ppf "%aOpaque %s."
         pp_locality local
         id
+  | Zoo_type (qualif, lpath, typ) ->
+      Fmt.pf ppf "%aZoo type %a :=%a."
+        pp_qualification qualif
+        (Lpath.pp ~sep:"." ?mod_:None) lpath
+        pp_zoo_type typ
 
 let pp ppf t =
   Fmt.pf ppf "@[<v>" ;
