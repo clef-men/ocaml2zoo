@@ -8,7 +8,7 @@ Require Import zoo.options.
 
 Zoo type t :=
   | A
-  | B.
+  | B _.
 
 Zoo type t.B := mutable
   { f1

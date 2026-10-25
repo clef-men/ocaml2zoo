@@ -706,6 +706,11 @@ and pp_fallback ~mod_ ppf fb =
 let pp_expression ~mod_ =
   pp_expression ~mod_ max_level
 
+let transl_constructor constr : Rocq.zoo_constructor =
+  { zoo_constructor_tag= constr.constructor_tag
+  ; zoo_constructor_constancy= constr.constructor_constancy
+  }
+
 let transl_typ ~mode lpath kind ty =
   let lpath =
     match kind with
@@ -730,6 +735,7 @@ let transl_typ ~mode lpath kind ty =
         lpath
         (Zoo_record (mut, flds))
   | Type_variant constrs ->
+      let constrs = constrs |> List.map transl_constructor in
       Rocq.zoo_type
         qualif
         lpath

@@ -28,9 +28,18 @@ type mutability = Implementation.mutability =
   | Immutable
   | Mutable
 
+type constancy = Implementation.constancy =
+  | Constant
+  | Nonconstant
+
+type zoo_constructor =
+  { zoo_constructor_tag: string
+  ; zoo_constructor_constancy: constancy
+  }
+
 type zoo_type =
   | Zoo_record of mutability * string list
-  | Zoo_variant of string list
+  | Zoo_variant of zoo_constructor list
 
 type item =
   | Newline

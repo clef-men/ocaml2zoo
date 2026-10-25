@@ -8,7 +8,7 @@ Require Import zoo.options.
 
 #[qualified] Zoo type t :=
   | Leaf
-  | Node.
+  | Node _.
 
 Definition variant_2٠test1 : val :=
   𝗳𝘂𝗻 ⎽ ->

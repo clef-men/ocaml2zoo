@@ -9,19 +9,15 @@ type mutability = Asttypes.mutable_flag =
   | Immutable
   | Mutable
 
+type constancy =
+  | Constant
+  | Nonconstant
+
 type constructor_mutability =
   | Constr_immutable_nongenerative
   | Constr_immutable_generative_weak
   | Constr_immutable_generative_strong
   | Constr_mutable
-
-type typ_kind =
-  | Type_normal
-  | Type_inline of string
-
-type typ =
-  | Type_record of mutability * string list
-  | Type_variant of string list
 
 type pattern =
   | Pat_var of Var.t
@@ -101,6 +97,19 @@ type value =
   | Val_fun of Lpath.t * binder list * expression
   | Val_recs of (Lpath.t * Var.t * binder list * expression) list
   | Val_opaque of Lpath.t
+
+type typ_kind =
+  | Type_normal
+  | Type_inline of string
+
+type constructor =
+  { constructor_tag: string
+  ; constructor_constancy: constancy
+  }
+
+type typ =
+  | Type_record of mutability * string list
+  | Type_variant of constructor list
 
 type declaration =
   | Type of Lpath.t * typ_kind * typ

@@ -758,18 +758,18 @@ module Context = struct
     res
 
   let add_constructor t (constr : Types.constructor_declaration) =
-    let tag = constr.cd_id |> Ident.name in
+    let name = constr.cd_id |> Ident.name in
     let scope = Stack.top t.scopes in
-    if Hashset.mem scope.scope_constructors tag then
+    if Hashset.mem scope.scope_constructors name then
       unsupported ~loc:constr.cd_loc (Shadowing Constructor) ;
-    Hashset.add scope.scope_constructors tag
+    Hashset.add scope.scope_constructors name
 
   let add_label t (lbl : Types.label_declaration) =
-    let tag = lbl.ld_id |> Ident.name in
+    let name = lbl.ld_id |> Ident.name in
     let scope = Stack.top t.scopes in
-    if Hashset.mem scope.scope_labels tag then
+    if Hashset.mem scope.scope_labels name then
       unsupported ~loc:lbl.ld_loc (Shadowing Label) ;
-    Hashset.add scope.scope_labels tag
+    Hashset.add scope.scope_labels name
 
   let mem_var t id =
     Ident.Set.mem id t.vars
@@ -792,9 +792,9 @@ module Context = struct
     | Some (id, names) ->
         if mem_var t id then (
           assert (names = []) ;
-          Var (Ident.name id)
+          Var (id |> Ident.name)
         ) else if Ident.global id then (
-          let id = Ident.name id in
+          let id = id |> Ident.name in
           if Array.mem id Builtin.types then
             Const (Gpath.ident id)
           else
@@ -880,11 +880,11 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
       None
   | Tpat_var (id, _, _) ->
       Context.add_var ctx id ;
-      Some (Ident.name id)
+      Some (id |> Ident.name)
   | Tpat_alias (pat, id, _, _, _) ->
       if pattern_is_neutral pat then (
         Context.add_var ctx id ;
-        Some (Ident.name id)
+        Some (id |> Ident.name)
       ) else (
         unsupported ~loc:pat.pat_loc err
       )
@@ -914,7 +914,7 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
       None
   | Tpat_var (id, _, _) ->
       Context.add_var ctx id ;
-      Some (Pat_var (Ident.name id))
+      Some (Pat_var (id |> Ident.name))
   | Tpat_tuple pats ->
       let bdrs = List.map (fun (_, pat) -> pattern_to_binder ~ctx ~err:Pattern_nested pat) pats in
       Some (Pat_tuple bdrs)
@@ -1007,7 +1007,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         | Tfunction_cases { cases= brs; param= id; _ } ->
             Context.add_var ctx id ;
             let brs, fb = transl_branches ~ctx brs in
-            let var = Ident.name id in
+            let var = id |> Ident.name in
             Fun (bdrs @ [Some var], Match (Var var, brs, fb))
         end
   | Texp_apply (expr', exprs) ->
@@ -1279,7 +1279,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
           match pat.pat_desc with
           | Tpat_alias (pat, id, _, _, _) ->
               Context.add_var ctx id ;
-              pat, Some (Ident.name id)
+              pat, Some (id |> Ident.name)
           | _ ->
               pat, None
         in
@@ -1293,7 +1293,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               Context.add_var ctx id ;
               let expr = transl_expression ~ctx br.c_rhs in
               end_scope () ;
-              let var = Ident.name id in
+              let var = id |> Ident.name in
               begin match bdr with
               | None ->
                   acc, Some { fallback_as= Some var; fallback_expr= expr }
@@ -1334,7 +1334,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                         Context.add_var ctx id ;
                         let expr = transl_expression ~ctx br.c_rhs in
                         let bdr, expr =
-                          let var = Ident.name id in
+                          let var = id |> Ident.name in
                           match bdr with
                           | None ->
                               Some var, expr
@@ -1388,7 +1388,7 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path
   match expr with
   | Fun (bdrs, expr) ->
       if rec_ then
-        Val_recs [path, Ident.name id, bdrs, expr]
+        Val_recs [path, id |> Ident.name, bdrs, expr]
       else
         Val_fun (path, bdrs, expr)
   | _ ->
@@ -1505,18 +1505,25 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
       []
   | Type_variant (constrs, _) ->
       let constrs, decls =
-        List.fold_right (fun (constr : Types.constructor_declaration) (tags, decls) ->
+        List.fold_right (fun (constr : Types.constructor_declaration) (constrs, decls) ->
           Context.add_constructor ctx constr ;
-          let tag = Ident.name constr.cd_id in
-          let decls =
+          let tag = constr.cd_id |> Ident.name in
+          let const, decls =
             match constr.cd_args with
+            | Cstr_tuple tys ->
+                let const = if List.length tys = 0 then Constant else Nonconstant in
+                const, decls
             | Cstr_record lbls ->
                 let ty = transl_type_declaration_record ~ctx lbls in
-                Type (path, Type_inline tag, ty) :: decls
-            | _ ->
-                decls
+                let decls = Type (path, Type_inline tag, ty) :: decls in
+                Nonconstant, decls
           in
-          tag :: tags, decls
+          let constr =
+            { constructor_tag= tag
+            ; constructor_constancy= const
+            }
+          in
+          constr :: constrs, decls
         ) constrs ([], [])
       in
       let decl = Type (path, Type_normal, Type_variant constrs) in

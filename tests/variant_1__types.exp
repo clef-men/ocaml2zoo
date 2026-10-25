@@ -8,5 +8,5 @@ Require Import zoo.options.
 
 Zoo type t :=
   | A
-  | B
-  | C.
+  | B _
+  | C _.

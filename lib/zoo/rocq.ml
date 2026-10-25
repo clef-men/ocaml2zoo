@@ -28,9 +28,18 @@ type mutability = Implementation.mutability =
   | Immutable
   | Mutable
 
+type constancy = Implementation.constancy =
+  | Constant
+  | Nonconstant
+
+type zoo_constructor =
+  { zoo_constructor_tag: string
+  ; zoo_constructor_constancy: constancy
+  }
+
 type zoo_type =
   | Zoo_record of mutability * string list
-  | Zoo_variant of string list
+  | Zoo_variant of zoo_constructor list
 
 type item =
   | Newline
@@ -90,6 +99,17 @@ let pp_mutability ppf = function
   | Mutable ->
       Fmt.pf ppf " mutable"
 
+let pp_constancy ppf = function
+  | Constant ->
+      ()
+  | Nonconstant ->
+      Fmt.pf ppf " _"
+
+let pp_zoo_constructor ppf constr =
+  Fmt.pf ppf "%s%a"
+    constr.zoo_constructor_tag
+    pp_constancy constr.zoo_constructor_constancy
+
 let pp_zoo_type ppf = function
   | Zoo_record (mut, flds) ->
       Fmt.pf ppf "%a@,  @[<v>{ %a@,}@]"
@@ -97,7 +117,7 @@ let pp_zoo_type ppf = function
         Fmt.(list ~sep:(any "@,; ") string) flds
   | Zoo_variant constrs ->
       Fmt.pf ppf "@,  @[<v>| %a@]"
-        Fmt.(list ~sep:(any "@,| ") string) constrs
+        Fmt.(list ~sep:(any "@,| ") pp_zoo_constructor) constrs
 
 let pp_item ppf = function
   | Newline ->
