@@ -1,8 +1,12 @@
 open Implementation
 open Mode
 
-let separator =
-  "٠"
+module Separator = struct
+  let cdot1 =
+    "۰"
+  let cdot2 =
+    "٠"
+end
 
 module Punctuation = struct
   let alt =
@@ -198,6 +202,12 @@ module Type = struct
     "val"
 end
 
+module Custom_entry = struct
+  let recs =
+    Printf.sprintf "zoo%srecs"
+      Separator.cdot1
+end
+
 let pp_boolean ppf =
   Fmt.pf ppf "%B"
 
@@ -228,7 +238,7 @@ let pp_pattern ppf = function
   | Pat_constr (tag, bdrs) ->
       Fmt.pf ppf "%s%a %a"
         Punctuation.backtick
-        (Gpath.pp ~sep:separator) tag
+        (Gpath.pp ~sep:Separator.cdot2) tag
         Fmt.(list ~sep:(const string @@ Punctuation.comma ^ " ") pp_binder) bdrs
 
 let pp_unop ppf op =
@@ -426,7 +436,7 @@ let rec level = function
 
 let rec pp_expression' ~mod_ lvl ppf = function
   | Const path ->
-      Gpath.pp ~sep:separator ppf path
+      Gpath.pp ~sep:Separator.cdot2 ppf path
   | Var var ->
       pp_variable ppf var
   | Bool bool ->
@@ -556,11 +566,11 @@ let rec pp_expression' ~mod_ lvl ppf = function
   | Constr (_, tag, []) ->
       Fmt.pf ppf "%s%a"
         Punctuation.tag
-        (Gpath.pp ~sep:separator) tag
+        (Gpath.pp ~sep:Separator.cdot2) tag
   | Constr (flag, tag, exprs) ->
       Fmt.pf ppf "@[<hv>%s%a%s@;<1 2>%a@ %s@]"
         Punctuation.backtick
-        (Gpath.pp ~sep:separator) tag
+        (Gpath.pp ~sep:Separator.cdot2) tag
         ( match flag with
           | Constr_immutable_nongenerative ->
               Punctuation.paren_left
@@ -593,7 +603,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
       Fmt.pf ppf "@[%a@]%s%a%s"
         (pp_expression ~mod_ lvl) expr
         Punctuation.proj_left
-        (Gpath.pp ~sep:separator) fld
+        (Gpath.pp ~sep:Separator.cdot2) fld
         Punctuation.proj_right
   | Ref_get expr ->
       Fmt.pf ppf "%s@[%a@]"
@@ -608,20 +618,20 @@ let rec pp_expression' ~mod_ lvl ppf = function
       Fmt.pf ppf "@[%a@]%s%a%s"
         (pp_expression ~mod_ lvl) expr
         Punctuation.record_get_left
-        (Gpath.pp ~sep:separator) fld
+        (Gpath.pp ~sep:Separator.cdot2) fld
         Punctuation.record_get_right
   | Record_set (expr1, fld, expr2) ->
       Fmt.pf ppf "@[<hv>@[<hv>@[%a@]@;<1 2>%s%a%s@]@;<1 2>@[%a@]@]"
         (pp_expression ~mod_ @@ next_level lvl) expr1
         Punctuation.record_set_left
-        (Gpath.pp ~sep:separator) fld
+        (Gpath.pp ~sep:Separator.cdot2) fld
         Punctuation.record_set_right
         (pp_expression ~mod_ lvl) expr2
   | Atomic_loc (expr, fld) ->
       Fmt.pf ppf "@[%a@]%s%a%s"
         (pp_expression ~mod_ lvl) expr
         Punctuation.atomic_loc_left
-        (Gpath.pp ~sep:separator) fld
+        (Gpath.pp ~sep:Separator.cdot2) fld
         Punctuation.atomic_loc_right
 and pp_expression ~mod_ lvl ppf expr =
   let lvl_expr = level expr in
@@ -680,7 +690,7 @@ and pp_branch ~mod_ ppf br =
         pp_binder bdr2
   | _ ->
       Fmt.pf ppf "%a%s%a"
-        (Gpath.pp ~sep:separator) br.branch_tag
+        (Gpath.pp ~sep:Separator.cdot2) br.branch_tag
         (match br.branch_fields with [] -> "" | _ -> " ")
         Fmt.(list ~sep:(const char ' ') pp_binder) br.branch_fields
   end ;
@@ -752,7 +762,7 @@ let transl_value_code ~mod_ ~gen = function
   | Val_expr (path, expr) ->
       [ Rocq.definition
           Locality_normal
-          Lpath.(path |> to_string ~sep:separator ~mod_)
+          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
           (Some Type.value)
           ( fun ppf () ->
               pp_expression_box ~mod_ ppf expr
@@ -761,7 +771,7 @@ let transl_value_code ~mod_ ~gen = function
   | Val_fun (path, params, expr) ->
       [ Rocq.definition
           Locality_normal
-          Lpath.(path |> to_string ~sep:separator ~mod_)
+          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
           (Some Type.value)
           ( fun ppf () ->
               Fmt.pf ppf "@[<v>%s %a %s@,  @[%a@]@]"
@@ -774,7 +784,7 @@ let transl_value_code ~mod_ ~gen = function
   | Val_recs [path, var, params, body] ->
       [ Rocq.definition
           Locality_normal
-          Lpath.(path |> to_string ~sep:separator ~mod_)
+          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
           (Some Type.value)
           ( fun ppf () ->
               Fmt.pf ppf "@[<v>%s %a %a %s@,  @[%a@]@]"
@@ -790,10 +800,14 @@ let transl_value_code ~mod_ ~gen = function
       List.concat
       [ [ Rocq.definition
             Locality_local
-            (Printf.sprintf "__zoo_recs_%i" id)
+            ( Printf.sprintf "__%s%s%i"
+                Custom_entry.recs
+                Separator.cdot1
+                id
+            )
             None
             ( fun ppf () ->
-                Fmt.pf ppf "@[<v>( @[<v>%s %a@]@,)%%zoo_recs@]"
+                Fmt.pf ppf "@[<v>( @[<v>%s %a@]@,)%%%s@]"
                   Keyword.recs
                   Fmt.(
                     list
@@ -810,16 +824,19 @@ let transl_value_code ~mod_ ~gen = function
                           (pp_expression ~mod_) body
                       )
                   ) recs
+                  Custom_entry.recs
             )
         ]
       ; List.mapi (fun i (path, _, _, _) ->
           Rocq.definition
             Locality_normal
-            Lpath.(path |> to_string ~sep:separator ~mod_)
+            Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
             None
             ( fun ppf () ->
-                Fmt.pf ppf "ValRecs %i __zoo_recs_%i"
+                Fmt.pf ppf "ValRecs %i __%s%s%i"
                   i
+                  Custom_entry.recs
+                  Separator.cdot1
                   id
             )
         ) recs
@@ -828,26 +845,28 @@ let transl_value_code ~mod_ ~gen = function
             Locality_global
             None
             ( fun ppf () ->
-                Fmt.pf ppf "@[<v>AsValRecs'@,  @[<v>%a@,%i@,__zoo_recs_%i@,[ %a@,]@]@]"
-                  (Lpath.pp ~sep:separator ~mod_) path
+                Fmt.pf ppf "@[<v>AsValRecs'@,  @[<v>%a@,%i@,__%s%s%i@,[ %a@,]@]@]"
+                  (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
                   i
+                  Custom_entry.recs
+                  Separator.cdot1
                   id
                   Fmt.(
                     list ~sep:(any "@,; ") @@ fun ppf (path, _, _, _) ->
-                      Lpath.pp ~sep:separator ~mod_ ppf path
+                      Lpath.pp ~sep:Separator.cdot2 ~mod_ ppf path
                   ) recs
             )
         ) recs
       ]
   | Val_opaque path ->
       [ Rocq.parameter
-          Lpath.(path |> to_string ~sep:separator ~mod_)
+          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
           Type.value
       ]
 let transl_value_opaque ~mod_ path =
   Rocq.opaque
     Locality_global
-    Lpath.(path |> cons mod_ |> to_string ~sep:separator)
+    Lpath.(path |> cons mod_ |> to_string ~sep:Separator.cdot2)
 let transl_value_opaque ~mod_ = function
   | Val_expr (path, _)
   | Val_fun (path, _, _)

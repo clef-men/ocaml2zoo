@@ -6,21 +6,21 @@ Require Import zoo.language.notations.
 Require Import zoo.language.typeclasses.
 Require Import zoo.options.
 
-#[local] Definition __zoo_recs_0 :=
+#[local] Definition __zoo۰recs۰0 :=
   ( 𝗿𝗲𝗰𝘀 "test3" "x" ->
       "x"
     𝘄𝗶𝘁𝗵 "test4" "x" ->
       "x"
-  )%zoo_recs.
+  )%zoo۰recs.
 Definition mutual٠test3 :=
-  ValRecs 0 __zoo_recs_0.
+  ValRecs 0 __zoo۰recs۰0.
 Definition mutual٠test4 :=
-  ValRecs 1 __zoo_recs_0.
+  ValRecs 1 __zoo۰recs۰0.
 #[global] Instance :
   AsValRecs'
     mutual٠test3
     0
-    __zoo_recs_0
+    __zoo۰recs۰0
     [ mutual٠test3
     ; mutual٠test4
     ].
@@ -31,7 +31,7 @@ Qed.
   AsValRecs'
     mutual٠test4
     1
-    __zoo_recs_0
+    __zoo۰recs۰0
     [ mutual٠test3
     ; mutual٠test4
     ].
@@ -39,21 +39,21 @@ Proof.
   done.
 Qed.
 
-#[local] Definition __zoo_recs_1 :=
+#[local] Definition __zoo۰recs۰1 :=
   ( 𝗿𝗲𝗰𝘀 "test5" "x" ->
       "test6" "x"
     𝘄𝗶𝘁𝗵 "test6" "x" ->
       "test5" "x"
-  )%zoo_recs.
+  )%zoo۰recs.
 Definition mutual٠test5 :=
-  ValRecs 0 __zoo_recs_1.
+  ValRecs 0 __zoo۰recs۰1.
 Definition mutual٠test6 :=
-  ValRecs 1 __zoo_recs_1.
+  ValRecs 1 __zoo۰recs۰1.
 #[global] Instance :
   AsValRecs'
     mutual٠test5
     0
-    __zoo_recs_1
+    __zoo۰recs۰1
     [ mutual٠test5
     ; mutual٠test6
     ].
@@ -64,7 +64,7 @@ Qed.
   AsValRecs'
     mutual٠test6
     1
-    __zoo_recs_1
+    __zoo۰recs۰1
     [ mutual٠test5
     ; mutual٠test6
     ].
