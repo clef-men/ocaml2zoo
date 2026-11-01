@@ -1,11 +1,5 @@
-module Error : sig
-  type t
-
-  val pp :
-    t Fmt.t
-end
-
-exception Error of Location.t * Error.t
+module Error =
+  Implementation_of_cmt_error
 
 exception Ignore
 

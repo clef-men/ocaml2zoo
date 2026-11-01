@@ -1,641 +1,23 @@
 open Implementation
 
-module Builtin = struct
-  let raisings =
-    [|[|"Stdlib";"raise"|]
-    ; [|"Stdlib";"invalid_arg"|]
-    ; [|"Stdlib";"failwith"|]
-    |]
-  let raisings =
-    Array.fold_left (fun acc path ->
-      Path.Set.add (Path.of_array path) acc
-    ) Path.Set.empty raisings
-
-  type nonraising =
-    | Nonraising_untyped of (expression list -> expression option) * expression option
-    | Nonraising_typed of ((Types.type_expr * expression) list -> expression option)
-  let nonraisings =
-    let helper1 mk_expr =
-      ( 1
-      , Nonraising_untyped
-        ( ( function
-              | [expr] ->
-                  Some (mk_expr expr)
-              | _ ->
-                  None
-          )
-        , None
-        )
-      )
-    in
-    let helper2 mk_expr =
-      ( 2
-      , Nonraising_untyped
-        ( ( function
-              | [expr1; expr2] ->
-                  Some (mk_expr expr1 expr2)
-              | _ ->
-                  None
-          )
-        , None
-        )
-      )
-    in
-    let helper3 mk_expr =
-      ( 3
-      , Nonraising_untyped
-        ( ( function
-              | [expr1; expr2; expr3] ->
-                  Some (mk_expr expr1 expr2 expr3)
-              | _ ->
-                  None
-          )
-        , None
-        )
-      )
-    in
-    [|[|"Stdlib";"ignore"|],
-      ( 1
-      , Nonraising_untyped
-        ( ( function
-              | [expr] ->
-                  Some (Seq (expr, Tuple []))
-              | _ ->
-                  None
-          )
-        , Some (Fun ([None], Tuple []))
-        )
-      )
-    ; [|"Stdlib";"not"|],
-      helper1 (fun expr ->
-        Unop (Unop_neg, expr)
-      )
-    ; [|"Stdlib";"~-"|],
-      helper1 (fun expr ->
-        Unop (Unop_minus, expr)
-      )
-    ; [|"Stdlib";"+"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_plus, expr1, expr2)
-      )
-    ; [|"Stdlib";"-"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_minus, expr1, expr2)
-      )
-    ; [|"Stdlib";"*"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_mult, expr1, expr2)
-      )
-    ; [|"Stdlib";"/"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_quot, expr1, expr2)
-      )
-    ; [|"Stdlib";"mod"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_rem, expr1, expr2)
-      )
-    ; [|"Stdlib";"land"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_land, expr1, expr2)
-      )
-    ; [|"Stdlib";"lor"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_lor, expr1, expr2)
-      )
-    ; [|"Stdlib";"lsl"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_lsl, expr1, expr2)
-      )
-    ; [|"Stdlib";"lsr"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_lsr, expr1, expr2)
-      )
-    ; [|"Stdlib";"=="|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_eq, expr1, expr2)
-      )
-    ; [|"Stdlib";"!="|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_ne, expr1, expr2)
-      )
-    ; [|"Stdlib";"<="|],
-      ( 2
-      , Nonraising_typed (
-          function
-            | [ty1, expr1; _ty2, expr2] ->
-                if Types.is_int ty1 then
-                  Some (Binop (Binop_le, expr1, expr2))
-                else
-                  None
-            | _ ->
-                None
-        )
-      )
-    ; [|"Stdlib";"<"|],
-      ( 2
-      , Nonraising_typed (
-          function
-            | [ty1, expr1; _ty2, expr2] ->
-                if Types.is_int ty1 then
-                  Some (Binop (Binop_lt, expr1, expr2))
-                else
-                  None
-            | _ ->
-                None
-        )
-      )
-    ; [|"Stdlib";">="|],
-      ( 2
-      , Nonraising_typed (
-          function
-            | [ty1, expr1; _ty2, expr2] ->
-                if Types.is_int ty1 then
-                  Some (Binop (Binop_ge, expr1, expr2))
-                else
-                  None
-            | _ ->
-                None
-        )
-      )
-    ; [|"Stdlib";">"|],
-      ( 2
-      , Nonraising_typed (
-          function
-            | [ty1, expr1; _ty2, expr2] ->
-                if Types.is_int ty1 then
-                  Some (Binop (Binop_gt, expr1, expr2))
-                else
-                  None
-            | _ ->
-                None
-        )
-      )
-    ; [|"Stdlib";"&&"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_and, expr1, expr2)
-      )
-    ; [|"Stdlib";"||"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_or, expr1, expr2)
-      )
-    ; [|"Stdlib";"="|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_structeq, expr1, expr2)
-      )
-    ; [|"Stdlib";"<>"|],
-      helper2 (fun expr1 expr2 ->
-        Binop (Binop_structne, expr1, expr2)
-      )
-    ; [|"Stdlib";"ref"|],
-      helper1 (fun expr ->
-        Apply (Primitive Ref, [expr])
-      )
-    ; [|"Stdlib";"!"|],
-      helper1 (fun expr ->
-        Ref_get expr
-      )
-    ; [|"Stdlib";":="|],
-      helper2 (fun expr1 expr2 ->
-        Ref_set (expr1, expr2)
-      )
-    ; [|"Stdlib";"Obj";"repr"|],
-      helper1 (fun expr ->
-        expr
-      )
-    ; [|"Stdlib";"Obj";"obj"|],
-      helper1 (fun expr ->
-        expr
-      )
-    ; [|"Stdlib";"Obj";"magic"|],
-      helper1 (fun expr ->
-        expr
-      )
-    ; [|"Stdlib";"Obj";"is_int"|],
-      helper1 (fun expr ->
-        Apply (Primitive Immediate, [expr])
-      )
-    ; [|"Stdlib";"Obj";"tag"|],
-      helper1 (fun expr ->
-        Apply (Primitive Tag, [expr])
-      )
-    ; [|"Stdlib";"Obj";"size"|],
-      helper1 (fun expr ->
-        Apply (Primitive Size, [expr])
-      )
-    ; [|"Stdlib";"Obj";"field"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Load, [expr1; expr2])
-      )
-    ; [|"Stdlib";"Obj";"set_field"|],
-      helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Store, [expr1; expr2; expr3])
-      )
-    ; [|"Stdlib";"Obj";"new_block"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Alloc, [expr1; expr2])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"get"|],
-      helper1 (fun expr ->
-        Apply (Primitive Load, [Proj (expr, Gpath.Builtin._0); Proj (expr, Gpath.Builtin._1)])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"set"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Store, [Proj (expr1, Gpath.Builtin._0); Proj (expr1, Gpath.Builtin._1); expr2])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"exchange"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Xchg, [expr1; expr2])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"compare_and_set"|],
-      helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Cas, [expr1; expr2; expr3])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"fetch_and_add"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Faa, [expr1; expr2])
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"decr"|],
-      helper1 (fun expr ->
-        Seq
-        ( Apply (Primitive Faa, [expr; Int (-1)])
-        , Tuple []
-        )
-      )
-    ; [|"Stdlib";"Atomic";"Loc";"incr"|],
-      helper1 (fun expr ->
-        Seq
-        ( Apply (Primitive Faa, [expr; Int 1])
-        , Tuple []
-        )
-      )
-    ; [|"Stdlib";"Atomic";"make"|],
-      helper1 (fun expr ->
-        Apply (Primitive Ref, [expr])
-      )
-    ; [|"Stdlib";"Atomic";"get"|],
-      helper1 (fun expr ->
-        Ref_get expr
-      )
-    ; [|"Stdlib";"Atomic";"set"|],
-      helper2 (fun expr1 expr2 ->
-        Ref_set (expr1, expr2)
-      )
-    ; [|"Stdlib";"Atomic";"exchange"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Xchg, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2])
-      )
-    ; [|"Stdlib";"Atomic";"compare_and_set"|],
-      helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Cas, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2; expr3])
-      )
-    ; [|"Stdlib";"Atomic";"fetch_and_add"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Faa, [Atomic_loc (expr1, Gpath.Builtin.contents); expr2])
-      )
-    ; [|"Stdlib";"Atomic";"decr"|],
-      helper1 (fun expr ->
-        Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.Builtin.contents); Int (-1)])
-        , Tuple []
-        )
-      )
-    ; [|"Stdlib";"Atomic";"incr"|],
-      helper1 (fun expr ->
-        Seq
-        ( Apply (Primitive Faa, [Atomic_loc (expr, Gpath.Builtin.contents); Int 1])
-        , Tuple []
-        )
-      )
-    ; [|"Zoo";"proph"|],
-      helper1 (fun _expr ->
-        Apply (Primitive Proph, [])
-      )
-    ; [|"Zoo";"resolve_with"|],
-      helper3 (fun expr1 expr2 expr3 ->
-        Apply (Primitive Resolve, [expr1; expr2; expr3])
-      )
-    ; [|"Zoo";"resolve_silent"|],
-      helper2 (fun expr1 expr2 ->
-        Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; expr2])
-      )
-    ; [|"Zoo";"resolve"|],
-      helper2 (fun expr1 expr2 ->
-        Let
-        ( Pat_var Var.temporary
-        , expr2
-        , Seq
-          ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; Var Var.temporary])
-          , Var Var.temporary
-          )
-        )
-      )
-    ; [|"Zoo";"id"|],
-      helper1 (fun _expr ->
-        Apply (Primitive Id, [])
-      )
-    |]
-  let nonraisings =
-    nonraisings |> Array.map @@ fun (path, spec) ->
-      Path.of_array path, spec
-
-  type application =
-    | Raising of expression
-    | Nonraising of ((Types.type_expr * expression) list -> expression option)
-  let applications =
-    Path.Map.empty
-  let applications =
-    Path.Set.fold (fun path acc ->
-      let expr = Apply (Primitive Diverge, [Tuple []]) in
-      Path.Map.add path (Raising expr) acc
-    ) raisings applications
-  let applications =
-    Array.fold_left (fun acc (path, (_arity, nonraising)) ->
-      let mk_expr =
-        match nonraising with
-        | Nonraising_untyped (mk_expr, _) ->
-            fun args ->
-              args |> List.map snd |> mk_expr
-        | Nonraising_typed mk_expr ->
-            mk_expr
-      in
-      Path.Map.add path (Nonraising mk_expr) acc
-    ) applications nonraisings
-
-  let values =
-    Path.Map.empty
-  let values =
-    Path.Set.fold (fun path acc ->
-      let expr = Fun ([None], Apply (Primitive Diverge, [Tuple []])) in
-      Path.Map.add path expr acc
-    ) raisings values
-  let values =
-    Array.fold_left (fun acc (path, (arity, nonraising)) ->
-      match nonraising with
-      | Nonraising_untyped (mk_expr, expr) ->
-          let expr =
-            match expr with
-            | Some expr ->
-                expr
-            | None ->
-                let expr = mk_expr @@ List.init arity (fun i -> Var (Var.of_int (i + 1))) in
-                let expr = expr |> Option.get in
-                let expr = Fun (List.init arity (fun i -> Some (Var.of_int (i + 1))), expr) in
-                expr
-          in
-          Path.Map.add path expr acc
-      | Nonraising_typed _ ->
-          acc
-    ) values nonraisings
-
-  let constant_constructors =
-    [|[|"()"|],
-      Tuple []
-    ; [|"true"|],
-      Bool true
-    ; [|"false"|],
-      Bool false
-    ;
-    |]
-  let constant_constructors =
-    Array.fold_left (fun acc (lid, expr) ->
-      Longident.Map.add (Longident.of_array lid) expr acc
-    ) Longident.Map.empty constant_constructors
-
-  let types =
-    [|"list"
-    ; "option"
-    |]
-end
-
-module Error = struct
-  module Unsupported = struct
-    module Shadowing = struct
-      type t =
-        | Constructor
-        | Label
-
-      let to_string = function
-        | Constructor ->
-            "constructor"
-        | Label ->
-            "label"
-    end
-
-    type t =
-      | Literal_non_integer
-      | Pattern_alias
-      | Pattern_constant
-      | Pattern_variant
-      | Pattern_record
-      | Pattern_array
-      | Pattern_or
-      | Pattern_lazy
-      | Pattern_guard
-      | Pattern_constr
-      | Pattern_nested
-      | Pattern_invalid
-      | Pattern_non_trivial
-      | Handler_exception
-      | Expr_let_rec_non_function
-      | Expr_let_mutual
-      | Expr_for_downward
-      | Expr_array
-      | Expr_try
-      | Expr_variant
-      | Expr_send
-      | Expr_new
-      | Expr_inst_var
-      | Expr_set_inst_var
-      | Expr_overwrite
-      | Expr_lazy
-      | Expr_object
-      | Expr_pack
-      | Expr_let_op
-      | Expr_unreachable
-      | Expr_extension
-      | Expr_struct_item
-      | Argument_optional
-      | Argument_omitted
-      | Module_packed
-      | Functor
-      | Type_extensible
-      | Type_external
-      | Decl_recursive
-      | Decl_invalid
-      | Decl_pattern
-      | Decl_eval
-      | Decl_external
-      | Decl_exception
-      | Decl_module_unnamed
-      | Decl_module_rec
-      | Decl_module_alias
-      | Decl_module_type
-      | Decl_class
-      | Decl_class_type
-      | Decl_include
-      | Open
-      | Shadowing of Shadowing.t
-
-    let to_string = function
-      | Literal_non_integer ->
-          "non-integer literal"
-      | Pattern_alias ->
-          {|"as" pattern|}
-      | Pattern_constant ->
-          "constant pattern"
-      | Pattern_variant ->
-          "variant pattern"
-      | Pattern_record ->
-          "invalid record pattern"
-      | Pattern_array ->
-          "array pattern"
-      | Pattern_or ->
-          "disjunction pattern"
-      | Pattern_lazy ->
-          {|"lazy" pattern|}
-      | Pattern_guard ->
-          "guard expression"
-      | Pattern_constr ->
-          "invalid constructor pattern"
-      | Pattern_nested ->
-          "nested pattern"
-      | Pattern_invalid ->
-          "invalid pattern"
-      | Pattern_non_trivial ->
-          "non-trivial pattern in function parameter"
-      | Handler_exception ->
-          "exception handler"
-      | Expr_let_rec_non_function ->
-          "recursive binding must bind a function"
-      | Expr_let_mutual ->
-          "mutually recursive let-bindings"
-      | Expr_for_downward ->
-          {|downward "for" loop|}
-      | Expr_array ->
-          "array expression"
-      | Expr_try ->
-          {|"try" expression|}
-      | Expr_variant ->
-          "variant expression"
-      | Expr_send ->
-          "method call"
-      | Expr_new ->
-          {|"new" expression|}
-      | Expr_inst_var ->
-          "instance variable"
-      | Expr_set_inst_var ->
-          "instance variable assignment"
-      | Expr_overwrite ->
-          "overwrite expression"
-      | Expr_lazy ->
-          {|"lazy" expression|}
-      | Expr_object ->
-          "object expression"
-      | Expr_pack ->
-          "module expression"
-      | Expr_let_op ->
-          "binding operator"
-      | Expr_unreachable ->
-          "unreachable branch"
-      | Expr_extension ->
-          "extension"
-      | Argument_optional ->
-          "optional function argument"
-      | Argument_omitted ->
-          "omitted function argument"
-      | Module_packed ->
-          "first-class module"
-      | Functor ->
-          "module functor"
-      | Type_extensible ->
-          "extensible variant"
-      | Type_external ->
-          "external type"
-      | Decl_recursive ->
-          "recursive toplevel declaration must be a function"
-      | Decl_invalid ->
-          "toplevel declaration must be a constant or a function"
-      | Decl_pattern ->
-          "toplevel declaration pattern must be a variable"
-      | Decl_eval ->
-          "evaluated expression"
-      | Decl_external ->
-          "external declaration"
-      | Decl_exception ->
-          "exception declaration"
-      | Decl_module_unnamed ->
-          "unnamed module"
-      | Decl_module_rec ->
-          "recursive module"
-      | Decl_module_alias ->
-          "module alias"
-      | Decl_module_type ->
-          "module type declaration"
-      | Decl_class ->
-          "class declaration"
-      | Decl_class_type ->
-          "class type declaration"
-      | Decl_include ->
-          {|"include" declaration|}
-      | Open ->
-          "opened module must be an identifier"
-      | Shadowing shadowing ->
-          Printf.sprintf "%s shadowing"
-            (Shadowing.to_string shadowing)
-      | Expr_struct_item ->
-          "unsupported local structure item (only basic open statements are supported)"
-
-    let pp ppf t =
-      Fmt.string ppf (to_string t)
-  end
-
-  module Overwrite = struct
-    type t =
-      | Invalid
-      | Typing
-
-    let pp (kind : Attribute.overwrite_kind) ppf = function
-      | Invalid ->
-          Fmt.pf ppf "payload must be %s"
-            begin match kind with
-            | Overwrite _ ->
-                "an expression"
-            | Raw ->
-                "of the form library.module.identifier"
-            end
-      | Typing ->
-          Fmt.pf ppf "cannot infer type"
-  end
-
-  type t =
-    | Unsupported of Unsupported.t
-    | Overwrite of Attribute.overwrite_kind * Overwrite.t
-    | Envaux of Envaux.error
-
-  let pp ppf = function
-    | Unsupported unsupported ->
-        Fmt.pf ppf "unsupported feature: %a"
-          Unsupported.pp unsupported
-    | Overwrite (kind, err) ->
-        Fmt.pf ppf {|attribute "%s%s": %a|}
-          Attribute.overwrite
-          (Attribute.overwrite_kind_to_string kind)
-          (Overwrite.pp kind) err
-    | Envaux err ->
-        Fmt.pf ppf "internal Envaux error: %a"
-          Envaux.report_error err
-end
-
-exception Error of Location.t * Error.t
-
-let error ~loc err =
-  raise @@ Error (loc, err)
-let unsupported ~loc err =
-  error ~loc @@ Unsupported err
-let error_overwrite ~loc kind err =
-  error ~loc @@ Overwrite (kind, err)
+module Error =
+  Implementation_of_cmt_error
+module Context =
+  Implementation_of_cmt_context
+module Builtin =
+  Implementation_of_cmt_builtin
 
 exception Ignore
+
+module Envaux = struct
+  include Envaux
+
+  let env_of_only_summary env =
+    try
+      Envaux.env_of_only_summary env
+    with Error err ->
+      Error.raise ~loc:Location.none (Envaux err)
+end
 
 let record_is_mutable =
   List.exists @@ fun lbl -> lbl.Types.ld_mutable = Mutable
@@ -648,218 +30,12 @@ let record_type_is_mutable ty =
   let[@warning "-8"] Types.Type_record (lbls, _) = ty.Types.type_kind in
   record_is_mutable lbls
 
-module Envaux = struct
-  include Envaux
-
-  let env_of_only_summary env =
-    try
-      Envaux.env_of_only_summary env
-    with Error err ->
-      error ~loc:Location.none (Envaux err)
-end
-
-module Context = struct
-  type scope =
-    { scope_ids: Ident.Set.t
-    ; scope_constructors: string Hashset.t
-    ; scope_labels: string Hashset.t
-    ; scope_final_env: Env.t
-    }
-
-  type t =
-    { library: string
-    ; module_: string
-    (* environment at the current item *)
-    ; mutable env: Env.t
-    (* module scoping *)
-    ; mutable path: string list
-    ; mutable locals: Lpath.t Ident.Map.t
-    ; scopes: scope Stack.t
-    (* variables for the current item *)
-    ; mutable vars: Ident.Set.t
-    (* whether or not to generate a file to make declarations opaque *)
-    ; mutable transparent: bool
-    }
-
-  let create ~lib ~mod_ ~final_env =
-    let scope =
-      { scope_ids= Ident.Set.empty
-      ; scope_constructors= Hashset.create ()
-      ; scope_labels= Hashset.create ()
-      ; scope_final_env= final_env
-      }
-    in
-    { library= lib
-    ; module_= mod_
-    ; env= Env.empty
-    ; path= []
-    ; locals= Ident.Map.empty
-    ; scopes= Stack.of_list [scope]
-    ; vars= Ident.Set.empty
-    ; transparent= false
-    }
-
-  let module_ t =
-    t.module_
-
-  let env t =
-    t.env
-  let set_env t env =
-    t.env <- Envaux.env_of_only_summary env
-
-  let final_env t =
-    let scope = Stack.top t.scopes in
-    scope.scope_final_env
-
-  let find_type t path =
-    Env.find_type path t.env
-
-  let normalize name =
-    if String.starts_with_uppercase name then
-      name |> String.uncapitalize_ascii
-    else
-      name
-
-  let find_local t id =
-    Ident.Map.find id t.locals
-  let add_local t kind id =
-    let path =
-      let name = id |> Ident.name |> normalize in
-      let name =
-        let[@warning "-8"] Some idx = Env.find_index kind id (final_env t) in
-        if idx = 0 then
-          name
-        else
-          name ^ Int.to_string_subscript idx
-      in
-      Lpath.of_list_rev (name :: t.path)
-    in
-    t.locals <- Ident.Map.add id path t.locals ;
-    let scope = Stack.pop t.scopes in
-    let ids = Ident.Set.add id scope.scope_ids in
-    Stack.push { scope with scope_ids= ids } t.scopes ;
-    path
-  let with_module t ~mod_ ~final_env fn =
-    let mod_ = mod_ |> Ident.name |> normalize in
-    let final_env = Envaux.env_of_only_summary final_env in
-    t.path <- mod_ :: t.path ;
-    let scope =
-      { scope_ids= Ident.Set.empty
-      ; scope_constructors= Hashset.create ()
-      ; scope_labels= Hashset.create ()
-      ; scope_final_env= final_env
-      }
-    in
-    Stack.push scope t.scopes ;
-    let res = fn () in
-    let scope = Stack.pop t.scopes in
-    t.locals <- Ident.Set.fold Ident.Map.remove scope.scope_ids t.locals ;
-    t.path <- List.tl t.path ;
-    res
-
-  let add_constructor t (constr : Types.constructor_declaration) =
-    let name = constr.cd_id |> Ident.name in
-    let scope = Stack.top t.scopes in
-    if Hashset.mem scope.scope_constructors name then
-      unsupported ~loc:constr.cd_loc (Shadowing Constructor) ;
-    Hashset.add scope.scope_constructors name
-
-  let add_label t (lbl : Types.label_declaration) =
-    let name = lbl.ld_id |> Ident.name in
-    let scope = Stack.top t.scopes in
-    if Hashset.mem scope.scope_labels name then
-      unsupported ~loc:lbl.ld_loc (Shadowing Label) ;
-    Hashset.add scope.scope_labels name
-
-  let mem_var t id =
-    Ident.Set.mem id t.vars
-  let add_var t id =
-    t.vars <- Ident.Set.add id t.vars
-  let begin_scope t =
-    let vars = t.vars in
-    fun () ->
-      t.vars <- vars
-  let with_scope t fn =
-    let vars = t.vars in
-    let res = fn () in
-    t.vars <- vars ;
-    res
-
-  let resolve_path t ~loc path =
-    match Path.to_list path with
-    | None ->
-        unsupported ~loc Functor
-    | Some (id, names) ->
-        if mem_var t id then (
-          assert (names = []) ;
-          Var (id |> Ident.name)
-        ) else if Ident.global id then (
-          let id = id |> Ident.name in
-          if Array.mem id Builtin.types then
-            Const (Gpath.ident id)
-          else
-            let lib = id |> normalize in
-            let mod_, names =
-              match names with
-              | [] ->
-                  lib, [lib]
-              | name :: names' ->
-                  if String.starts_with_uppercase name then
-                    name |> normalize, names' |> List.map normalize
-                  else
-                    lib, names |> List.map normalize
-            in
-            let path = names |> Lpath.of_list |> Gpath.make ~lib ~mod_ in
-            Const path
-        ) else (
-          let path = find_local t id in
-          let path = names |> List.map normalize |> Lpath.append_list path in
-          let path = Gpath.make ~lib:t.library ~mod_:t.module_ path in
-          Const path
-        )
-  let resolve_path_type =
-    resolve_path
-  let resolve_path_value t ~loc path =
-    match Path.Map.find_opt path Builtin.values with
-    | Some expr ->
-        expr
-    | None ->
-        resolve_path t ~loc path
-
-  let resolve_type t ~loc ty =
-    match Types.get_desc ty with
-    | Tconstr (ty, _, _) ->
-        ty, resolve_path_type t ~loc ty
-    | _ ->
-        assert false
-  let resolve_constructor_or_label t ~loc ty name =
-    let ty, typ_path = resolve_type t ~loc ty in
-    let path =
-      match typ_path with
-      | Const typ_path ->
-          let path = Lpath.set_last typ_path.path name in
-          { typ_path with path }
-      | _ ->
-          assert false
-    in
-    ty, path
-  let resolve_constructor t ~loc (constr : Data_types.constructor_description) =
-    resolve_constructor_or_label t ~loc constr.cstr_res constr.cstr_name
-  let resolve_label t ~loc (lbl : Data_types.label_description) =
-    resolve_constructor_or_label t ~loc lbl.lbl_res lbl.lbl_name
-
-  let transparent t =
-    t.transparent
-  let set_transparent t =
-    t.transparent <- true
-end
-
 let transl_open_declaration ~loc (open_ : Typedtree.open_declaration) =
   match open_.open_expr.mod_desc with
   | Tmod_ident _ ->
       ()
   | _ ->
-      unsupported ~loc Open
+      Error.raise_unsupported ~loc Open
 
 let rec pattern_is_neutral (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -886,13 +62,13 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
         Context.add_var ctx id ;
         Some (id |> Ident.name)
       ) else (
-        unsupported ~loc:pat.pat_loc err
+        Error.raise_unsupported ~loc:pat.pat_loc err
       )
   | Tpat_tuple pats ->
       if List.for_all (fun (_, pat) -> pattern_is_neutral pat) pats then
         None
       else
-        unsupported ~loc:pat.pat_loc err
+        Error.raise_unsupported ~loc:pat.pat_loc err
   | Tpat_record ((_, { lbl_repres= Record_unboxed _; _ }, pat) :: _, _) ->
       pattern_to_binder ~ctx ~err pat
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
@@ -904,9 +80,9 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
       then
         None
       else
-        unsupported ~loc:pat.pat_loc err
+        Error.raise_unsupported ~loc:pat.pat_loc err
   | _ ->
-      unsupported ~loc:pat.pat_loc err
+      Error.raise_unsupported ~loc:pat.pat_loc err
 
 let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -923,32 +99,32 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_record (((_, lbl, _) :: _) as pats, Closed) ->
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
       if record_type_is_mutable @@ Context.find_type ctx rcd then
-        unsupported ~loc:pat.pat_loc Pattern_record ;
+        Error.raise_unsupported ~loc:pat.pat_loc Pattern_record ;
       let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_nested pat) pats in
       Some (Pat_tuple bdrs)
   | Tpat_record _ ->
-      unsupported ~loc:pat.pat_loc Pattern_record
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_record
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
       let[@warning "-8"] [pat] = pats in
       transl_pattern ~ctx pat
   | Tpat_construct (lid, constr, pats, _) ->
       let bdrs = List.map (pattern_to_binder ~ctx ~err:Pattern_nested) pats in
       if Longident.Map.mem lid.txt Builtin.constant_constructors then
-        unsupported ~loc:lid.loc Pattern_constr ;
+        Error.raise_unsupported ~loc:lid.loc Pattern_constr ;
       let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
       Some (Pat_constr (tag, bdrs))
   | Tpat_alias _ ->
-      unsupported ~loc:pat.pat_loc Pattern_alias
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_alias
   | Tpat_constant _ ->
-      unsupported ~loc:pat.pat_loc Pattern_constant
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_constant
   | Tpat_variant _ ->
-      unsupported ~loc:pat.pat_loc Pattern_variant
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_variant
   | Tpat_array _ ->
-      unsupported ~loc:pat.pat_loc Pattern_array
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_array
   | Tpat_or _ ->
-      unsupported ~loc:pat.pat_loc Pattern_or
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_or
   | Tpat_lazy _ ->
-      unsupported ~loc:pat.pat_loc Pattern_lazy
+      Error.raise_unsupported ~loc:pat.pat_loc Pattern_lazy
 
 let check_argument_label ~loc (lbl : Asttypes.arg_label) =
   match lbl with
@@ -956,7 +132,7 @@ let check_argument_label ~loc (lbl : Asttypes.arg_label) =
   | Labelled _ ->
       ()
   | Optional _ ->
-      unsupported ~loc Argument_optional
+      Error.raise_unsupported ~loc Argument_optional
 let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let rcd, fld = Context.resolve_label ctx ~loc lbl in
   if record_type_is_mutable @@ Context.find_type ctx rcd then
@@ -970,7 +146,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_constant (Const_int int) ->
       Int int
   | Texp_constant _ ->
-      unsupported ~loc:expr.exp_loc Literal_non_integer
+      Error.raise_unsupported ~loc:expr.exp_loc Literal_non_integer
   | Texp_let (rec_flag, [bdg], expr2) ->
       let expr1 = transl_expression ~ctx bdg.vb_expr in
       Context.with_scope ctx @@ fun () ->
@@ -986,12 +162,12 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
                 Letrec (rec_flag, var, bdrs, expr1, expr2)
             | _ ->
                 if rec_flag = Recursive then
-                  unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
+                  Error.raise_unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
                 let expr2 = transl_expression ~ctx expr2 in
                 Let (pat, expr1, expr2)
         end
   | Texp_let (_, _, _) ->
-      unsupported ~loc:expr.exp_loc Expr_let_mutual
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_let_mutual
   | Texp_function (params, body) ->
       Context.with_scope ctx @@ fun () ->
         let bdrs =
@@ -1016,7 +192,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
           check_argument_label ~loc:expr.exp_loc lbl ;
           match expr' with
           | Omitted () ->
-              unsupported ~loc:expr.exp_loc Argument_omitted
+              Error.raise_unsupported ~loc:expr.exp_loc Argument_omitted
           | Arg expr' ->
               expr'.exp_type, transl_expression ~ctx expr'
       in
@@ -1093,7 +269,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         let expr3 = transl_expression ~ctx expr3 in
         For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
-      unsupported ~loc:expr.exp_loc Expr_for_downward
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_for_downward
   | Texp_tuple exprs ->
       let exprs = List.map (fun (_, expr) -> transl_expression ~ctx expr) exprs in
       Tuple exprs
@@ -1176,35 +352,35 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       transl_open_declaration ~loc:expr.exp_loc open_ ;
       transl_expression ~ctx expr
   | Texp_array _ ->
-      unsupported ~loc:expr.exp_loc Expr_array
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_array
   | Texp_try _ ->
-      unsupported ~loc:expr.exp_loc Expr_try
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_try
   | Texp_variant _ ->
-      unsupported ~loc:expr.exp_loc Expr_variant
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_variant
   | Texp_send _ ->
-      unsupported ~loc:expr.exp_loc Expr_send
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_send
   | Texp_new _ ->
-      unsupported ~loc:expr.exp_loc Expr_new
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_new
   | Texp_instvar _ ->
-      unsupported ~loc:expr.exp_loc Expr_inst_var
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_inst_var
   | Texp_setinstvar _ ->
-      unsupported ~loc:expr.exp_loc Expr_set_inst_var
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_set_inst_var
   | Texp_override _ ->
-      unsupported ~loc:expr.exp_loc Expr_overwrite
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_overwrite
   | Texp_lazy _ ->
-      unsupported ~loc:expr.exp_loc Expr_lazy
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_lazy
   | Texp_object _ ->
-      unsupported ~loc:expr.exp_loc Expr_object
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_object
   | Texp_pack _ ->
-      unsupported ~loc:expr.exp_loc Expr_pack
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_pack
   | Texp_letop _ ->
-      unsupported ~loc:expr.exp_loc Expr_let_op
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_let_op
   | Texp_unreachable ->
-      unsupported ~loc:expr.exp_loc Expr_unreachable
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_unreachable
   | Texp_extension_constructor _ ->
-      unsupported ~loc:expr.exp_loc Expr_extension
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_extension
   | Texp_struct_item _ ->
-      unsupported ~loc:expr.exp_loc Expr_struct_item
+      Error.raise_unsupported ~loc:expr.exp_loc Expr_struct_item
 and transl_expression_ident ~ctx ~loc path =
   Context.resolve_path_value ctx ~loc path
 and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
@@ -1243,7 +419,9 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
     | [] ->
         acc, None
     | br :: brs ->
-        Option.iter (fun expr -> unsupported ~loc:expr.Typedtree.exp_loc Pattern_guard) br.Typedtree.c_guard ;
+        br.Typedtree.c_guard |> Option.iter (fun expr ->
+          Error.raise_unsupported ~loc:expr.Typedtree.exp_loc Pattern_guard
+        ) ;
         let end_scope = Context.begin_scope ctx in
         let pat = br.c_lhs in
         let pat =
@@ -1251,9 +429,9 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
           | Tpat_value pat ->
               (pat :> Typedtree.(value general_pattern))
           | Tpat_exception _ ->
-              unsupported ~loc:pat.pat_loc Handler_exception
+              Error.raise_unsupported ~loc:pat.pat_loc Handler_exception
           | Tpat_or _ ->
-              unsupported ~loc:pat.pat_loc Pattern_or
+              Error.raise_unsupported ~loc:pat.pat_loc Pattern_or
           | Tpat_any ->
               pat
           | Tpat_var _ ->
@@ -1307,7 +485,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               aux2 pat bdr
           | Tpat_construct (lid, constr, pats, _) ->
               if Longident.Map.mem lid.txt Builtin.constant_constructors then
-                unsupported ~loc:lid.loc Pattern_constr ;
+                Error.raise_unsupported ~loc:lid.loc Pattern_constr ;
               let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
               let bdrs, bdr, expr =
                 match constr.cstr_inlined with
@@ -1346,12 +524,12 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                         bdrs, bdr, expr
                     | Tpat_record (pats, Closed) ->
                         if record_type_is_mutable ty then
-                          unsupported ~loc:pat.pat_loc Pattern_invalid ;
+                          Error.raise_unsupported ~loc:pat.pat_loc Pattern_invalid ;
                         let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_invalid pat) pats in
                         let expr = transl_expression ~ctx br.c_rhs in
                         bdrs, bdr, expr
                     | _ ->
-                        unsupported ~loc:pat.pat_loc Pattern_invalid
+                        Error.raise_unsupported ~loc:pat.pat_loc Pattern_invalid
               in
               end_scope () ;
               let br =
@@ -1363,7 +541,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               in
               aux1 (br :: acc) brs
           | _ ->
-              unsupported ~loc:pat.pat_loc Pattern_invalid
+              Error.raise_unsupported ~loc:pat.pat_loc Pattern_invalid
         in
         aux2 pat bdr
   in
@@ -1393,11 +571,11 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path
         Val_fun (path, bdrs, expr)
   | _ ->
       if rec_ then
-        unsupported ~loc:bdg.vb_loc Decl_recursive ;
+        Error.raise_unsupported ~loc:bdg.vb_loc Decl_recursive ;
       if expression_is_value expr then
         Val_expr (path, expr)
       else
-        unsupported ~loc:bdg.vb_loc Decl_invalid
+        Error.raise_unsupported ~loc:bdg.vb_loc Decl_invalid
 let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
@@ -1408,7 +586,7 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
             expr
         | _ ->
-            error_overwrite ~loc:attr.attr_loc kind Invalid
+            Error.raise_overwrite ~loc:attr.attr_loc kind Invalid
       in
       let add ~env ~loc id =
         let uid =
@@ -1438,7 +616,7 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         try
           Typecore.type_expression env expr
         with Env.Error.In_context _ ->
-          error_overwrite ~loc:attr.attr_loc kind Typing
+          Error.raise_overwrite ~loc:attr.attr_loc kind Typing
       in
       transl_value_binding ~ctx rec_flag bdgs bdg path id rec_flag' expr
   | Some (Raw, attr) ->
@@ -1447,13 +625,13 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
             raw
         | _ ->
-            error_overwrite ~loc:attr.attr_loc Raw Invalid
+            Error.raise_overwrite ~loc:attr.attr_loc Raw Invalid
       in
       match String.split_on_char '.' raw with
       | [lib; mod_; name] ->
           Val_expr (path, Const (Gpath.ident ~lib ~mod_ name))
       | _ ->
-          error_overwrite ~loc:attr.attr_loc Raw Invalid
+          Error.raise_overwrite ~loc:attr.attr_loc Raw Invalid
 
 let transl_value_bindings ~ctx rec_flag bdgs =
   let bdgs =
@@ -1463,7 +641,7 @@ let transl_value_bindings ~ctx rec_flag bdgs =
           let path = Context.add_local ctx Ident_value id in
           bdg, path, id, loc
       | _ ->
-          unsupported ~loc:bdg.vb_pat.pat_loc Decl_pattern
+          Error.raise_unsupported ~loc:bdg.vb_pat.pat_loc Decl_pattern
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
   if Attribute.has_ignore bdg.vb_attributes then
@@ -1529,9 +707,9 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
       let decl = Type (path, Type_normal, Type_variant constrs) in
       decl :: decls
   | Type_open ->
-      unsupported ~loc:ty.typ_loc Type_extensible
+      Error.raise_unsupported ~loc:ty.typ_loc Type_extensible
   | Type_external _ ->
-      unsupported ~loc:ty.typ_loc Type_external
+      Error.raise_unsupported ~loc:ty.typ_loc Type_external
 
 let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
   match mexpr.mod_desc with
@@ -1540,18 +718,18 @@ let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
   | Tmod_constraint (mexpr, _ty, _constraint, _coerc) ->
       transl_module_expr ~ctx ~mod_ mexpr
   | Tmod_ident _ ->
-      unsupported ~loc:mexpr.mod_loc Decl_module_alias
+      Error.raise_unsupported ~loc:mexpr.mod_loc Decl_module_alias
   | Tmod_functor _
   | Tmod_apply _
   | Tmod_apply_unit _ ->
-      unsupported ~loc:mexpr.mod_loc Functor
+      Error.raise_unsupported ~loc:mexpr.mod_loc Functor
   | Tmod_unpack _ ->
-      unsupported ~loc:mexpr.mod_loc Module_packed
+      Error.raise_unsupported ~loc:mexpr.mod_loc Module_packed
 
 and transl_module_binding ~ctx (mbdg : Typedtree.module_binding) =
   match mbdg.mb_id with
   | None ->
-      unsupported ~loc:mbdg.mb_loc Decl_module_unnamed
+      Error.raise_unsupported ~loc:mbdg.mb_loc Decl_module_unnamed
   | Some mod_ ->
       let _path = Context.add_local ctx Ident_module mod_ in
       transl_module_expr ~ctx ~mod_ mbdg.mb_expr
@@ -1576,23 +754,23 @@ and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   | Tstr_module mbdg ->
       transl_module_binding ~ctx mbdg
   | Tstr_eval _ ->
-      unsupported ~loc:str_item.str_loc Decl_eval
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_eval
   | Tstr_primitive _ ->
-      unsupported ~loc:str_item.str_loc Decl_external
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_external
   | Tstr_typext _ ->
-      unsupported ~loc:str_item.str_loc Type_extensible
+      Error.raise_unsupported ~loc:str_item.str_loc Type_extensible
   | Tstr_exception _ ->
-      unsupported ~loc:str_item.str_loc Decl_exception
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_exception
   | Tstr_recmodule _ ->
-      unsupported ~loc:str_item.str_loc Decl_module_rec
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_module_rec
   | Tstr_modtype _ ->
-      unsupported ~loc:str_item.str_loc Decl_module_type
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_module_type
   | Tstr_class _ ->
-      unsupported ~loc:str_item.str_loc Decl_class
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_class
   | Tstr_class_type _ ->
-      unsupported ~loc:str_item.str_loc Decl_class_type
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_class_type
   | Tstr_include _ ->
-      unsupported ~loc:str_item.str_loc Decl_include
+      Error.raise_unsupported ~loc:str_item.str_loc Decl_include
 
 and transl_structure' ~ctx (str : Typedtree.structure) =
   List.concat_map (transl_structure_item ~ctx) str.str_items

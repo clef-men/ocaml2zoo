@@ -45,7 +45,7 @@ let main_cmt ~lib_name ~mod_name ~input ~output =
       | Implementation str ->
           Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
           begin match Zoo.Implementation_of_cmt.transl ~lib:lib_name ~mod_:mod_name str with
-          | exception Zoo.Implementation_of_cmt.Error (loc, err) ->
+          | exception Zoo.Implementation_of_cmt.Error.Error (loc, err) ->
               error ~usage:false "%a:@ %a"
                 Location.print_loc loc
                 Zoo.Implementation_of_cmt.Error.pp err
