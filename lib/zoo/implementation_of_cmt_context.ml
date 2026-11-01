@@ -3,12 +3,39 @@ module Error =
 module Builtin =
   Implementation_of_cmt_builtin
 
-type scope =
-  { scope_ids: Ident.Set.t
-  ; scope_constructors: string Hashset.t
-  ; scope_labels: string Hashset.t
-  ; scope_final_env: Env.t
-  }
+module Scope = struct
+  type t =
+    { mutable idents: Ident.Set.t
+    ; constructors: string Hashset.t
+    ; labels: string Hashset.t
+    ; final_env: Env.t
+    }
+
+  let create ~final_env =
+    { idents= Ident.Set.empty
+    ; constructors= Hashset.create ()
+    ; labels= Hashset.create ()
+    ; final_env= final_env
+    }
+
+  let idents t =
+    t.idents
+  let add_ident t id =
+    t.idents <- Ident.Set.add id t.idents
+
+  let add_constructor t ~loc name =
+    if Hashset.mem t.constructors name then
+      Error.raise_unsupported ~loc (Shadowing Constructor) ;
+    Hashset.add t.constructors name
+
+  let add_label t ~loc name =
+    if Hashset.mem t.labels name then
+      Error.raise_unsupported ~loc (Shadowing Label) ;
+    Hashset.add t.labels name
+
+  let final_env t =
+    t.final_env
+end
 
 type t =
   { library: string
@@ -18,7 +45,7 @@ type t =
   (* module scoping *)
   ; mutable path: string list
   ; mutable locals: Lpath.t Ident.Map.t
-  ; scopes: scope Stack.t
+  ; scopes: Scope.t Stack.t
   (* variables for the current item *)
   ; mutable vars: Ident.Set.t
   (* whether or not to generate a file to make declarations opaque *)
@@ -26,19 +53,12 @@ type t =
   }
 
 let create ~lib ~mod_ ~final_env =
-  let scope =
-    { scope_ids= Ident.Set.empty
-    ; scope_constructors= Hashset.create ()
-    ; scope_labels= Hashset.create ()
-    ; scope_final_env= final_env
-    }
-  in
   { library= lib
   ; module_= mod_
   ; env= Env.empty
   ; path= []
   ; locals= Ident.Map.empty
-  ; scopes= Stack.of_list [scope]
+  ; scopes= Stack.of_list [Scope.create ~final_env]
   ; vars= Ident.Set.empty
   ; transparent= false
   }
@@ -52,8 +72,7 @@ let set_env t env =
   t.env <- Envaux.env_of_only_summary env
 
 let final_env t =
-  let scope = Stack.top t.scopes in
-  scope.scope_final_env
+  Scope.final_env (Stack.top t.scopes)
 
 let find_type t path =
   Env.find_type path t.env
@@ -79,41 +98,27 @@ let add_local t kind id =
     Lpath.of_list_rev (name :: t.path)
   in
   t.locals <- Ident.Map.add id path t.locals ;
-  let scope = Stack.pop t.scopes in
-  let ids = Ident.Set.add id scope.scope_ids in
-  Stack.push { scope with scope_ids= ids } t.scopes ;
+  Scope.add_ident (Stack.top t.scopes) id ;
   path
 let with_module t ~mod_ ~final_env fn =
   let mod_ = mod_ |> Ident.name |> normalize in
   let final_env = Envaux.env_of_only_summary final_env in
   t.path <- mod_ :: t.path ;
-  let scope =
-    { scope_ids= Ident.Set.empty
-    ; scope_constructors= Hashset.create ()
-    ; scope_labels= Hashset.create ()
-    ; scope_final_env= final_env
-    }
-  in
+  let scope = Scope.create ~final_env in
   Stack.push scope t.scopes ;
   let res = fn () in
-  let scope = Stack.pop t.scopes in
-  t.locals <- Ident.Set.fold Ident.Map.remove scope.scope_ids t.locals ;
+  Stack.drop t.scopes ;
+  t.locals <- Ident.Set.fold Ident.Map.remove (Scope.idents scope) t.locals ;
   t.path <- List.tl t.path ;
   res
 
 let add_constructor t (constr : Types.constructor_declaration) =
   let name = constr.cd_id |> Ident.name in
-  let scope = Stack.top t.scopes in
-  if Hashset.mem scope.scope_constructors name then
-    Error.raise_unsupported ~loc:constr.cd_loc (Shadowing Constructor) ;
-  Hashset.add scope.scope_constructors name
+  Scope.add_constructor (Stack.top t.scopes) ~loc:constr.cd_loc name
 
 let add_label t (lbl : Types.label_declaration) =
   let name = lbl.ld_id |> Ident.name in
-  let scope = Stack.top t.scopes in
-  if Hashset.mem scope.scope_labels name then
-    Error.raise_unsupported ~loc:lbl.ld_loc (Shadowing Label) ;
-  Hashset.add scope.scope_labels name
+  Scope.add_label (Stack.top t.scopes) ~loc:lbl.ld_loc name
 
 let mem_var t id =
   Ident.Set.mem id t.vars
