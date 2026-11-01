@@ -198,11 +198,14 @@ module Overwrite = struct
 end
 
 type t =
+  | Envaux of Envaux.error
   | Unsupported of Unsupported.t
   | Overwrite of Attribute.overwrite_kind * Overwrite.t
-  | Envaux of Envaux.error
 
 let pp ppf = function
+  | Envaux err ->
+      Fmt.pf ppf "internal Envaux error: %a"
+        Envaux.report_error err
   | Unsupported unsupported ->
       Fmt.pf ppf "unsupported feature: %a"
         Unsupported.pp unsupported
@@ -211,9 +214,6 @@ let pp ppf = function
         Attribute.overwrite
         (Attribute.overwrite_kind_to_string kind)
         (Overwrite.pp kind) err
-  | Envaux err ->
-      Fmt.pf ppf "internal Envaux error: %a"
-        Envaux.report_error err
 
 exception Error of Location.t * t
 

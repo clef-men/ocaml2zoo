@@ -68,9 +68,9 @@ module Overwrite : sig
 end
 
 type t =
+  | Envaux of Envaux.error
   | Unsupported of Unsupported.t
   | Overwrite of Attribute.overwrite_kind * Overwrite.t
-  | Envaux of Envaux.error
 
 val pp :
   t Fmt.t
