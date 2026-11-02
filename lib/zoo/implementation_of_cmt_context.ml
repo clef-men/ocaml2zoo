@@ -25,12 +25,12 @@ module Scope = struct
 
   let add_constructor t ~loc name =
     if Hashset.mem t.constructors name then
-      Error.raise_unsupported ~loc (Shadowing Constructor) ;
+      Error.raise ~loc (Unsupported (Shadowing Constructor)) ;
     Hashset.add t.constructors name
 
   let add_label t ~loc name =
     if Hashset.mem t.labels name then
-      Error.raise_unsupported ~loc (Shadowing Label) ;
+      Error.raise ~loc (Unsupported (Shadowing Label)) ;
     Hashset.add t.labels name
 
   let final_env t =
@@ -137,7 +137,7 @@ let with_scope t fn =
 let resolve_path t ~loc path : Implementation.expression =
   match Path.to_list path with
   | None ->
-      Error.raise_unsupported ~loc Functor
+      Error.raise ~loc (Unsupported Functor)
   | Some (id, names) ->
       if mem_var t id then (
         assert (names = []) ;

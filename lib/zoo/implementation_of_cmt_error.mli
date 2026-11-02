@@ -79,7 +79,3 @@ exception Error of Location.t * t
 
 val raise :
   loc:Location.t -> t -> 'a
-val raise_unsupported :
-  loc:Location.t -> Unsupported.t -> 'a
-val raise_overwrite :
-  loc:Location.t -> Attribute.overwrite_kind -> Overwrite.t -> 'a

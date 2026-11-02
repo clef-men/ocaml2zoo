@@ -35,7 +35,7 @@ let transl_open_declaration ~loc (open_ : Typedtree.open_declaration) =
   | Tmod_ident _ ->
       ()
   | _ ->
-      Error.raise_unsupported ~loc Open
+      Error.raise ~loc (Unsupported Open)
 
 let rec pattern_is_neutral (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -62,13 +62,13 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
         Context.add_var ctx id ;
         Some (id |> Ident.name)
       ) else (
-        Error.raise_unsupported ~loc:pat.pat_loc err
+        Error.raise ~loc:pat.pat_loc (Unsupported err)
       )
   | Tpat_tuple pats ->
       if List.for_all (fun (_, pat) -> pattern_is_neutral pat) pats then
         None
       else
-        Error.raise_unsupported ~loc:pat.pat_loc err
+        Error.raise ~loc:pat.pat_loc (Unsupported err)
   | Tpat_record ((_, { lbl_repres= Record_unboxed _; _ }, pat) :: _, _) ->
       pattern_to_binder ~ctx ~err pat
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
@@ -80,9 +80,9 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
       then
         None
       else
-        Error.raise_unsupported ~loc:pat.pat_loc err
+        Error.raise ~loc:pat.pat_loc (Unsupported err)
   | _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc err
+      Error.raise ~loc:pat.pat_loc (Unsupported err)
 
 let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   match pat.pat_desc with
@@ -99,32 +99,32 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_record (((_, lbl, _) :: _) as pats, Closed) ->
       let[@warning "-8"] Types.Tconstr (rcd, _, _) = Types.get_desc lbl.lbl_res in
       if record_type_is_mutable @@ Context.find_type ctx rcd then
-        Error.raise_unsupported ~loc:pat.pat_loc Pattern_record ;
+        Error.raise ~loc:pat.pat_loc (Unsupported Pattern_record) ;
       let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_nested pat) pats in
       Some (Pat_tuple bdrs)
   | Tpat_record _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_record
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_record)
   | Tpat_construct (_, { cstr_tag= Cstr_unboxed; _ }, pats, _) ->
       let[@warning "-8"] [pat] = pats in
       transl_pattern ~ctx pat
   | Tpat_construct (lid, constr, pats, _) ->
       let bdrs = List.map (pattern_to_binder ~ctx ~err:Pattern_nested) pats in
       if Longident.Map.mem lid.txt Builtin.constant_constructors then
-        Error.raise_unsupported ~loc:lid.loc Pattern_constr ;
+        Error.raise ~loc:lid.loc (Unsupported Pattern_constr) ;
       let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
       Some (Pat_constr (tag, bdrs))
   | Tpat_alias _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_alias
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_alias)
   | Tpat_constant _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_constant
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_constant)
   | Tpat_variant _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_variant
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_variant)
   | Tpat_array _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_array
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_array)
   | Tpat_or _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_or
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_or)
   | Tpat_lazy _ ->
-      Error.raise_unsupported ~loc:pat.pat_loc Pattern_lazy
+      Error.raise ~loc:pat.pat_loc (Unsupported Pattern_lazy)
 
 let check_argument_label ~loc (lbl : Asttypes.arg_label) =
   match lbl with
@@ -132,7 +132,7 @@ let check_argument_label ~loc (lbl : Asttypes.arg_label) =
   | Labelled _ ->
       ()
   | Optional _ ->
-      Error.raise_unsupported ~loc Argument_optional
+      Error.raise ~loc (Unsupported Argument_optional)
 let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let rcd, fld = Context.resolve_label ctx ~loc lbl in
   if record_type_is_mutable @@ Context.find_type ctx rcd then
@@ -146,7 +146,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
   | Texp_constant (Const_int int) ->
       Int int
   | Texp_constant _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Literal_non_integer
+      Error.raise ~loc:expr.exp_loc (Unsupported Literal_non_integer)
   | Texp_let (rec_flag, [bdg], expr2) ->
       let expr1 = transl_expression ~ctx bdg.vb_expr in
       Context.with_scope ctx @@ fun () ->
@@ -162,12 +162,12 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
                 Letrec (rec_flag, var, bdrs, expr1, expr2)
             | _ ->
                 if rec_flag = Recursive then
-                  Error.raise_unsupported ~loc:bdg.vb_loc Expr_let_rec_non_function ;
+                  Error.raise ~loc:bdg.vb_loc (Unsupported Expr_let_rec_non_function) ;
                 let expr2 = transl_expression ~ctx expr2 in
                 Let (pat, expr1, expr2)
         end
   | Texp_let (_, _, _) ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_let_mutual
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_let_mutual)
   | Texp_function (params, body) ->
       Context.with_scope ctx @@ fun () ->
         let bdrs =
@@ -192,7 +192,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
           check_argument_label ~loc:expr.exp_loc lbl ;
           match expr' with
           | Omitted () ->
-              Error.raise_unsupported ~loc:expr.exp_loc Argument_omitted
+              Error.raise ~loc:expr.exp_loc (Unsupported Argument_omitted)
           | Arg expr' ->
               expr'.exp_type, transl_expression ~ctx expr'
       in
@@ -269,7 +269,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
         let expr3 = transl_expression ~ctx expr3 in
         For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_for_downward
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_for_downward)
   | Texp_tuple exprs ->
       let exprs = List.map (fun (_, expr) -> transl_expression ~ctx expr) exprs in
       Tuple exprs
@@ -352,35 +352,35 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       transl_open_declaration ~loc:expr.exp_loc open_ ;
       transl_expression ~ctx expr
   | Texp_array _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_array
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_array)
   | Texp_try _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_try
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_try)
   | Texp_variant _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_variant
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_variant)
   | Texp_send _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_send
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_send)
   | Texp_new _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_new
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_new)
   | Texp_instvar _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_inst_var
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_inst_var)
   | Texp_setinstvar _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_set_inst_var
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_set_inst_var)
   | Texp_override _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_overwrite
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_overwrite)
   | Texp_lazy _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_lazy
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_lazy)
   | Texp_object _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_object
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_object)
   | Texp_pack _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_pack
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_pack)
   | Texp_letop _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_let_op
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_let_op)
   | Texp_unreachable ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_unreachable
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_unreachable)
   | Texp_extension_constructor _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_extension
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_extension)
   | Texp_struct_item _ ->
-      Error.raise_unsupported ~loc:expr.exp_loc Expr_struct_item
+      Error.raise ~loc:expr.exp_loc (Unsupported Expr_struct_item)
 and transl_expression_ident ~ctx ~loc path =
   Context.resolve_path_value ctx ~loc path
 and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
@@ -420,7 +420,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
         acc, None
     | br :: brs ->
         br.Typedtree.c_guard |> Option.iter (fun expr ->
-          Error.raise_unsupported ~loc:expr.Typedtree.exp_loc Pattern_guard
+          Error.raise ~loc:expr.Typedtree.exp_loc (Unsupported Pattern_guard)
         ) ;
         let end_scope = Context.begin_scope ctx in
         let pat = br.c_lhs in
@@ -429,9 +429,9 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
           | Tpat_value pat ->
               (pat :> Typedtree.(value general_pattern))
           | Tpat_exception _ ->
-              Error.raise_unsupported ~loc:pat.pat_loc Handler_exception
+              Error.raise ~loc:pat.pat_loc (Unsupported Handler_exception)
           | Tpat_or _ ->
-              Error.raise_unsupported ~loc:pat.pat_loc Pattern_or
+              Error.raise ~loc:pat.pat_loc (Unsupported Pattern_or)
           | Tpat_any ->
               pat
           | Tpat_var _ ->
@@ -485,7 +485,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               aux2 pat bdr
           | Tpat_construct (lid, constr, pats, _) ->
               if Longident.Map.mem lid.txt Builtin.constant_constructors then
-                Error.raise_unsupported ~loc:lid.loc Pattern_constr ;
+                Error.raise ~loc:lid.loc (Unsupported Pattern_constr) ;
               let _variant, tag = Context.resolve_constructor ctx ~loc:lid.loc constr in
               let bdrs, bdr, expr =
                 match constr.cstr_inlined with
@@ -524,12 +524,12 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                         bdrs, bdr, expr
                     | Tpat_record (pats, Closed) ->
                         if record_type_is_mutable ty then
-                          Error.raise_unsupported ~loc:pat.pat_loc Pattern_invalid ;
+                          Error.raise ~loc:pat.pat_loc (Unsupported Pattern_invalid) ;
                         let bdrs = List.map (fun (_, _, pat) -> pattern_to_binder ~ctx ~err:Pattern_invalid pat) pats in
                         let expr = transl_expression ~ctx br.c_rhs in
                         bdrs, bdr, expr
                     | _ ->
-                        Error.raise_unsupported ~loc:pat.pat_loc Pattern_invalid
+                        Error.raise ~loc:pat.pat_loc (Unsupported Pattern_invalid)
               in
               end_scope () ;
               let br =
@@ -541,7 +541,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               in
               aux1 (br :: acc) brs
           | _ ->
-              Error.raise_unsupported ~loc:pat.pat_loc Pattern_invalid
+              Error.raise ~loc:pat.pat_loc (Unsupported Pattern_invalid)
         in
         aux2 pat bdr
   in
@@ -571,11 +571,11 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path
         Val_fun (path, bdrs, expr)
   | _ ->
       if rec_ then
-        Error.raise_unsupported ~loc:bdg.vb_loc Decl_recursive ;
+        Error.raise ~loc:bdg.vb_loc (Unsupported Decl_recursive) ;
       if expression_is_value expr then
         Val_expr (path, expr)
       else
-        Error.raise_unsupported ~loc:bdg.vb_loc Decl_invalid
+        Error.raise ~loc:bdg.vb_loc (Unsupported Decl_invalid)
 let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
   match Attribute.has_overwrite bdg.Typedtree.vb_attributes with
   | None ->
@@ -586,7 +586,7 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         | PStr [{ pstr_desc= Pstr_eval (expr, _); _ }] ->
             expr
         | _ ->
-            Error.raise_overwrite ~loc:attr.attr_loc kind Invalid
+            Error.raise ~loc:attr.attr_loc (Overwrite (kind, Invalid))
       in
       let add ~env ~loc id =
         let uid =
@@ -616,7 +616,7 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         try
           Typecore.type_expression env expr
         with Env.Error.In_context _ ->
-          Error.raise_overwrite ~loc:attr.attr_loc kind Typing
+          Error.raise ~loc:attr.attr_loc (Overwrite (kind, Typing))
       in
       transl_value_binding ~ctx rec_flag bdgs bdg path id rec_flag' expr
   | Some (Raw, attr) ->
@@ -625,13 +625,13 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
             raw
         | _ ->
-            Error.raise_overwrite ~loc:attr.attr_loc Raw Invalid
+            Error.raise ~loc:attr.attr_loc (Overwrite (Raw, Invalid))
       in
       match String.split_on_char '.' raw with
       | [lib; mod_; name] ->
           Val_expr (path, Const (Gpath.ident ~lib ~mod_ name))
       | _ ->
-          Error.raise_overwrite ~loc:attr.attr_loc Raw Invalid
+          Error.raise ~loc:attr.attr_loc (Overwrite (Raw, Invalid))
 
 let transl_value_bindings ~ctx rec_flag bdgs =
   let bdgs =
@@ -641,7 +641,7 @@ let transl_value_bindings ~ctx rec_flag bdgs =
           let path = Context.add_local ctx Ident_value id in
           bdg, path, id, loc
       | _ ->
-          Error.raise_unsupported ~loc:bdg.vb_pat.pat_loc Decl_pattern
+          Error.raise ~loc:bdg.vb_pat.pat_loc (Unsupported Decl_pattern)
   in
   let[@warning "-8"] (bdg, _, _, _) :: _ = bdgs in
   if Attribute.has_ignore bdg.vb_attributes then
@@ -707,9 +707,9 @@ let transl_type_declaration ~ctx (ty : Typedtree.type_declaration) =
       let decl = Type (path, Type_normal, Type_variant constrs) in
       decl :: decls
   | Type_open ->
-      Error.raise_unsupported ~loc:ty.typ_loc Type_extensible
+      Error.raise ~loc:ty.typ_loc (Unsupported Type_extensible)
   | Type_external _ ->
-      Error.raise_unsupported ~loc:ty.typ_loc Type_external
+      Error.raise ~loc:ty.typ_loc (Unsupported Type_external)
 
 let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
   match mexpr.mod_desc with
@@ -718,18 +718,18 @@ let rec transl_module_expr ~ctx ~mod_ (mexpr : Typedtree.module_expr) =
   | Tmod_constraint (mexpr, _ty, _constraint, _coerc) ->
       transl_module_expr ~ctx ~mod_ mexpr
   | Tmod_ident _ ->
-      Error.raise_unsupported ~loc:mexpr.mod_loc Decl_module_alias
+      Error.raise ~loc:mexpr.mod_loc (Unsupported Decl_module_alias)
   | Tmod_functor _
   | Tmod_apply _
   | Tmod_apply_unit _ ->
-      Error.raise_unsupported ~loc:mexpr.mod_loc Functor
+      Error.raise ~loc:mexpr.mod_loc (Unsupported Functor)
   | Tmod_unpack _ ->
-      Error.raise_unsupported ~loc:mexpr.mod_loc Module_packed
+      Error.raise ~loc:mexpr.mod_loc (Unsupported Module_packed)
 
 and transl_module_binding ~ctx (mbdg : Typedtree.module_binding) =
   match mbdg.mb_id with
   | None ->
-      Error.raise_unsupported ~loc:mbdg.mb_loc Decl_module_unnamed
+      Error.raise ~loc:mbdg.mb_loc (Unsupported Decl_module_unnamed)
   | Some mod_ ->
       let _path = Context.add_local ctx Ident_module mod_ in
       transl_module_expr ~ctx ~mod_ mbdg.mb_expr
@@ -754,23 +754,23 @@ and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
   | Tstr_module mbdg ->
       transl_module_binding ~ctx mbdg
   | Tstr_eval _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_eval
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_eval)
   | Tstr_primitive _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_external
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_external)
   | Tstr_typext _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Type_extensible
+      Error.raise ~loc:str_item.str_loc (Unsupported Type_extensible)
   | Tstr_exception _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_exception
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_exception)
   | Tstr_recmodule _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_module_rec
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_module_rec)
   | Tstr_modtype _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_module_type
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_module_type)
   | Tstr_class _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_class
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_class)
   | Tstr_class_type _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_class_type
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_class_type)
   | Tstr_include _ ->
-      Error.raise_unsupported ~loc:str_item.str_loc Decl_include
+      Error.raise ~loc:str_item.str_loc (Unsupported Decl_include)
 
 and transl_structure' ~ctx (str : Typedtree.structure) =
   List.concat_map (transl_structure_item ~ctx) str.str_items

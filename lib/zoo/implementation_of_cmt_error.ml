@@ -219,7 +219,3 @@ exception Error of Location.t * t
 
 let raise ~loc t =
   raise @@ Error (loc, t)
-let raise_unsupported ~loc err =
-  raise ~loc @@ Unsupported err
-let raise_overwrite ~loc kind err =
-  raise ~loc @@ Overwrite (kind, err)
