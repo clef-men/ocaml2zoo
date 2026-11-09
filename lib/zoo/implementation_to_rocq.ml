@@ -740,16 +740,10 @@ let transl_typ ~mode lpath kind ty =
   in
   match ty with
   | Type_record (mut, flds) ->
-      Rocq.zoo_type
-        qualif
-        lpath
-        (Zoo_record (mut, flds))
+      Rocq.Zoo_type (qualif, lpath, Zoo_record (mut, flds))
   | Type_variant constrs ->
       let constrs = constrs |> List.map transl_constructor in
-      Rocq.zoo_type
-        qualif
-        lpath
-        (Zoo_variant constrs)
+      Rocq.Zoo_type (qualif, lpath, Zoo_variant constrs)
 let transl_typ ~mode path kind ty =
   match mode with
   | Types
@@ -760,113 +754,114 @@ let transl_typ ~mode path kind ty =
 
 let transl_value_code ~mod_ ~gen = function
   | Val_expr (path, expr) ->
-      [ Rocq.definition
-          Locality_normal
-          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
-          (Some Type.value)
-          ( fun ppf () ->
-              pp_expression_box ~mod_ ppf expr
-          )
+      [ Rocq.Definition
+        ( Locality_normal
+        , Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
+        , Some Type.value
+        , fun ppf () ->
+            pp_expression_box ~mod_ ppf expr
+        )
       ]
   | Val_fun (path, params, expr) ->
-      [ Rocq.definition
-          Locality_normal
-          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
-          (Some Type.value)
-          ( fun ppf () ->
-              Fmt.pf ppf "@[<v>%s %a %s@,  @[%a@]@]"
-                Keyword.fun_
-                Fmt.(list ~sep:(const char ' ') pp_binder) params
-                Punctuation.arrow
-                (pp_expression ~mod_) expr
-          )
+      [ Rocq.Definition
+        ( Locality_normal
+        , Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
+        , Some Type.value
+        , fun ppf () ->
+            Fmt.pf ppf "@[<v>%s %a %s@,  @[%a@]@]"
+              Keyword.fun_
+              Fmt.(list ~sep:(const char ' ') pp_binder) params
+              Punctuation.arrow
+              (pp_expression ~mod_) expr
+        )
       ]
   | Val_recs [path, var, params, body] ->
-      [ Rocq.definition
-          Locality_normal
-          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
-          (Some Type.value)
-          ( fun ppf () ->
-              Fmt.pf ppf "@[<v>%s %a %a %s@,  @[%a@]@]"
-                Keyword.rec_
-                pp_variable var
-                Fmt.(list ~sep:(const char ' ') pp_binder) params
-                Punctuation.arrow
-                (pp_expression ~mod_) body
-          )
+      [ Rocq.Definition
+        ( Locality_normal
+        , Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
+        , Some Type.value
+        , fun ppf () ->
+            Fmt.pf ppf "@[<v>%s %a %a %s@,  @[%a@]@]"
+              Keyword.rec_
+              pp_variable var
+              Fmt.(list ~sep:(const char ' ') pp_binder) params
+              Punctuation.arrow
+              (pp_expression ~mod_) body
+        )
       ]
   | Val_recs recs ->
       let id = Generator.next gen in
       List.concat
-      [ [ Rocq.definition
-            Locality_local
-            ( Printf.sprintf "__%s%s%i"
+      [ [ Rocq.Definition
+          ( Locality_local
+          , Printf.sprintf "__%s%s%i"
+              Custom_entry.recs
+              Separator.cdot1
+              id
+          , None
+          , fun ppf () ->
+              Fmt.pf ppf "@[<v>( @[<v>%s %a@]@,)%%%s@]"
+                Keyword.recs
+                Fmt.(
+                  list
+                    ~sep:(
+                      fun ppf () ->
+                        Fmt.pf ppf "@,%s "
+                          Keyword.with_
+                    )
+                    ( fun ppf (_, var, params, body) ->
+                      pf ppf "%a %a %s@,  @[%a@]"
+                        pp_variable var
+                        (list ~sep:(const char ' ') pp_binder) params
+                        Punctuation.arrow
+                        (pp_expression ~mod_) body
+                    )
+                ) recs
+                Custom_entry.recs
+          )
+        ]
+      ; recs |> List.mapi (fun i (path, _, _, _) ->
+          Rocq.Definition
+          ( Locality_normal
+          , Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
+          , None
+          , fun ppf () ->
+              Fmt.pf ppf "ValRecs %i __%s%s%i"
+                i
                 Custom_entry.recs
                 Separator.cdot1
                 id
-            )
-            None
-            ( fun ppf () ->
-                Fmt.pf ppf "@[<v>( @[<v>%s %a@]@,)%%%s@]"
-                  Keyword.recs
-                  Fmt.(
-                    list
-                      ~sep:(
-                        fun ppf () ->
-                          Fmt.pf ppf "@,%s "
-                            Keyword.with_
-                      )
-                      ( fun ppf (_, var, params, body) ->
-                        pf ppf "%a %a %s@,  @[%a@]"
-                          pp_variable var
-                          (list ~sep:(const char ' ') pp_binder) params
-                          Punctuation.arrow
-                          (pp_expression ~mod_) body
-                      )
-                  ) recs
-                  Custom_entry.recs
-            )
-        ]
-      ; List.mapi (fun i (path, _, _, _) ->
-          Rocq.definition
-            Locality_normal
-            Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
-            None
-            ( fun ppf () ->
-                Fmt.pf ppf "ValRecs %i __%s%s%i"
-                  i
-                  Custom_entry.recs
-                  Separator.cdot1
-                  id
-            )
-        ) recs
-      ; List.mapi (fun i (path, _, _, _) ->
-          Rocq.instance
-            Locality_global
-            None
-            ( fun ppf () ->
-                Fmt.pf ppf "@[<v>AsValRecs'@,  @[<v>%a@,%i@,__%s%s%i@,[ %a@,]@]@]"
-                  (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
-                  i
-                  Custom_entry.recs
-                  Separator.cdot1
-                  id
-                  Fmt.(
-                    list ~sep:(any "@,; ") @@ fun ppf (path, _, _, _) ->
-                      Lpath.pp ~sep:Separator.cdot2 ~mod_ ppf path
-                  ) recs
-            )
-        ) recs
+          )
+        )
+      ; recs |> List.mapi (fun i (path, _, _, _) ->
+          Rocq.Instance
+          ( Locality_global
+          , None
+          , fun ppf () ->
+              Fmt.pf ppf "@[<v>AsValRecs'@,  @[<v>%a@,%i@,__%s%s%i@,[ %a@,]@]@]"
+                (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+                i
+                Custom_entry.recs
+                Separator.cdot1
+                id
+                Fmt.(
+                  list ~sep:(any "@,; ") @@ fun ppf (path, _, _, _) ->
+                    Lpath.pp ~sep:Separator.cdot2 ~mod_ ppf path
+                ) recs
+          )
+        )
       ]
   | Val_opaque path ->
-      [ Rocq.parameter
-          Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
-          Type.value
+      [ Rocq.Parameter
+        ( Lpath.(path |> to_string ~sep:Separator.cdot2 ~mod_)
+        , Type.value
+        )
       ]
 let transl_value_opaque ~mod_ path =
-  Rocq.opaque
-    Locality_global
-    Lpath.(path |> cons mod_ |> to_string ~sep:Separator.cdot2)
+  Rocq.Opaque
+  ( Locality_global
+  , Lpath.(path |> cons mod_ |> to_string ~sep:Separator.cdot2)
+  )
 let transl_value_opaque ~mod_ = function
   | Val_expr (path, _)
   | Val_fun (path, _, _)
@@ -892,16 +887,16 @@ let transl_declaration ~mod_ ~mode ~gen = function
       transl_value ~mod_ ~mode ~gen val_
 
 let prelude ~mode =
-  [ Rocq.comment "This file was generated by ocaml2zoo."
-  ; Rocq.newline
+  [ Rocq.Comment "This file was generated by ocaml2zoo."
+  ; Rocq.Newline
   ] @
   match mode with
   | Types
   | Code ->
-      [ Rocq.require Require_import "zoo.prelude"
-      ; Rocq.require Require_import "zoo.plugin"
-      ; Rocq.require Require_import "zoo.language.notations"
-      ; Rocq.require Require_import "zoo.language.typeclasses"
+      [ Rocq.Require (Require_import, "zoo.prelude")
+      ; Rocq.Require (Require_import, "zoo.plugin")
+      ; Rocq.Require (Require_import, "zoo.language.notations")
+      ; Rocq.Require (Require_import, "zoo.language.typeclasses")
       ]
   | Opaque ->
       []
@@ -909,7 +904,7 @@ let postlude ~mode =
   match mode with
   | Types
   | Code ->
-      [ Rocq.require Require_import "zoo.options"
+      [ Rocq.Require (Require_import, "zoo.options")
       ]
   | Opaque ->
       []
@@ -944,7 +939,7 @@ let body ~mode t =
     match mode with
     | Types
     | Code ->
-        List.interleave ~sep:[Rocq.newline] body
+        List.interleave ~sep:[Rocq.Newline] body
     | Opaque ->
         body
   in
@@ -954,6 +949,6 @@ let transl ~mode t =
     [ prelude ~mode
     ; dependencies ~mode t
     ; postlude ~mode
-    ; [Rocq.newline]
+    ; [Rocq.Newline]
     ] @
     body ~mode t

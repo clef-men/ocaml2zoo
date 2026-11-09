@@ -51,23 +51,6 @@ type item =
   | Opaque of locality * ident
   | Zoo_type of qualification * Lpath.t * zoo_type
 
-val newline :
-  item
-val comment :
-  string -> item
-val require :
-  require_kind -> path -> item
-val parameter :
-  ident -> term -> item
-val definition :
-  locality -> ident -> term option -> custom -> item
-val instance :
-  locality -> ident option -> custom -> item
-val opaque :
-  locality -> ident -> item
-val zoo_type :
-  qualification -> Lpath.t -> zoo_type -> item
-
 type t =
   item list
 

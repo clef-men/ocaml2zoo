@@ -54,23 +54,6 @@ type item =
 type t =
   item list
 
-let newline =
-  Newline
-let[@inline] comment str =
-  Comment str
-let[@inline] require kind path =
-  Require (kind, path)
-let[@inline] parameter id tm =
-  Parameter (id, tm)
-let[@inline] definition local id tm custom =
-  Definition (local, id, tm, custom)
-let[@inline] instance local id custom =
-  Instance (local, id, custom)
-let[@inline] opaque local id =
-  Opaque (local, id)
-let[@inline] zoo_type qualif path typ =
-  Zoo_type (qualif, path, typ)
-
 let pp_require_kind ppf = function
   | Require_only ->
       ()

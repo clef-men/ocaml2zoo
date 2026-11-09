@@ -29,4 +29,4 @@ let compare =
   String.compare
 
 let to_rocq ~require_kind t =
-  Rocq.require require_kind t
+  Rocq.Require (require_kind, t)
