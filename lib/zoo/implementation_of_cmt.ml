@@ -588,37 +588,40 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         | _ ->
             Error.raise ~loc:attr.attr_loc (Overwrite (kind, Invalid))
       in
-      let add ~env ~loc id =
-        let uid =
-          Context.module_ ctx
-          |> Ident.create_persistent
-          |> Types.Uid.of_compilation_unit_id
-        in
-        env |> Env.add_value id
-          { val_type= Ctype.newvar ()
-          ; val_attributes= []
-          ; val_kind= Val_reg
-          ; val_loc= loc
-          ; val_uid= uid
-          }
-      in
       let env = Context.env ctx in
-      let env =
-        match rec_flag, rec_flag' with
-        | Recursive, _ ->
-            List.fold_left (fun env (_, _, id, loc) -> add ~env ~loc id) env bdgs
-        | Nonrecursive, Recursive ->
-            add ~env ~loc id
-        | Nonrecursive, Nonrecursive ->
-            env
-      in
-      let expr =
-        try
-          Typecore.type_expression env expr
-        with Env.Error.In_context _ ->
-          Error.raise ~loc:attr.attr_loc (Overwrite (kind, Typing))
-      in
-      transl_value_binding ~ctx rec_flag bdgs bdg path id rec_flag' expr
+      Ctype.with_level ~level:(Env.max_scope env) @@ fun () ->
+        let env =
+          let add ~env ~loc id =
+            let uid =
+              Context.module_ ctx
+              |> Ident.create_persistent
+              |> Types.Uid.of_compilation_unit_id
+            in
+            env |> Env.add_value id
+              { val_type= Ctype.newvar ()
+              ; val_attributes= []
+              ; val_kind= Val_reg
+              ; val_loc= loc
+              ; val_uid= uid
+              }
+          in
+          match rec_flag, rec_flag' with
+          | Recursive, _ ->
+              bdgs |> List.fold_left (fun env (_, _, id, loc) -> add ~env ~loc id) env
+          | Nonrecursive, Recursive ->
+              add ~env ~loc id
+          | Nonrecursive, Nonrecursive ->
+              env
+        in
+        let expr =
+          try
+            Typecore.type_expression env expr
+          with
+          | Typecore.Error.In_context _
+          | Env.Error.In_context _ ->
+              Error.raise ~loc:attr.attr_loc (Overwrite (kind, Typing))
+        in
+        transl_value_binding ~ctx rec_flag bdgs bdg path id rec_flag' expr
   | Some (Raw, attr) ->
       let raw =
         match attr.attr_payload with

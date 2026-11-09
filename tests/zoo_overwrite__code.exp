@@ -4,19 +4,32 @@ Require Import zoo.prelude.
 Require Import zoo.plugin.
 Require Import zoo.language.notations.
 Require Import zoo.language.typeclasses.
-Require Import foo.bar.
 Require Import zoo.options.
+
+#[qualified] Zoo type t1 :=
+  | A.
 
 Definition zoo_overwrite٠test1 : val :=
   𝗳𝘂𝗻 ⎽ ->
     ().
 
 Definition zoo_overwrite٠test2 : val :=
-  𝗿𝗲𝗰 "test2" ⎽ ->
-    "test2" ().
+  𝗳𝘂𝗻 ⎽ ->
+    §zoo_overwrite٠A.
+
+#[qualified] Zoo type test.t :=
+  | B.
+
+Definition zoo_overwrite٠test٠test1 : val :=
+  𝗳𝘂𝗻 ⎽ ->
+    ( §zoo_overwrite٠A, §zoo_overwrite٠test٠B ).
+
+#[qualified] Zoo type opened.t :=
+  | C.
+
+#[qualified] Zoo type t2 :=
+  | D.
 
 Definition zoo_overwrite٠test3 : val :=
-  bar٠raw.
-
-Definition zoo_overwrite٠test4 : val :=
-  bar٠raw.
+  𝗳𝘂𝗻 ⎽ ->
+    ( §zoo_overwrite٠opened٠C, §zoo_overwrite٠D ).

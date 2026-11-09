@@ -1,3 +1,6 @@
+type t1 =
+  | A
+
 let test1 =
   object end
 [@@zoo.overwrite
@@ -6,14 +9,33 @@ let test1 =
 
 let test2 =
   object end
-[@@zoo.overwrite_rec
-  fun () -> test2 ()
+[@@zoo.overwrite
+  fun () -> A
 ]
+
+module Test = struct
+  type t =
+    | B
+
+  let test1 =
+    object end
+  [@@zoo.overwrite
+    fun () -> A, B
+  ]
+end
+
+module Opened = struct
+  type t =
+    | C
+end
+
+type t2 =
+  | D
+
+open Opened
 
 let test3 =
   object end
-[@@zoo.overwrite_raw "foo.bar.raw"]
-
-let test4 () =
-  object end
-[@@zoo.overwrite_raw "foo.bar.raw"]
+[@@zoo.overwrite
+  fun () -> C, D
+]

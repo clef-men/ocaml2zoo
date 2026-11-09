@@ -4,6 +4,16 @@ Require Import zoo.prelude.
 Require Import zoo.plugin.
 Require Import zoo.language.notations.
 Require Import zoo.language.typeclasses.
-Require Export foo.bar.
 Require Import zoo.options.
 
+Zoo type t1 :=
+  | A.
+
+Zoo type test.t :=
+  | B.
+
+Zoo type opened.t :=
+  | C.
+
+Zoo type t2 :=
+  | D.
