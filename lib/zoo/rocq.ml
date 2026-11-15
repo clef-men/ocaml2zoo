@@ -1,8 +1,12 @@
-module Separator = struct
-  let cdot1 =
-    "۰"
-  let cdot2 =
-    "٠"
+module Type = struct
+  let value =
+    "val"
+end
+
+module Custom_entry = struct
+  let recs =
+    Printf.sprintf "zoo%srecs"
+      Separator.cdot1
 end
 
 type path =
@@ -20,12 +24,8 @@ type require_kind =
   | Require_export
 
 type locality =
-  | Locality_normal
-  | Locality_local
-  | Locality_global
-
-type custom =
-  unit Fmt.t
+  | Local
+  | Global
 
 type qualification =
   | Qualified
@@ -52,11 +52,12 @@ type item =
   | Newline
   | Comment of string
   | Require of require_kind * path
-  | Parameter of ident * term
-  | Definition of locality * ident * term option * custom
-  | Instance of locality * ident option * custom
-  | Opaque of locality * ident
+  | Opaque of Lpath.t
   | Zoo_type of qualification * Lpath.t * zoo_type
+  | Zoo_val of Lpath.t * Implementation.expression
+  | Zoo_fun of Lpath.t * Implementation.binder list * Implementation.expression
+  | Zoo_recs of (Lpath.t * Var.t * Implementation.binder list * Implementation.expression) list
+  | Zoo_parameter of Lpath.t
 
 type t =
   item list
@@ -70,11 +71,9 @@ let pp_require_kind ppf = function
       Fmt.pf ppf " Export"
 
 let pp_locality ppf = function
-  | Locality_normal ->
-      ()
-  | Locality_local ->
+  | Local ->
       Fmt.pf ppf "#[local] "
-  | Locality_global ->
+  | Global ->
       Fmt.pf ppf "#[global] "
 
 let pp_qualification ppf = function
@@ -109,7 +108,7 @@ let pp_zoo_type ppf = function
       Fmt.pf ppf "@,  @[<v>| %a@]"
         Fmt.(list ~sep:(any "@,| ") pp_zoo_constructor) constrs
 
-let pp_item ppf = function
+let pp_item ~mod_ ~gen ppf = function
   | Newline ->
       ()
   | Comment str ->
@@ -119,32 +118,69 @@ let pp_item ppf = function
       Fmt.pf ppf "Require%a %s."
         pp_require_kind kind
         path
-  | Parameter (id, tm) ->
-      Fmt.pf ppf "Parameter %s : %s."
-        id
-        tm
-  | Definition (local, id, tm, custom) ->
-      Fmt.pf ppf "%aDefinition %s%a :=@,  %a."
-        pp_locality local
-        id
-        Fmt.(option @@ fmt " : %s") tm
-        custom ()
-  | Instance (local, id, custom) ->
-      Fmt.pf ppf "%aInstance %a:@,  %a.@,Proof.@,  done.@,Qed."
-        pp_locality local
-        Fmt.(option string) id
-        custom ()
-  | Opaque (local, id) ->
-      Fmt.pf ppf "%aOpaque %s."
-        pp_locality local
-        id
-  | Zoo_type (qualif, lpath, typ) ->
+  | Opaque path ->
+      Fmt.pf ppf "%aOpaque %a."
+        pp_locality Global
+        (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+  | Zoo_type (qualif, path, typ) ->
       Fmt.pf ppf "%aZoo type %a :=%a."
         pp_qualification qualif
-        (Lpath.pp ~sep:"." ?mod_:None) lpath
+        (Lpath.pp ~sep:"." ?mod_:None) path
         pp_zoo_type typ
+  | Zoo_val (path, expr) ->
+      Fmt.pf ppf "Definition %a : %s :=@,  @[%a@]."
+        (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+        Type.value
+        (Implementation_pp.pp_expression ~mod_) expr
+  | Zoo_fun (path, params, expr) ->
+      Fmt.pf ppf "Definition %a : %s :=@,  @[%a@]."
+        (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+        Type.value
+        (Implementation_pp.pp_fun ~mod_) (params, expr)
+  | Zoo_recs [path, var, params, expr] ->
+      Fmt.pf ppf "Definition %a : %s :=@,  @[%a@]."
+        (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+        Type.value
+        (Implementation_pp.pp_rec ~mod_) (path, var, params, expr)
+  | Zoo_recs recs ->
+      let id = Generator.next gen in
+      Fmt.pf ppf "%aDefinition __%s%s%i :=@,  @[<v>( %a@,)%%%s@]."
+        pp_locality Local
+        Custom_entry.recs
+        Separator.cdot1
+        id
+        (Implementation_pp.pp_recs ~mod_) recs
+        Custom_entry.recs ;
+      Fmt.pf ppf "@," ;
+      Format.pp_print_list (fun ppf i (path, _, _, _) ->
+        Fmt.pf ppf "Definition %a :=@,  ValRecs %i __%s%s%i."
+          (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+          i
+          Custom_entry.recs
+          Separator.cdot1
+          id
+      ) ppf recs ;
+      Fmt.pf ppf "@," ;
+      Format.pp_print_list (fun ppf i (path, _, _, _) ->
+        Fmt.pf ppf "%aInstance :@,  @[<v>AsValRecs'@,  @[<v>%a@,%i@,__%s%s%i@,[ %a@,]@]@].@,Proof.@,  done.@,Qed."
+          pp_locality Global
+          (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+          i
+          Custom_entry.recs
+          Separator.cdot1
+          id
+          Fmt.(
+            list ~sep:(any "@,; ") @@ fun ppf (path, _, _, _) ->
+              Lpath.pp ~sep:Separator.cdot2 ~mod_ ppf path
+          ) recs
+      ) ppf recs
+  | Zoo_parameter path ->
+      Fmt.pf ppf "Parameter %a : %s."
+        (Lpath.pp ~sep:Separator.cdot2 ~mod_) path
+        Type.value
 
-let pp ppf t =
+let pp ~mod_ ppf t =
+  let gen = Generator.create () in
   Fmt.pf ppf "@[<v>" ;
-  Fmt.list pp_item ppf t ;
+  Fmt.list (pp_item ~mod_ ~gen) ppf t ;
   Fmt.pf ppf "@]"

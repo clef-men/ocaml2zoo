@@ -1,8 +1,5 @@
 open Implementation
 
-module Separator =
-  Rocq.Separator
-
 module Punctuation = struct
   let alt =
     "|"
@@ -700,20 +697,20 @@ and pp_fallback ~mod_ ppf fb =
 let pp_expression ~mod_ =
   pp_expression ~mod_ max_level
 
-let pp_fun ~mod_ ppf (_path, params, expr) =
+let pp_fun ~mod_ ppf (params, expr) =
   Fmt.pf ppf "@[<v>%s %a %s@,  @[%a@]@]"
     Keyword.fun_
     Fmt.(list ~sep:(const char ' ') pp_binder) params
     Punctuation.arrow
     (pp_expression ~mod_) expr
 
-let pp_rec ~mod_ ppf (_path, var, params, body) =
+let pp_rec ~mod_ ppf (_path, var, params, expr) =
   Fmt.pf ppf "@[<v>%s %a %a %s@,  @[%a@]@]"
     Keyword.rec_
     pp_variable var
     Fmt.(list ~sep:(const char ' ') pp_binder) params
     Punctuation.arrow
-    (pp_expression ~mod_) body
+    (pp_expression ~mod_) expr
 
 let pp_recs ~mod_ ppf recs =
   Fmt.pf ppf "@[<v>%s %a@]"
@@ -725,11 +722,11 @@ let pp_recs ~mod_ ppf recs =
             Fmt.pf ppf "@,%s "
               Keyword.with_
         )
-        ( fun ppf (_path, var, params, body) ->
+        ( fun ppf (_path, var, params, expr) ->
           pf ppf "%a %a %s@,  @[%a@]"
             pp_variable var
             (list ~sep:(const char ' ') pp_binder) params
             Punctuation.arrow
-            (pp_expression ~mod_) body
+            (pp_expression ~mod_) expr
         )
     ) recs

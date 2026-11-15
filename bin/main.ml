@@ -54,16 +54,19 @@ let main_cmt ~lib_name ~mod_name ~input ~output =
           | ast ->
               let rocq = Zoo.Implementation_to_rocq.transl ~mode:Types ast in
               Out_channel.with_open_text output.output_types (fun chan ->
-                Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+                Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
+                  (Zoo.Rocq.pp ~mod_:ast.module_) rocq
               ) ;
               let rocq = Zoo.Implementation_to_rocq.transl ~mode:Code ast in
               Out_channel.with_open_text output.output_code (fun chan ->
-                Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+                Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
+                  (Zoo.Rocq.pp ~mod_:ast.module_) rocq
               ) ;
               if not ast.transparent then
                 let rocq = Zoo.Implementation_to_rocq.transl ~mode:Opaque ast in
                 Out_channel.with_open_text output.output_opaque (fun chan ->
-                  Fmt.pf (Format.formatter_of_out_channel chan) "%a@." Zoo.Rocq.pp rocq
+                  Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
+                    (Zoo.Rocq.pp ~mod_:ast.module_) rocq
                 )
           end
       | _ ->

@@ -1,10 +1,3 @@
-module Separator : sig
-  val cdot1 :
-    string
-  val cdot2 :
-    string
-end
-
 type path =
   string
 
@@ -18,14 +11,6 @@ type require_kind =
   | Require_only
   | Require_import
   | Require_export
-
-type locality =
-  | Locality_normal
-  | Locality_local
-  | Locality_global
-
-type custom =
-  unit Fmt.t
 
 type qualification =
   | Qualified
@@ -52,14 +37,15 @@ type item =
   | Newline
   | Comment of string
   | Require of require_kind * path
-  | Parameter of ident * term
-  | Definition of locality * ident * term option * custom
-  | Instance of locality * ident option * custom
-  | Opaque of locality * ident
+  | Opaque of Lpath.t
   | Zoo_type of qualification * Lpath.t * zoo_type
+  | Zoo_val of Lpath.t * Implementation.expression
+  | Zoo_fun of Lpath.t * Implementation.binder list * Implementation.expression
+  | Zoo_recs of (Lpath.t * Var.t * Implementation.binder list * Implementation.expression) list
+  | Zoo_parameter of Lpath.t
 
 type t =
   item list
 
 val pp :
-  t Fmt.t
+  mod_:string -> t Fmt.t
