@@ -1,3 +1,10 @@
+module Separator = struct
+  let cdot1 =
+    "۰"
+  let cdot2 =
+    "٠"
+end
+
 type path =
   string
 

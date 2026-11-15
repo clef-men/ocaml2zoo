@@ -1,3 +1,10 @@
+module Separator : sig
+  val cdot1 :
+    string
+  val cdot2 :
+    string
+end
+
 type path =
   string
 
