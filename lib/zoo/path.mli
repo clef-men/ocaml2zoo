@@ -11,5 +11,5 @@ val of_array :
 val to_list :
   t -> (Ident.t * string list) option
 
-val to_string :
-  sep:string -> t -> string option
+val pp :
+  t Fmt.t
