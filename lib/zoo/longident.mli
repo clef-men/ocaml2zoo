@@ -11,8 +11,8 @@ val last :
 val of_array :
   string array -> t
 
-val to_string :
-  string -> t -> string option
+val pp :
+  t Fmt.t
 
 module Map :
   Map.S with type key = t
