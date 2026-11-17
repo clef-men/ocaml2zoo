@@ -320,11 +320,11 @@ let nonraisings =
   ; [|"Zoo";"resolve"|],
     helper2 (fun expr1 expr2 ->
       Let
-      ( Pat_var Var.temporary
+      ( Pat_var Var.Internal.temporary
       , expr2
       , Seq
-        ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; Var Var.temporary])
-        , Var Var.temporary
+        ( Apply (Primitive Resolve, [Apply (Primitive Skip, []); expr1; Var Var.Internal.temporary])
+        , Var Var.Internal.temporary
         )
       )
     )

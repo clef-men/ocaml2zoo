@@ -25,6 +25,8 @@ val add_constructor :
 val add_label :
   t -> Types.label_declaration -> unit
 
+val mem_var :
+  t -> Ident.t -> bool
 val add_var :
   t -> Ident.t -> unit
 val begin_scope :

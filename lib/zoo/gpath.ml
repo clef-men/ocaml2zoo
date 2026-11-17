@@ -40,4 +40,9 @@ module Builtin = struct
 
   let contents =
     ident "contents"
+
+  let _None =
+    ident "None"
+  let _Some =
+    ident "Some"
 end

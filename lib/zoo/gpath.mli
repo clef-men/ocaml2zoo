@@ -28,4 +28,9 @@ module Builtin : sig
 
   val contents :
     t
+
+  val _None :
+    t
+  val _Some :
+    t
 end

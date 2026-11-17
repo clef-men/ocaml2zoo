@@ -126,13 +126,6 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_lazy _ ->
       Error.raise ~loc:pat.pat_loc (Unsupported Pattern_lazy)
 
-let check_argument_label ~loc (lbl : Asttypes.arg_label) =
-  match lbl with
-  | Nolabel
-  | Labelled _ ->
-      ()
-  | Optional _ ->
-      Error.raise ~loc (Unsupported Argument_optional)
 let transl_expression_field ~ctx ~loc expr (lbl : Data_types.label_description)  =
   let rcd, fld = Context.resolve_label ctx ~loc lbl in
   if record_type_is_mutable @@ Context.find_type ctx rcd then
@@ -170,26 +163,77 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       Error.raise ~loc:expr.exp_loc (Unsupported Expr_let_mutual)
   | Texp_function (params, body) ->
       Context.with_scope ctx @@ fun () ->
-        let bdrs =
-          params |> List.map @@ fun (param : Typedtree.function_param) ->
-            check_argument_label ~loc:param.fp_loc param.fp_arg_label ;
-            let[@warning "-8"] Typedtree.Tparam_pat pat = param.fp_kind in
-            pattern_to_binder ~ctx ~err:Pattern_non_trivial pat
+        let check_default default =
+          let iter =
+            { Tast_iterator.default_iterator with
+              expr= fun iter expr ->
+                begin match expr.exp_desc with
+                | Texp_ident (Pident id, _, _) when Context.mem_var ctx id ->
+                    Error.raise ~loc:expr.exp_loc (Unsupported Default_variable)
+                | _ ->
+                    ()
+                end ;
+                Tast_iterator.default_iterator.expr iter expr
+            }
+          in
+          iter.expr iter default
+        in
+        let bdrs, defaults =
+          let gen = Var.Internal.Generator.create () in
+          List.fold_left (fun (bdrs, defaults) (param : Typedtree.function_param) ->
+            match param.fp_kind with
+            | Tparam_pat pat ->
+                let bdr = pattern_to_binder ~ctx ~err:Pattern_non_trivial pat in
+                bdr :: bdrs, defaults
+            | Tparam_optional_default (pat, default) ->
+                let[@warning "-8"] Asttypes.Optional lbl = param.fp_arg_label in
+                let var = Var.Internal.Generator.next gen lbl in
+                check_default default ;
+                let default = transl_expression ~ctx default in
+                let pat = transl_pattern ~ctx pat in
+                Some var :: bdrs, (var, pat, default) :: defaults
+          ) ([], []) params
+        in
+        let bdrs = List.rev bdrs in
+        let add_defaults expr =
+          List.fold_left (fun expr (var, pat, default) ->
+            let expr' =
+              Match
+              ( Var var
+              , [ { branch_tag= Gpath.Builtin._None
+                  ; branch_fields= []
+                  ; branch_as= None
+                  ; branch_expr= default
+                  }
+                ; { branch_tag= Gpath.Builtin._Some
+                  ; branch_fields= [Some var]
+                  ; branch_as= None
+                  ; branch_expr= Var var
+                  }
+                ]
+              , None
+              )
+            in
+            match pat with
+            | None ->
+                Seq (expr', expr)
+            | Some pat ->
+                Let (pat, expr', expr)
+          ) expr defaults
         in
         begin match body with
         | Tfunction_body expr ->
             let expr = transl_expression ~ctx expr in
-            Fun (bdrs, expr)
+            Fun (bdrs, add_defaults expr)
         | Tfunction_cases { cases= brs; param= id; _ } ->
             Context.add_var ctx id ;
             let brs, fb = transl_branches ~ctx brs in
             let var = id |> Ident.name in
-            Fun (bdrs @ [Some var], Match (Var var, brs, fb))
+            Fun (bdrs @ [Some var], add_defaults (Match (Var var, brs, fb)))
         end
   | Texp_apply (expr', exprs) ->
       let args () =
-        exprs |> List.map @@ fun (lbl, expr' : _ * Typedtree.apply_arg) ->
-          check_argument_label ~loc:expr.exp_loc lbl ;
+        exprs |> List.map @@ fun (_lbl, expr' : _ * Typedtree.apply_arg) ->
           match expr' with
           | Omitted () ->
               Error.raise ~loc:expr.exp_loc (Unsupported Argument_omitted)
@@ -388,7 +432,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   let ext_expr =
     match ext_expr with
     | None ->
-        Either.Left Var.temporary
+        Either.Left Var.Internal.temporary
     | Some ext_expr ->
         match transl_expression ~ctx ext_expr with
         | Var var ->
@@ -401,7 +445,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
       let expr =
         match def with
         | Typedtree.Kept _ ->
-            transl_expression_field ~ctx ~loc (Var (Either.get_left ~right:Var.temporary ext_expr)) lbl
+            transl_expression_field ~ctx ~loc (Var (Either.get_left ~right:Var.Internal.temporary ext_expr)) lbl
         | Overridden (_, expr) ->
             transl_expression ~ctx expr
       in
@@ -413,7 +457,7 @@ and transl_expression_record ~ctx ~loc flds ext_expr mk_expr =
   | Left _ ->
       expr
   | Right ext_expr ->
-      Let (Pat_var Var.temporary, ext_expr, expr)
+      Let (Pat_var Var.Internal.temporary, ext_expr, expr)
 
 and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch list * fallback option = fun ~ctx brs ->
   let rec aux1 acc = function

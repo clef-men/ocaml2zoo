@@ -25,6 +25,7 @@ module Unsupported = struct
     | Pattern_nested
     | Pattern_invalid
     | Pattern_non_trivial
+    | Default_variable
     | Handler_exception
     | Expr_let_rec_non_function
     | Expr_let_mutual
@@ -44,7 +45,6 @@ module Unsupported = struct
     | Expr_unreachable
     | Expr_extension
     | Expr_struct_item
-    | Argument_optional
     | Argument_omitted
     | Module_packed
     | Functor
@@ -93,6 +93,8 @@ module Unsupported = struct
         "invalid pattern"
     | Pattern_non_trivial ->
         "non-trivial pattern in function parameter"
+    | Default_variable ->
+        "default value of optional parameter refers to a local variable"
     | Handler_exception ->
         "exception handler"
     | Expr_let_rec_non_function ->
@@ -129,8 +131,6 @@ module Unsupported = struct
         "unreachable branch"
     | Expr_extension ->
         "extension"
-    | Argument_optional ->
-        "optional function argument"
     | Argument_omitted ->
         "omitted function argument"
     | Module_packed ->

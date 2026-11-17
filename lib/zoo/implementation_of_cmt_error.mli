@@ -19,6 +19,7 @@ module Unsupported : sig
     | Pattern_nested
     | Pattern_invalid
     | Pattern_non_trivial
+    | Default_variable
     | Handler_exception
     | Expr_let_rec_non_function
     | Expr_let_mutual
@@ -38,7 +39,6 @@ module Unsupported : sig
     | Expr_unreachable
     | Expr_extension
     | Expr_struct_item
-    | Argument_optional
     | Argument_omitted
     | Module_packed
     | Functor
