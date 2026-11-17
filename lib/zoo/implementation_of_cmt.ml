@@ -228,6 +228,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
       | _ ->
           let expr2 = transl_expression ~ctx expr2 in
           let expr3 = Option.map (transl_expression ~ctx) expr3 in
+          let expr3 = Option.value ~default:(Tuple []) expr3 in
           If (expr1, expr2, expr3)
       end
   | Texp_sequence (expr1, expr2) ->

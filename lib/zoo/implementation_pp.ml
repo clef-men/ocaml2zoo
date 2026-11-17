@@ -52,9 +52,6 @@ module Punctuation = struct
   let wildcard =
     "⎽"
 
-  let unit =
-    "()"
-
   let nil =
     "[]"
   let cons =
@@ -459,7 +456,7 @@ let rec pp_expression' ~mod_ lvl ppf = function
       Fmt.pf ppf "@[<v>@[" ;
       begin match expr1 with
       | If (expr1, expr2, expr3) ->
-          pp_expression_if ~mod_ ~force_else:true ppf expr1 expr2 expr3
+          pp_expression_if ~mod_ ppf expr1 expr2 expr3
       | _ ->
           pp_expression ~mod_ (next_level lvl) ppf expr1
       end ;
@@ -626,7 +623,7 @@ and pp_expression ~mod_ lvl ppf expr =
       (pp_expression' ~mod_ lvl_expr) expr
 and pp_expression_box ~mod_ ppf expr =
   Fmt.box (pp_expression ~mod_ max_level) ppf expr
-and pp_expression_if_aux ~mod_ ?(nested = false) ?(force_else = false) ppf expr1 expr2 expr3 =
+and pp_expression_if_aux ~mod_ ?(nested = false) ppf expr1 expr2 expr3 =
   Fmt.pf ppf "@[<hv>%s%s@;<1 2>@[%a@]@ %s %s@]@,  @[%a@]@,%s"
     (if nested then " 𝗲𝗹𝘀𝗲 " else "")
     Keyword.if_
@@ -636,26 +633,17 @@ and pp_expression_if_aux ~mod_ ?(nested = false) ?(force_else = false) ppf expr1
     (pp_expression ~mod_ max_level) expr2
     Punctuation.paren_right ;
   match expr3 with
-  | None ->
-      if force_else then
-        Fmt.pf ppf " %s %s@,  %s@,%s"
-          Keyword.else_
-          Punctuation.paren_left
-          Punctuation.unit
-          Punctuation.paren_right
-  | Some expr3 ->
-      match expr3 with
-      | If (expr1, expr2, expr3) ->
-          pp_expression_if_aux ~mod_ ~nested:true ppf expr1 expr2 expr3
-      | expr ->
-          Fmt.pf ppf " %s %s@,  @[%a@]@,%s"
-            Keyword.else_
-            Punctuation.paren_left
-            (pp_expression ~mod_ max_level) expr
-            Punctuation.paren_right
-and pp_expression_if ~mod_ ?force_else ppf expr1 expr2 expr3 =
+  | If (expr1, expr2, expr3) ->
+      pp_expression_if_aux ~mod_ ~nested:true ppf expr1 expr2 expr3
+  | expr ->
+      Fmt.pf ppf " %s %s@,  @[%a@]@,%s"
+        Keyword.else_
+        Punctuation.paren_left
+        (pp_expression ~mod_ max_level) expr
+        Punctuation.paren_right
+and pp_expression_if ~mod_ ppf expr1 expr2 expr3 =
   Fmt.pf ppf "@[<v>" ;
-  pp_expression_if_aux ~mod_ ?force_else ppf expr1 expr2 expr3 ;
+  pp_expression_if_aux ~mod_ ppf expr1 expr2 expr3 ;
   Fmt.pf ppf "@]"
 and pp_branch ~mod_ ppf br =
   Fmt.pf ppf "%s "

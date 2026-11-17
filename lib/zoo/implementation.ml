@@ -65,7 +65,7 @@ type expression =
   | Let of pattern * expression * expression
   | Letrec of rec_flag * Var.t * binder list * expression * expression
   | Seq of expression * expression
-  | If of expression * expression * expression option
+  | If of expression * expression * expression
   | While of expression * expression
   | For of binder * expression * expression * expression
   | Match of expression * branch list * fallback option

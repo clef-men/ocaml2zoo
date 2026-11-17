@@ -35,3 +35,31 @@ Definition if٠test3 : val :=
     ) 𝗲𝗹𝘀𝗲 (
       3
     ).
+
+Definition if٠test4 : val :=
+  𝗳𝘂𝗻 "b" ->
+    𝗶𝗳 "b" 𝘁𝗵𝗲𝗻 (
+      ()
+    ) 𝗲𝗹𝘀𝗲 (
+      ()
+    ).
+
+Definition if٠test5 : val :=
+  𝗳𝘂𝗻 "b" ->
+    𝗶𝗳 "b" 𝘁𝗵𝗲𝗻 (
+      ()
+    ) 𝗲𝗹𝘀𝗲 (
+      ()
+    ) ⍮
+    ().
+
+Definition if٠test6 : val :=
+  𝗳𝘂𝗻 "b" ->
+    𝗶𝗳 "b" 𝘁𝗵𝗲𝗻 (
+      ()
+    ) 𝗲𝗹𝘀𝗲 𝗶𝗳 "b" 𝘁𝗵𝗲𝗻 (
+      ()
+    ) 𝗲𝗹𝘀𝗲 (
+      ()
+    ) ⍮
+    ().

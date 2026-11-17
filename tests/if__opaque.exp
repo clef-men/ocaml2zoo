@@ -5,3 +5,6 @@ Require Import tests.if__code.
 #[global] Opaque if٠test1.
 #[global] Opaque if٠test2.
 #[global] Opaque if٠test3.
+#[global] Opaque if٠test4.
+#[global] Opaque if٠test5.
+#[global] Opaque if٠test6.
