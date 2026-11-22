@@ -1,11 +1,11 @@
 open Implementation
 
 module Error =
-  Implementation_of_cmt_error
+  Implementation_of_typedtree_error
 module Context =
-  Implementation_of_cmt_context
+  Implementation_of_typedtree_context
 module Builtin =
-  Implementation_of_cmt_builtin
+  Implementation_of_typedtree_builtin
 
 exception Ignore
 

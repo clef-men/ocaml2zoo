@@ -1,7 +1,7 @@
 module Error =
-  Implementation_of_cmt_error
+  Implementation_of_typedtree_error
 module Builtin =
-  Implementation_of_cmt_builtin
+  Implementation_of_typedtree_builtin
 
 module Scope = struct
   type t =

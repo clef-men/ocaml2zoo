@@ -1,5 +1,5 @@
 module Error =
-  Implementation_of_cmt_error
+  Implementation_of_typedtree_error
 
 exception Ignore
 
