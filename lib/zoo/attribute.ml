@@ -1,6 +1,13 @@
 type t =
   Parsetree.attribute
 
+let payload (t : t) =
+  match t.attr_payload with
+  | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (str, loc, _); _ }; _ }, _); _ }] ->
+      Some (loc, str)
+  | _ ->
+      None
+
 let has attr =
   List.exists (fun attr' -> attr'.Parsetree.attr_name.txt = attr)
 
@@ -62,3 +69,8 @@ let transparent =
   zoo ^ ".transparent"
 let has_transparent =
   has transparent
+
+let spec =
+  zoo ^ ".spec"
+let has_spec =
+  List.filter (fun attr -> attr.Parsetree.attr_name.txt = spec)

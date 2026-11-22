@@ -1,25 +1,9 @@
 open Implementation
 
-module Error =
-  Implementation_of_typedtree_error
-
-module Context =
-  Implementation_of_typedtree_context
-
 module Builtin =
   Implementation_of_typedtree_builtin
 
 exception Ignore
-
-module Envaux = struct
-  include Envaux
-
-  let env_of_only_summary env =
-    try
-      Envaux.env_of_only_summary env
-    with Error err ->
-      Error.raise ~loc:Location.none (Envaux err)
-end
 
 let record_is_mutable =
   List.exists @@ fun lbl -> lbl.Types.ld_mutable = Mutable
@@ -671,11 +655,11 @@ let transl_value_binding ~ctx rec_flag bdgs bdg path id loc =
         transl_value_binding ~ctx rec_flag bdgs bdg path id rec_flag' expr
   | Some (Raw, attr) ->
       let raw =
-        match attr.attr_payload with
-        | PStr [{ pstr_desc= Pstr_eval ({ pexp_desc= Pexp_constant { pconst_desc= Pconst_string (raw, _, _); _ }; _ }, _); _ }] ->
-            raw
-        | _ ->
+        match Attribute.payload attr with
+        | None ->
             Error.raise ~loc:attr.attr_loc (Overwrite (Raw, Invalid))
+        | Some (_loc, raw) ->
+            raw
       in
       match String.split_on_char '.' raw with
       | [lib; mod_; name] ->
@@ -823,7 +807,7 @@ and transl_structure_item ~ctx (str_item : Typedtree.structure_item) =
       Error.raise ~loc:str_item.str_loc (Unsupported Decl_include)
 
 and transl_structure' ~ctx (str : Typedtree.structure) =
-  List.concat_map (transl_structure_item ~ctx) str.str_items
+  str.str_items |> List.concat_map (transl_structure_item ~ctx)
 and transl_structure ~ctx ?mod_ str =
   match mod_ with
   | None ->

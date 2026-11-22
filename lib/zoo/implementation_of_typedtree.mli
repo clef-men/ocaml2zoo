@@ -1,6 +1,3 @@
-module Error =
-  Implementation_of_typedtree_error
-
 exception Ignore
 
 val transl :

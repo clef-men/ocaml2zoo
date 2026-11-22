@@ -8,76 +8,90 @@ type arguments =
   ; describe: bool
   }
 
-exception Error of unit Cmdliner.Term.ret
-
-let error ?(usage = true) fmt =
-  let fmt = "@[<v>" ^^ fmt ^^ "@]" in
-  fmt |> Fmt.kstr @@ fun msg ->
-    raise @@ Error (`Error (usage, msg))
-let invalid_cmt ?(usage = true) fmt =
-  error ~usage ("invalid .cmt file" ^^ fmt)
-let invalid_directory ?(usage = true) fmt =
-  error ~usage ("invalid directory" ^^ fmt)
-
 type output =
   { output_types: string
   ; output_code: string
   ; output_opaque: string
   }
-let output output_dir mod_name mode =
-  let output = Filename.concat output_dir mod_name in
-  Printf.sprintf "%s%s.v" output (Zoo.Mode.to_string mode)
-let output output_dir mod_name =
-  { output_types= output output_dir mod_name Types
-  ; output_code= output output_dir mod_name Code
-  ; output_opaque= output output_dir mod_name Opaque
+let output ~output_dir ~mod_name ~mode =
+  Printf.sprintf "%s%s.v"
+    (Filename.concat output_dir mod_name)
+    (Zoo.Mode.to_string mode)
+let output ~output_dir ~mod_name =
+  { output_types= output ~output_dir ~mod_name ~mode:Types
+  ; output_code= output ~output_dir ~mod_name ~mode:Code
+  ; output_opaque= output ~output_dir ~mod_name ~mode:Opaque
   }
 
-let main_cmt ~lib_name ~mod_name ~input ~output =
+let read ~filetype input =
   match Cmt_format.read_cmt input with
   | exception Sys_error err ->
-      invalid_cmt ": %s" err
+      Error.invalid_file ~filetype ": %s"
+        err
   | exception Cmt_format.Error _
   | exception Cmi_format.Error _ ->
-      invalid_cmt ""
+      Error.invalid_file ~filetype ""
   | cmt ->
-      match cmt.cmt_annots with
-      | Implementation str ->
-          Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
-          begin match Zoo.Implementation_of_typedtree.transl ~lib:lib_name ~mod_:mod_name str with
-          | exception Zoo.Implementation_of_typedtree.Error.Error (loc, err) ->
-              error ~usage:false "%a:@ %a"
-                Location.print_loc loc
-                Zoo.Implementation_of_typedtree.Error.pp err
-          | exception Zoo.Implementation_of_typedtree.Ignore ->
-              ()
-          | ast ->
-              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Types ast in
-              Out_channel.with_open_text output.output_types (fun chan ->
-                Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
-                  (Zoo.Rocq.pp ~mod_:ast.module_) rocq
-              ) ;
-              let rocq = Zoo.Implementation_to_rocq.transl ~mode:Code ast in
-              Out_channel.with_open_text output.output_code (fun chan ->
-                Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
-                  (Zoo.Rocq.pp ~mod_:ast.module_) rocq
-              ) ;
-              if not ast.transparent then
-                let rocq = Zoo.Implementation_to_rocq.transl ~mode:Opaque ast in
-                Out_channel.with_open_text output.output_opaque (fun chan ->
-                  Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
-                    (Zoo.Rocq.pp ~mod_:ast.module_) rocq
-                )
-          end
-      | _ ->
-          invalid_cmt ": not an implementation"
+      Load_path.(init ~auto_include:no_auto_include ~visible:cmt.cmt_loadpath.visible ~hidden:cmt.cmt_loadpath.hidden) ;
+      cmt
 
-let main_singlefile args =
+let main_cmt ~lib_name ~mod_name ~input ~output =
+  let cmt = read ~filetype:Cmt input in
+  match cmt.cmt_annots with
+  | Implementation str ->
+      begin match Zoo.Implementation_of_typedtree.transl ~lib:lib_name ~mod_:mod_name str with
+      | exception Zoo.Error.Error (loc, err) ->
+          Error.raise ~usage:false "%a:@ %a"
+            Location.print_loc loc
+            Zoo.Error.pp err
+      | exception Zoo.Implementation_of_typedtree.Ignore ->
+          ()
+      | ast ->
+          let rocq = Zoo.Implementation_to_rocq.transl ~mode:Types ast in
+          Out_channel.with_open_text output.output_types (fun chan ->
+            Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
+              (Zoo.Rocq.pp ~mod_:ast.module_) rocq
+          ) ;
+          let rocq = Zoo.Implementation_to_rocq.transl ~mode:Code ast in
+          Out_channel.with_open_text output.output_code (fun chan ->
+            Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
+              (Zoo.Rocq.pp ~mod_:ast.module_) rocq
+          ) ;
+          if not ast.transparent then
+            let rocq = Zoo.Implementation_to_rocq.transl ~mode:Opaque ast in
+            Out_channel.with_open_text output.output_opaque (fun chan ->
+              Fmt.pf (Format.formatter_of_out_channel chan) "%a@."
+                (Zoo.Rocq.pp ~mod_:ast.module_) rocq
+            )
+      end
+  | _ ->
+      Error.invalid_file ~filetype:Cmt ": not an implementation"
+
+let main_cmti ~lib_name ~mod_name ~input =
+  let cmt = read ~filetype:Cmti input in
+  match cmt.cmt_annots with
+  | Interface sig_ ->
+      begin match Zoo.Annotation_of_typedtree.transl ~lib:lib_name ~mod_:mod_name sig_ with
+      | exception Zoo.Error.Error (loc, err) ->
+          Error.raise ~usage:false "%a:@ %a"
+            Location.print_loc loc
+            Zoo.Error.pp err
+      | _annot ->
+          ()
+      end
+  | _ ->
+      Error.invalid_file ~filetype:Cmti ": not an interface"
+
+let main_singlefile ~(filetype : Filetype.t) args =
   let input = args.input in
   let lib_name = Filename.(input |> dirname |> basename) |> String.uncapitalize_ascii in
   let mod_name = Filename.(input |> basename |> remove_extension) |> String.uncapitalize_ascii in
-  let output = output args.output mod_name in
-  main_cmt ~lib_name ~mod_name ~input ~output
+  let output = output ~output_dir:args.output ~mod_name in
+  match filetype with
+  | Cmt ->
+      main_cmt ~lib_name ~mod_name ~input ~output
+  | Cmti ->
+      main_cmti ~lib_name ~mod_name ~input
 
 let check ~args ~input ~output =
   if args.force then
@@ -85,7 +99,7 @@ let check ~args ~input ~output =
   else
     match Unix.stat input with
     | exception Unix.Unix_error _ ->
-        invalid_cmt ""
+        Error.invalid_file ~filetype:Cmt ""
     | input_stats ->
         match Unix.stat output.output_code with
         | output_stats when input_stats.st_mtime < output_stats.st_mtime ->
@@ -105,30 +119,38 @@ let main_directory args (dune : Dune.t) =
         lib.library_modules |> Hashtbl.iter @@ fun mod_name (mod_ : Dune.module_) ->
           if not @@ Filename.check_suffix mod_.module_impl "-gen" then
             let input = Filename.concat args.input mod_.module_cmt in
-            let output = output output_dir mod_name in
-            if check ~args ~input ~output then
-              main_cmt ~lib_name ~mod_name ~input ~output
-            else if not args.quiet then
+            let output = output ~output_dir ~mod_name in
+            if check ~args ~input ~output then (
+              main_cmt ~lib_name ~mod_name ~input ~output ;
+              mod_.module_cmti |> Option.iter (fun cmti ->
+                let input = Filename.concat args.input cmti in
+                main_cmti ~lib_name ~mod_name ~input
+              )
+            ) else if not args.quiet then (
               Fmt.pr {|Ignoring module "%s" from library "%s" (already up-to-date).@.|}
                 mod_name
                 lib_name
+            )
 let main_directory args =
   begin try
     Sys.chdir args.input
   with Sys_error _ ->
-    error "cannot move to input directory"
+    Error.raise "cannot move to input directory"
   end ;
   match Dune.of_directory () with
   | Error err ->
-      error "%s" err
+      Error.raise "%s"
+        err
   | Ok dune ->
-      if args.describe then
-        Fmt.pr "%a@." Dune.pp dune
-      else (
+      if args.describe then (
+        Fmt.pr "%a@."
+          Dune.pp dune
+      ) else (
         begin try
           Sys.chdir dune.build_context
         with Sys_error _ ->
-          error "cannot move to %s" (Filename.concat args.input dune.build_context)
+          Error.raise "cannot move to dune build context: %s"
+            (Filename.concat args.input dune.build_context)
         end ;
         main_directory args dune
       )
@@ -138,18 +160,20 @@ let main args =
     try
       Unix.realpath args.input
     with Unix.Unix_error _ ->
-      error "invalid input file"
+      Error.raise "invalid input file"
   in
   let output =
     try
       Unix.realpath args.output
     with Unix.Unix_error _ ->
-      error "invalid output directory"
+      Error.raise "invalid output directory"
   in
   let args = { args with input; output } in
-  if Filename.extension args.input = ".cmt" then
-    main_singlefile args
-  else if Sys.is_directory args.input then
-    main_directory args
-  else
-    invalid_directory ""
+  match Filetype.of_filename args.input with
+  | Some filetype ->
+      main_singlefile ~filetype args
+  | None ->
+      if Sys.is_directory args.input then
+        main_directory args
+      else
+        Error.invalid_directory ()

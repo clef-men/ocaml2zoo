@@ -1,4 +1,6 @@
-(lang dune 3.0)
+(lang dune 3.13)
+
+(using menhir 3.0)
 
 (name ocaml2zoo)
 
@@ -18,9 +20,10 @@
  (name ocaml2zoo)
  (synopsis "OCaml to Zoo")
  (depends
-  ocaml-compiler-libs
+  cmdliner
   csexp
   fmt
-  cmdliner
+  menhir
+  ocaml-compiler-libs
  )
 )

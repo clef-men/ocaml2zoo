@@ -7,11 +7,12 @@ license: "ISC"
 homepage: "https://github.com/clef-men/ocaml2zoo"
 bug-reports: "https://github.com/clef-men/ocaml2zoo/issues"
 depends: [
-  "dune" {>= "3.0"}
-  "ocaml-compiler-libs"
+  "dune" {>= "3.13"}
+  "cmdliner"
   "csexp"
   "fmt"
-  "cmdliner"
+  "menhir" {>= "20180523"}
+  "ocaml-compiler-libs"
   "odoc" {with-doc}
 ]
 build: [

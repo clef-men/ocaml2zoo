@@ -8,7 +8,5 @@ type arguments =
   ; describe: bool
   }
 
-exception Error of unit Cmdliner.Term.ret
-
 val main :
   arguments -> unit

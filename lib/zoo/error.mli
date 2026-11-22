@@ -3,6 +3,7 @@ module Unsupported : sig
     type t =
       | Constructor
       | Label
+      | Predicate
   end
 
   type t =
@@ -67,10 +68,54 @@ module Overwrite : sig
     | Typing
 end
 
+module Annotation : sig
+  module Lexing : sig
+    type t =
+      | Illegal_character of char
+      | Invalid_integer_literal
+  end
+
+  module Unbound : sig
+    type t =
+      | Module of Longident.t
+      | Predicate of Longident.t
+      | Type of Longident.t
+      | Variable of string
+  end
+
+  module Typing : sig
+    type t =
+      | Ident of string
+      | Return
+      | Expr
+  end
+
+  type t =
+    | Lexing of Lexing.t
+    | Parsing
+    | Unbound of Unbound.t
+    | Predicate_return
+    | Predicate_property of string
+    | Predicate_arity of
+      { predicate: Lpath.t
+      ; arity: int
+      ; num_argument: int
+      }
+    | Spec_unit_parameter
+    | Spec_duplicate_parameter of string
+    | Spec_too_many_parameters
+    | Typing of
+      { kind: Typing.t
+      ; expected: Annotation.typ
+      ; inferred: Annotation.typ
+      }
+end
+
 type t =
-  | Envaux of Envaux.error
+  | Envaux of Ocaml_common.Envaux.error
   | Unsupported of Unsupported.t
   | Overwrite of Attribute.overwrite_kind * Overwrite.t
+  | Annotation of Annotation.t
 
 val pp :
   t Fmt.t

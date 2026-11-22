@@ -1,5 +1,14 @@
 include Ocaml_common.Path
 
+let rec global = function
+  | Pident id ->
+      Ident.global id
+  | Pdot (t, _)
+  | Pextra_ty (t, _) ->
+      global t
+  | Papply _ ->
+      false
+
 let rec head = function
   | Pident id ->
       Some id

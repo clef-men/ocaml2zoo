@@ -2,7 +2,7 @@ open Cmdliner
 
 let input =
   let docv = "input" in
-  let doc = "Input dune project or .cmt file." in
+  let doc = "Input dune project or .cmt(i) file." in
   Arg.(required & pos 0 (some file) None & info [] ~docv ~doc)
 
 let output =
@@ -67,8 +67,10 @@ let main
     ; describe
     }
   in
-  try `Ok (Main.main args)
-  with Main.Error err -> err
+  try
+    `Ok (Main.main args)
+  with Error.Error err ->
+    err
 let main =
   let open Term in
   ret (

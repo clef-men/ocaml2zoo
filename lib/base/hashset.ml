@@ -25,6 +25,9 @@ let to_list_sort compare t =
   |> to_list
   |> List.sort compare
 
+let iter fn =
+  Hashtbl.iter (fun elt () -> fn elt)
+
 let map_list fn =
   Hashtbl.map_list (fun elt () -> fn elt)
 
@@ -70,6 +73,9 @@ module Make
     t
     |> to_list
     |> List.sort compare
+
+  let iter fn =
+    Hashtbl.iter (fun elt () -> fn elt)
 
   let map_list fn =
     Hashtbl.map_list (fun elt () -> fn elt)

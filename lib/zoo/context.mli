@@ -46,3 +46,26 @@ val transparent :
   t -> bool
 val set_transparent :
   t -> unit
+
+val find_predicate :
+  t -> Longident.t Location.loc -> Lpath.t * Annotation.typ_scheme
+val add_predicate :
+  t -> string Location.loc -> Annotation.typ_scheme -> Lpath.t
+
+val spec :
+  t -> return:Annotation.btyp -> (unit -> 'a) -> 'a
+
+module Spec : sig
+  val return :
+    t -> Annotation.btyp
+
+  val find_variable :
+    t -> string -> Annotation.typ option
+  val add_variable :
+    t -> string -> Annotation.typ -> unit
+
+  val with_quantifiers :
+    t -> (unit -> 'a) -> (string * Annotation.typ) list * 'a
+  val add_quantifier :
+    t -> string -> Annotation.typ -> unit
+end

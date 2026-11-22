@@ -23,6 +23,9 @@ module type S = sig
   val to_list_sort :
     (elt -> elt -> int) -> t -> elt list
 
+  val iter :
+    (elt -> unit) -> t -> unit
+
   val map_list :
     (elt -> 'a) -> t -> 'a list
 end

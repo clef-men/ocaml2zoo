@@ -11,7 +11,7 @@ install :
 
 .PHONY : test
 test : build
-	@ ./tests/run.sh
+	@ ./tests/scripts/run.sh
 
 .PHONY : top
 top :
@@ -20,4 +20,4 @@ top :
 .PHONY : clean
 clean :
 	@ dune clean
-	@ rm -f tests/*.{cm[it],v}
+	@ rm -f tests/*.{cm{i,t,ti},v}

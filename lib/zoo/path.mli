@@ -2,6 +2,9 @@ include module type of struct
   include Ocaml_common.Path
 end
 
+val global :
+  t -> bool
+
 val head :
   t -> Ident.t option
 

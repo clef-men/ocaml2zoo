@@ -125,7 +125,7 @@ let pp_item ~mod_ ~gen ppf = function
   | Zoo_type (qualif, path, typ) ->
       Fmt.pf ppf "%aZoo type %a :=%a."
         pp_qualification qualif
-        (Lpath.pp ~sep:"." ?mod_:None) path
+        (Lpath.pp ~sep:Separator.dot ?mod_:None) path
         pp_zoo_type typ
   | Zoo_val (path, expr) ->
       Fmt.pf ppf "Definition %a : %s :=@,  @[%a@]."

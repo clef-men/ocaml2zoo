@@ -20,6 +20,9 @@ val to_list :
 val to_list_sort :
   ('a -> 'a -> int) -> 'a t -> 'a list
 
+val iter :
+  ('a -> unit) -> 'a t -> unit
+
 val map_list :
   ('a -> 'b) -> 'a t -> 'b list
 

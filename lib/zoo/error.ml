@@ -3,12 +3,15 @@ module Unsupported = struct
     type t =
       | Constructor
       | Label
+      | Predicate
 
     let to_string = function
       | Constructor ->
           "constructor"
       | Label ->
           "label"
+      | Predicate ->
+          "predicate"
   end
 
   type t =
@@ -197,15 +200,120 @@ module Overwrite = struct
         Fmt.pf ppf "cannot infer type"
 end
 
+module Annotation = struct
+  module Lexing = struct
+    type t =
+      | Illegal_character of char
+      | Invalid_integer_literal
+
+    let pp ppf = function
+      | Illegal_character chr ->
+          Fmt.pf ppf "illegal character: %c"
+            chr
+      | Invalid_integer_literal ->
+          Fmt.pf ppf "invalid integer literal"
+  end
+
+  module Unbound = struct
+    type t =
+      | Module of Longident.t
+      | Predicate of Longident.t
+      | Type of Longident.t
+      | Variable of string
+
+    let pp ppf = function
+      | Module lid ->
+          Fmt.pf ppf "unbound module: %a"
+            Longident.pp lid
+      | Predicate lid ->
+          Fmt.pf ppf "unbound predicate: %a"
+            Longident.pp lid
+      | Type lid ->
+          Fmt.pf ppf "unbound ghost type: %a"
+            Longident.pp lid
+      | Variable id ->
+          Fmt.pf ppf "unbound variable in spec: %s"
+            id
+  end
+
+  module Typing = struct
+    type t =
+      | Ident of string
+      | Return
+      | Expr
+
+    let pp ppf = function
+      | Ident id ->
+          Fmt.pf ppf "identifier %s"
+            id
+      | Return ->
+          Fmt.pf ppf "return"
+      | Expr ->
+          Fmt.pf ppf "expression"
+  end
+
+  type t =
+    | Lexing of Lexing.t
+    | Parsing
+    | Unbound of Unbound.t
+    | Predicate_return
+    | Predicate_property of string
+    | Predicate_arity of
+      { predicate: Lpath.t
+      ; arity: int
+      ; num_argument: int
+      }
+    | Spec_unit_parameter
+    | Spec_duplicate_parameter of string
+    | Spec_too_many_parameters
+    | Typing of
+      { kind: Typing.t
+      ; expected: Annotation.typ
+      ; inferred: Annotation.typ
+      }
+
+  let pp ppf = function
+    | Lexing err ->
+        Fmt.pf ppf "lexing error: %a"
+          Lexing.pp err
+    | Parsing ->
+        Fmt.pf ppf "parsing error"
+    | Unbound err ->
+        Unbound.pp ppf err
+    | Predicate_return ->
+        Fmt.pf ppf "predicate return type should be %a"
+          Annotation_pp.pp_typ Type_iprop
+    | Predicate_property property ->
+        Fmt.pf ppf "invalid predicate property: %s"
+          property
+    | Predicate_arity { predicate; arity; num_argument } ->
+        Fmt.pf ppf "too %s arguments for predicate %a"
+          (if arity < num_argument then "many" else "few")
+          (Lpath.pp ~sep:Separator.dot ?mod_:None) predicate
+    | Spec_unit_parameter ->
+        Fmt.pf ppf "spec parameter should have type unit"
+    | Spec_duplicate_parameter arg ->
+        Fmt.pf ppf "duplicate parameter in spec: %s"
+          arg
+    | Spec_too_many_parameters ->
+        Fmt.pf ppf "too many parameters in spec"
+    | Typing { kind; expected; inferred } ->
+        Fmt.pf ppf "%a should have type %a but has type %a"
+          Typing.pp kind
+          Annotation_pp.pp_typ expected
+          Annotation_pp.pp_typ inferred
+end
+
 type t =
-  | Envaux of Envaux.error
+  | Envaux of Ocaml_common.Envaux.error
   | Unsupported of Unsupported.t
   | Overwrite of Attribute.overwrite_kind * Overwrite.t
+  | Annotation of Annotation.t
 
 let pp ppf = function
   | Envaux err ->
       Fmt.pf ppf "internal Envaux error: %a"
-        Envaux.report_error err
+        Ocaml_common.Envaux.report_error err
   | Unsupported unsupported ->
       Fmt.pf ppf "unsupported feature: %a"
         Unsupported.pp unsupported
@@ -214,6 +322,8 @@ let pp ppf = function
         Attribute.overwrite
         (Attribute.overwrite_kind_to_string kind)
         (Overwrite.pp kind) err
+  | Annotation err ->
+      Annotation.pp ppf err
 
 exception Error of Location.t * t
 

@@ -1,6 +1,9 @@
 type t =
   Parsetree.attribute
 
+val payload :
+  t -> (Location.t * string) option
+
 val zoo :
   string
 val has_zoo :
@@ -35,3 +38,8 @@ val transparent :
   string
 val has_transparent :
   t list -> bool
+
+val spec :
+  string
+val has_spec :
+  t list -> t list

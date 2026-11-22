@@ -3,9 +3,13 @@ _build/
 
 *.exe
 
-zoo/*.cm[it]
+zoo/*.cmi
+zoo/*.cmt
 zoo/*.cmti
-tests/*.cm[it]
+
+tests/*.cmi
+tests/*.cmt
+tests/*.cmti
 tests/*.v
 
 # Vim
