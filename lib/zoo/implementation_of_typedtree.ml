@@ -57,11 +57,11 @@ let rec pattern_to_binder ~ctx ~err (pat : Typedtree.pattern) =
   | Tpat_any ->
       None
   | Tpat_var (id, _, _) ->
-      Context.add_var ctx id ;
+      Context.add_variable ctx id ;
       Some (id |> Ident.name)
   | Tpat_alias (pat, id, _, _, _) ->
       if pattern_is_neutral pat then (
-        Context.add_var ctx id ;
+        Context.add_variable ctx id ;
         Some (id |> Ident.name)
       ) else (
         Error.raise ~loc:pat.pat_loc (Unsupported err)
@@ -91,7 +91,7 @@ let rec transl_pattern ~ctx (pat : Typedtree.pattern) =
   | Tpat_any ->
       None
   | Tpat_var (id, _, _) ->
-      Context.add_var ctx id ;
+      Context.add_variable ctx id ;
       Some (Pat_var (id |> Ident.name))
   | Tpat_tuple pats ->
       let bdrs = List.map (fun (_, pat) -> pattern_to_binder ~ctx ~err:Pattern_nested pat) pats in
@@ -170,7 +170,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             { Tast_iterator.default_iterator with
               expr= fun iter expr ->
                 begin match expr.exp_desc with
-                | Texp_ident (Pident id, _, _) when Context.mem_var ctx id ->
+                | Texp_ident (Pident id, _, _) when Context.mem_variable ctx id ->
                     Error.raise ~loc:expr.exp_loc (Unsupported Default_variable)
                 | _ ->
                     ()
@@ -228,7 +228,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             let expr = transl_expression ~ctx expr in
             Fun (bdrs, add_defaults expr)
         | Tfunction_cases { cases= brs; param= id; _ } ->
-            Context.add_var ctx id ;
+            Context.add_variable ctx id ;
             let brs, fb = transl_branches ~ctx brs in
             let var = id |> Ident.name in
             Fun (bdrs @ [Some var], add_defaults (Match (Var var, brs, fb)))
@@ -312,7 +312,7 @@ let rec transl_expression ~ctx (expr : Typedtree.expression) =
             Binop (Binop_plus, expr2, Int 1)
       in
       Context.with_scope ctx @@ fun () ->
-        Context.add_var ctx id ;
+        Context.add_variable ctx id ;
         let expr3 = transl_expression ~ctx expr3 in
         For (bdr, expr1, expr2, expr3)
   | Texp_for (_, _, _, _, Downto, _) ->
@@ -503,7 +503,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
         let pat, bdr =
           match pat.pat_desc with
           | Tpat_alias (pat, id, _, _, _) ->
-              Context.add_var ctx id ;
+              Context.add_variable ctx id ;
               pat, Some (id |> Ident.name)
           | _ ->
               pat, None
@@ -515,7 +515,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
               end_scope () ;
               acc, Some { fallback_as= bdr; fallback_expr= expr }
           | Tpat_var (id, _, _) ->
-              Context.add_var ctx id ;
+              Context.add_variable ctx id ;
               let expr = transl_expression ~ctx br.c_rhs in
               end_scope () ;
               let var = id |> Ident.name in
@@ -556,7 +556,7 @@ and transl_branches : type a. ctx:Context.t -> a Typedtree.case list -> branch l
                         let bdrs = List.make (List.length lbls) None in
                         bdrs, bdr, expr
                     | Tpat_var (id, _, _) ->
-                        Context.add_var ctx id ;
+                        Context.add_variable ctx id ;
                         let expr = transl_expression ~ctx br.c_rhs in
                         let bdr, expr =
                           let var = id |> Ident.name in
@@ -600,9 +600,9 @@ let transl_value_binding ~ctx rec_flag bdgs (bdg : Typedtree.value_binding) path
     Context.with_scope ctx @@ fun () ->
       begin match rec_flag, rec_flag' with
       | Recursive, _ ->
-          List.iter (fun (_, _, id, _) -> Context.add_var ctx id) bdgs
+          List.iter (fun (_, _, id, _) -> Context.add_variable ctx id) bdgs
       | Nonrecursive, Recursive ->
-          Context.add_var ctx id
+          Context.add_variable ctx id
       | Nonrecursive, Nonrecursive ->
           ()
       end ;

@@ -48,7 +48,7 @@ type t =
   ; mutable locals: Lpath.t Ident.Map.t
   ; scopes: Scope.t Stack.t
   (* variables for the current item *)
-  ; mutable vars: Ident.Set.t
+  ; mutable variables: Ident.Set.t
   (* whether or not to generate a file to make declarations opaque *)
   ; mutable transparent: bool
   }
@@ -60,7 +60,7 @@ let create ~lib ~mod_ ~final_env =
   ; path= []
   ; locals= Ident.Map.empty
   ; scopes= Stack.of_list [Scope.create ~final_env]
-  ; vars= Ident.Set.empty
+  ; variables= Ident.Set.empty
   ; transparent= false
   }
 
@@ -121,18 +121,18 @@ let add_label t (lbl : Types.label_declaration) =
   let name = lbl.ld_id |> Ident.name in
   Scope.add_label (Stack.top t.scopes) ~loc:lbl.ld_loc name
 
-let mem_var t id =
-  Ident.Set.mem id t.vars
-let add_var t id =
-  t.vars <- Ident.Set.add id t.vars
+let mem_variable t id =
+  Ident.Set.mem id t.variables
+let add_variable t id =
+  t.variables <- Ident.Set.add id t.variables
 let begin_scope t =
-  let vars = t.vars in
+  let vars = t.variables in
   fun () ->
-    t.vars <- vars
+    t.variables <- vars
 let with_scope t fn =
-  let vars = t.vars in
+  let vars = t.variables in
   let res = fn () in
-  t.vars <- vars ;
+  t.variables <- vars ;
   res
 
 let resolve_path t ~loc path : Implementation.expression =
@@ -140,7 +140,7 @@ let resolve_path t ~loc path : Implementation.expression =
   | None ->
       Error.raise ~loc (Unsupported Functor)
   | Some (id, names) ->
-      if mem_var t id then (
+      if mem_variable t id then (
         assert (names = []) ;
         Var (id |> Ident.name)
       ) else if Ident.global id then (
